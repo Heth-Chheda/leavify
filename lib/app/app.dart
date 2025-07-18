@@ -1,0 +1,18 @@
+import 'package:flutter/material.dart';
+import 'package:leavify/app/routes.dart';
+import 'package:leavify/core/constants/theme/app_theme.dart';
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Leavify',
+      debugShowCheckedModeBanner: false,
+      initialRoute: Routes.login,
+      onGenerateRoute: Routes.generateRoute,
+      theme: AppTheme.lightTheme,
+    );
+  }
+}
