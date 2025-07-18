@@ -360,10 +360,10 @@ class _LoginPageState extends State<LoginPage>
   void _handleLogin() {
     if (_tabController.index == 0) {
       // Email login
-      _viewModel.loginWithEmail(context);
+      _viewModel.login(context, LoginType.email);
     } else {
       // Phone login
-      _viewModel.loginWithPhone(context);
+      _viewModel.login(context, LoginType.phone);
     }
   }
 

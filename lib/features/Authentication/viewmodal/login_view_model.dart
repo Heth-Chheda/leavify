@@ -1,52 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/features/Authentication/data/authentication_repository.dart';
+import 'package:leavify/features/Authentication/domain/request/login_request.dart';
+import 'package:leavify/features/Authentication/domain/response/login_response.dart';
+
+enum LoginType { email, phone }
 
 class LoginViewModel extends ChangeNotifier {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final phoneNumberController = TextEditingController();
 
+  final AuthenticationRepository _authenticationRepository =
+      AuthenticationRepository();
+
   bool isLoading = false;
 
-  Future<void> loginWithEmail(BuildContext context) async {
+  Future<void> login(BuildContext context, LoginType loginType) async {
+    final password = passwordController.text.trim();
     final email = emailController.text.trim();
-    final password = passwordController.text;
+    final phone = phoneNumberController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email and password required')),
-      );
-      return;
-    }
-
-    isLoading = true;
-    notifyListeners();
-
-    try {
-      // TODO: Call your API client here
-      await Future.delayed(const Duration(seconds: 2)); // simulate request
-      debugPrint("Logged in with $email : $password");
-
-      // Navigate to dashboard or home
-      // Navigator.pushReplacementNamed(context, Routes.home);
-    } catch (e) {
-      debugPrint("Login error: $e");
+    if (password.isEmpty ||
+        (loginType == LoginType.email && email.isEmpty) ||
+        (loginType == LoginType.phone && phone.isEmpty)) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Login failed: $e')));
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> loginWithPhone(BuildContext context) async {
-    final password = passwordController.text;
-    final phoneNumber = phoneNumberController.text;
-
-    if (phoneNumber.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email and password required')),
-      );
+      ).showSnackBar(const SnackBar(content: Text('Credentials are required')));
       return;
     }
 
@@ -54,11 +33,20 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // TODO: Call your API client here
-      await Future.delayed(const Duration(seconds: 2)); // simulate request
-      debugPrint("Logged in with $phoneNumber : $password");
+      // Create login request based on type
+      final loginRequest = loginType == LoginType.email
+          ? LoginRequest(email: email, password: password)
+          : LoginRequest(phoneNumber: phone, password: password);
 
-      // Navigate to dashboard or home
+      final LoginResponseModel response = await _authenticationRepository.login(
+        loginRequest,
+      );
+
+      debugPrint("Login success: ${response.currentUser?.firstName}");
+
+      // TODO: Save token & user to SharedPreferences
+
+      // TODO: Navigate based on user role or screen
       // Navigator.pushReplacementNamed(context, Routes.home);
     } catch (e) {
       debugPrint("Login error: $e");
@@ -75,6 +63,7 @@ class LoginViewModel extends ChangeNotifier {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    phoneNumberController.dispose();
     super.dispose();
   }
 }
