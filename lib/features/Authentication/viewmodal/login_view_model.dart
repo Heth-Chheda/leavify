@@ -1,31 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/app/routes.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/request/login_request.dart';
 import 'package:leavify/features/Authentication/domain/response/login_response.dart';
-
-enum LoginType { email, phone }
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class LoginViewModel extends ChangeNotifier {
-  final emailController = TextEditingController();
+  final usernameController = TextEditingController(); // Single username field
   final passwordController = TextEditingController();
-  final phoneNumberController = TextEditingController();
 
   final AuthenticationRepository _authenticationRepository =
       AuthenticationRepository();
 
   bool isLoading = false;
 
-  Future<void> login(BuildContext context, LoginType loginType) async {
+  Future<void> login(BuildContext context) async {
     final password = passwordController.text.trim();
-    final email = emailController.text.trim();
-    final phone = phoneNumberController.text.trim();
+    final username = usernameController.text.trim();
 
-    if (password.isEmpty ||
-        (loginType == LoginType.email && email.isEmpty) ||
-        (loginType == LoginType.phone && phone.isEmpty)) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Credentials are required')));
+    if (password.isEmpty || username.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Username and password are required')),
+      );
       return;
     }
 
@@ -33,21 +30,24 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Create login request based on type
-      final loginRequest = loginType == LoginType.email
-          ? LoginRequest(email: email, password: password)
-          : LoginRequest(phoneNumber: phone, password: password);
+      // Create login request with username (can be email or phone)
+      final loginRequest = LoginRequest(username: username, password: password);
 
       final LoginResponseModel response = await _authenticationRepository.login(
         loginRequest,
       );
 
-      debugPrint("Login success: ${response.currentUser?.firstName}");
+      // debugPrint("Login success: ${response.currentUser?.firstName}");
 
-      // TODO: Save token & user to SharedPreferences
+      // Save user to SharedPreferences
+      SharedPreferences.getInstance().then((prefs) {
+        final jsonString = jsonEncode(response.toJson());
+        prefs.setString('user_details', jsonString);
+      });
 
-      // TODO: Navigate based on user role or screen
-      // Navigator.pushReplacementNamed(context, Routes.home);
+      if (!context.mounted) return;
+
+      Navigator.pushNamedAndRemoveUntil(context, Routes.home, (route) => false);
     } catch (e) {
       debugPrint("Login error: $e");
       ScaffoldMessenger.of(
@@ -61,9 +61,8 @@ class LoginViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    emailController.dispose();
+    usernameController.dispose();
     passwordController.dispose();
-    phoneNumberController.dispose();
     super.dispose();
   }
 }

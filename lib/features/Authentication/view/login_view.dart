@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/constants/theme/login_page_wave.dart';
 import 'package:leavify/features/Authentication/viewmodal/login_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -31,31 +32,43 @@ class _LoginPageState extends State<LoginPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 25),
-                _buildTabBar(),
-                const SizedBox(height: 15),
-                _buildLoginForm(),
-                _buildForgotPassword(),
-                _buildLoginButton(),
-                const SizedBox(height: 24),
-                _buildDivider(),
-                const SizedBox(height: 24),
-                _buildSocialLogin(),
-                _buildSignUpPrompt(),
-              ],
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: Stack(
+          children: [
+            // Gradient wave background
+            _buildWaveBackground(),
+            SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 60),
+                    _buildHeader(),
+                    const SizedBox(height: 40),
+                    _buildModernTabBar(),
+                    const SizedBox(height: 30),
+                    _buildLoginForm(),
+                    _buildForgotPassword(),
+                    _buildLoginButton(),
+                    const SizedBox(height: 60),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildWaveBackground() {
+    return Positioned.fill(
+      child: CustomPaint(
+        painter: WavePainter(animationValue: 0.5), // Static wave
+        size: Size.infinite,
       ),
     );
   }
@@ -64,34 +77,41 @@ class _LoginPageState extends State<LoginPage>
     return Column(
       children: [
         Container(
-          width: 80,
-          height: 80,
+          width: 90,
+          height: 90,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.blue.shade600, Colors.blue.shade400],
+              colors: [Colors.white, Colors.white.withOpacity(0.9)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-          child: const Icon(Icons.eco, color: Colors.white, size: 40),
+          child: Icon(Icons.eco, color: Colors.blue.shade600, size: 45),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 10),
         const Text(
-          'Welcome to Leavify',
+          'Welcome Back',
           style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
-            letterSpacing: -0.5,
+            fontSize: 32,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+            letterSpacing: -1,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Sign in to continue to your account',
+          'Sign in to continue your journey',
           style: TextStyle(
             fontSize: 16,
-            color: Colors.grey[600],
+            color: Colors.black.withOpacity(0.7),
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -99,51 +119,90 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  Widget _buildTabBar() {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(221, 255, 255, 255),
-        borderRadius: BorderRadius.circular(25),
-        border: BoxBorder.all(color: Colors.black),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicatorColor: Colors.indigo,
-        labelColor: const Color.fromARGB(255, 98, 185, 243),
-        dividerColor: Colors.transparent,
-        unselectedLabelColor: const Color.fromARGB(179, 77, 77, 77),
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w500,
-          fontSize: 14,
+  Widget _buildModernTabBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Container(
+        height: 60,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-        tabs: const [
-          Tab(text: 'Email'),
-          Tab(text: 'Phone'),
-        ],
+        child: TabBar(
+          controller: _tabController,
+          indicator: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.white, Colors.white.withOpacity(0.95)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(26),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          labelColor: Colors.blue.shade700,
+          unselectedLabelColor: Colors.white.withOpacity(0.8),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+          ),
+          indicatorSize: TabBarIndicatorSize.tab,
+          dividerColor: Colors.transparent,
+          tabs: const [
+            Tab(text: 'Email'),
+            Tab(text: 'Phone'),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildLoginForm() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black),
-      ),
-      child: Column(
-        children: [
-          SizedBox(
-            height: 200,
-            child: TabBarView(
-              controller: _tabController,
-              children: [_buildEmailForm(), _buildPhoneForm()],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+      child: Container(
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 25,
+              offset: const Offset(0, 15),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 200,
+              child: TabBarView(
+                controller: _tabController,
+                children: [_buildEmailForm(), _buildPhoneForm()],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -151,9 +210,8 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildEmailForm() {
     return Column(
       children: [
-        _buildTextField(
-          controller: _viewModel.emailController,
-          label: 'Email Address',
+        _buildUsernameField(
+          label: 'Username',
           hintText: 'Enter your email',
           prefixIcon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
@@ -167,9 +225,8 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildPhoneForm() {
     return Column(
       children: [
-        _buildTextField(
-          controller: _viewModel.phoneNumberController,
-          label: 'Phone Number',
+        _buildUsernameField(
+          label: 'Username',
           hintText: 'Enter your phone number',
           prefixIcon: Icons.phone_outlined,
           keyboardType: TextInputType.phone,
@@ -180,8 +237,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
+  Widget _buildUsernameField({
     required String label,
     required String hintText,
     required IconData prefixIcon,
@@ -192,38 +248,50 @@ class _LoginPageState extends State<LoginPage>
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: Colors.grey.shade700,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(16),
             color: Colors.grey.shade50,
+            border: Border.all(color: Colors.grey.shade200, width: 1.5),
           ),
           child: TextFormField(
-            controller: controller,
+            controller: _viewModel
+                .usernameController, // Using single username controller
             keyboardType: keyboardType,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
             decoration: InputDecoration(
               hintText: hintText,
               hintStyle: TextStyle(
-                color: Colors.grey.shade500,
+                color: Colors.grey.shade400,
                 fontWeight: FontWeight.w400,
               ),
-              prefixIcon: Icon(
-                prefixIcon,
-                color: Colors.grey.shade600,
-                size: 20,
+              prefixIcon: Container(
+                margin: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade400, Colors.blue.shade600],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(prefixIcon, color: Colors.white, size: 16),
               ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 16,
+                vertical: 14,
               ),
             ),
           ),
@@ -236,41 +304,56 @@ class _LoginPageState extends State<LoginPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Password',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: Colors.grey.shade700,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(16),
             color: Colors.grey.shade50,
+            border: Border.all(color: Colors.grey.shade200, width: 1.5),
           ),
           child: TextFormField(
             controller: _viewModel.passwordController,
             obscureText: !_isPasswordVisible,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
             decoration: InputDecoration(
               hintText: 'Enter your password',
               hintStyle: TextStyle(
-                color: Colors.grey.shade500,
+                color: Colors.grey.shade400,
                 fontWeight: FontWeight.w400,
               ),
-              prefixIcon: Icon(
-                Icons.lock_outline,
-                color: Colors.grey.shade600,
-                size: 20,
+              prefixIcon: Container(
+                margin: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade400, Colors.blue.shade600],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.lock_outline,
+                  color: Colors.white,
+                  size: 16,
+                ),
               ),
               suffixIcon: IconButton(
                 icon: Icon(
                   _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.grey.shade600,
-                  size: 20,
+                  color: Colors.grey.shade500,
+                  size: 18,
                 ),
                 onPressed: () {
                   setState(() {
@@ -281,7 +364,7 @@ class _LoginPageState extends State<LoginPage>
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 16,
+                vertical: 14,
               ),
             ),
           ),
@@ -291,18 +374,21 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildForgotPassword() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: TextButton(
-        onPressed: () {
-          // Handle forgot password
-        },
-        child: Text(
-          'Forgot Password?',
-          style: TextStyle(
-            color: Colors.blue.shade600,
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: TextButton(
+          onPressed: () {
+            // Handle forgot password
+          },
+          child: Text(
+            'Forgot Password?',
+            style: TextStyle(
+              color: Colors.blue.shade600,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
           ),
         ),
       ),
@@ -312,43 +398,53 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildLoginButton() {
     return Consumer<LoginViewModel>(
       builder: (context, viewModel, child) {
-        return Container(
-          width: double.infinity,
-          height: 54,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.blue.shade600, Colors.blue.shade400],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Container(
+            width: double.infinity,
+            height: 60,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade600, Colors.blue.shade400],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withOpacity(0.4),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: viewModel.isLoading ? null : () => _handleLogin(),
-              child: Center(
-                child: viewModel.isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: viewModel.isLoading ? null : () => _handleLogin(),
+                child: Center(
+                  child: viewModel.isLoading
+                      ? const SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text(
+                          'Sign In',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
                           ),
                         ),
-                      )
-                    : const Text(
-                        'Sign In',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                ),
               ),
             ),
           ),
@@ -358,120 +454,7 @@ class _LoginPageState extends State<LoginPage>
   }
 
   void _handleLogin() {
-    if (_tabController.index == 0) {
-      // Email login
-      _viewModel.login(context, LoginType.email);
-    } else {
-      // Phone login
-      _viewModel.login(context, LoginType.phone);
-    }
-  }
-
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(child: Divider(color: Colors.grey.shade300)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'or continue with',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        Expanded(child: Divider(color: Colors.grey.shade300)),
-      ],
-    );
-  }
-
-  Widget _buildSocialLogin() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildSocialButton(
-            label: 'Google',
-            icon: Icons.g_mobiledata,
-            onPressed: () {
-              // Handle Google login
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSocialButton(
-            label: 'Apple',
-            icon: Icons.apple,
-            onPressed: () {
-              // Handle Apple login
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSocialButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onPressed,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 20, color: Colors.grey.shade700),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSignUpPrompt() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          "Don't have an account? ",
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-        ),
-        TextButton(
-          onPressed: () {
-            // Navigate to sign up
-          },
-          child: Text(
-            'Sign Up',
-            style: TextStyle(
-              color: Colors.blue.shade600,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    );
+    // Since we're using a single username field, we don't need to pass login type
+    _viewModel.login(context);
   }
 }
