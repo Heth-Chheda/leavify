@@ -1,52 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/app/routes.dart';
+import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/core/utils/validation_utils.dart';
+import 'package:leavify/features/Authentication/data/authentication_repository.dart';
+import 'package:leavify/features/Authentication/domain/request/login_request.dart';
+import 'package:leavify/features/Authentication/domain/response/login_response.dart';
 
 class LoginViewModel extends ChangeNotifier {
-  final emailController = TextEditingController();
+  final usernameController = TextEditingController(); // Single username field
   final passwordController = TextEditingController();
-  final phoneNumberController = TextEditingController();
+
+  final AuthenticationRepository _authenticationRepository =
+      AuthenticationRepository();
 
   bool isLoading = false;
 
-  Future<void> loginWithEmail(BuildContext context) async {
-    final email = emailController.text.trim();
-    final password = passwordController.text;
+  Future<void> login(BuildContext context) async {
+    final password = passwordController.text.trim();
+    final username = usernameController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email and password required')),
-      );
-      return;
-    }
-
-    isLoading = true;
-    notifyListeners();
-
-    try {
-      // TODO: Call your API client here
-      await Future.delayed(const Duration(seconds: 2)); // simulate request
-      debugPrint("Logged in with $email : $password");
-
-      // Navigate to dashboard or home
-      // Navigator.pushReplacementNamed(context, Routes.home);
-    } catch (e) {
-      debugPrint("Login error: $e");
+    // Validation of email.
+    final usernameValidation = ValidationUtils.validateUsernameAsEmailOrPhone(
+      username,
+    );
+    if (usernameValidation != null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Login failed: $e')));
-    } finally {
-      isLoading = false;
-      notifyListeners();
+      ).showSnackBar(SnackBar(content: Text(usernameValidation)));
+      return;
     }
-  }
 
-  Future<void> loginWithPhone(BuildContext context) async {
-    final password = passwordController.text;
-    final phoneNumber = phoneNumberController.text;
-
-    if (phoneNumber.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email and password required')),
-      );
+    // Validation of password.
+    final passwordValidation = ValidationUtils.validatePassword(password);
+    if (passwordValidation != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(passwordValidation)));
       return;
     }
 
@@ -54,12 +43,19 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // TODO: Call your API client here
-      await Future.delayed(const Duration(seconds: 2)); // simulate request
-      debugPrint("Logged in with $phoneNumber : $password");
+      // Create login request with username (can be email or phone)
+      final loginRequest = LoginRequest(username: username, password: password);
 
-      // Navigate to dashboard or home
-      // Navigator.pushReplacementNamed(context, Routes.home);
+      final LoginResponseModel response = await _authenticationRepository.login(
+        loginRequest,
+      );
+
+      // Save user to SharedPreferences
+      AppStorage.saveObject("user_details", response.toJson());
+
+      if (!context.mounted) return;
+
+      Navigator.pushNamedAndRemoveUntil(context, Routes.home, (route) => false);
     } catch (e) {
       debugPrint("Login error: $e");
       ScaffoldMessenger.of(
@@ -73,7 +69,7 @@ class LoginViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    emailController.dispose();
+    usernameController.dispose();
     passwordController.dispose();
     super.dispose();
   }

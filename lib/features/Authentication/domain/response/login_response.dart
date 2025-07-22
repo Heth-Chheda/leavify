@@ -1,5 +1,5 @@
-import 'package:leavify/features/Authentication/domain/leave.dart';
-import 'package:leavify/features/Authentication/domain/user.dart';
+import 'package:leavify/features/Authentication/domain/models/leave.dart';
+import 'package:leavify/features/Authentication/domain/models/user.dart';
 
 class LoginResponseModel {
   final User? currentUser;
