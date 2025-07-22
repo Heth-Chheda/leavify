@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class User {
   final String id;
   final String firstName;
@@ -76,4 +78,9 @@ class User {
     'empId': empId,
     'joiningDate': joiningDate,
   };
+
+  factory User.fromJsonString(String jsonString) {
+    final Map<String, dynamic> json = jsonDecode(jsonString);
+    return User.fromJson(json);
+  }
 }

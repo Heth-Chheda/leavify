@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/features/Authentication/view/login_view.dart';
-import 'package:leavify/features/User/view/home_view.dart';
+import 'package:leavify/features/User/view/landing_view.dart';
 
 class Routes {
   static const String login = '/login';
@@ -12,7 +12,7 @@ class Routes {
         return MaterialPageRoute(builder: (_) => const LoginPage());
 
       case home:
-        return MaterialPageRoute(builder: (_) => const HomeView());
+        return MaterialPageRoute(builder: (_) => const LandingView());
 
       default:
         return MaterialPageRoute(
