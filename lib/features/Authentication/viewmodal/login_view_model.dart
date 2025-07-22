@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/app/routes.dart';
+import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/core/utils/validation_utils.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/request/login_request.dart';
 import 'package:leavify/features/Authentication/domain/response/login_response.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 
 class LoginViewModel extends ChangeNotifier {
   final usernameController = TextEditingController(); // Single username field
@@ -19,10 +19,23 @@ class LoginViewModel extends ChangeNotifier {
     final password = passwordController.text.trim();
     final username = usernameController.text.trim();
 
-    if (password.isEmpty || username.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Username and password are required')),
-      );
+    // Validation of email.
+    final usernameValidation = ValidationUtils.validateUsernameAsEmailOrPhone(
+      username,
+    );
+    if (usernameValidation != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(usernameValidation)));
+      return;
+    }
+
+    // Validation of password.
+    final passwordValidation = ValidationUtils.validatePassword(password);
+    if (passwordValidation != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(passwordValidation)));
       return;
     }
 
@@ -37,13 +50,8 @@ class LoginViewModel extends ChangeNotifier {
         loginRequest,
       );
 
-      // debugPrint("Login success: ${response.currentUser?.firstName}");
-
       // Save user to SharedPreferences
-      SharedPreferences.getInstance().then((prefs) {
-        final jsonString = jsonEncode(response.toJson());
-        prefs.setString('user_details', jsonString);
-      });
+      AppStorage.saveObject("user_details", response.toJson());
 
       if (!context.mounted) return;
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/app/routes.dart';
-import 'package:leavify/core/constants/theme/app_theme.dart';
+import 'package:leavify/core/utils/theme/app_theme.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
