@@ -9,15 +9,29 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppTheme.primaryBlueLight,
       automaticallyImplyLeading: false,
-      title: Text('Welcome $userName'),
+      title: Container(
+        margin: EdgeInsets.all(0),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: AppTheme.primaryBlueLight,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              "Hello $userName!",
+              style: TextStyle(color: Colors.black, fontSize: 25),
+            ),
+          ],
+        ),
+      ),
       actions: [
         IconButton(
           icon: const Icon(Icons.notifications_none),
           onPressed: () {},
         ),
-        IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
+        IconButton(icon: const Icon(Icons.settings_outlined), onPressed: () {}),
       ],
     );
   }

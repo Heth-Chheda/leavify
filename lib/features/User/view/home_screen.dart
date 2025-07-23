@@ -33,6 +33,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildAnnouncementSection(),
+        const SizedBox(height: 20),
+        // Add more home screen sections here later
+      ],
+    );
+  }
+
+  Widget _buildAnnouncementSection() {
     final bool hasAnnouncements = _dummyAnnouncements.isNotEmpty;
 
     return Column(
@@ -70,9 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
               children: List.generate(_dummyAnnouncements.length, (index) {
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: _currentPage == index ? 12 : 8,
-                  height: _currentPage == index ? 12 : 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 15),
+                  width: _currentPage == index ? 8 : 4,
+                  height: _currentPage == index ? 8 : 4,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _currentPage == index
@@ -100,8 +111,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-        const SizedBox(height: 20),
-        // More widgets here
       ],
     );
   }
