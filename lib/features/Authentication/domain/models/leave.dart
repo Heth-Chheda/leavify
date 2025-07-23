@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class Leave {
   final String userId;
   final String employeeName;
@@ -32,4 +34,38 @@ class Leave {
     'reason': reason,
     'status': status,
   };
+
+  /// 📅 Returns formatted date range like "12 Jul – 14 Jul"
+  String get formattedDateRange {
+    try {
+      final start = DateTime.parse(startDate);
+      final end = DateTime.parse(endDate);
+
+      final sameMonth = start.month == end.month && start.year == end.year;
+
+      final format = DateFormat('d MMM');
+      final formatWithYear = DateFormat('d MMM yyyy');
+
+      if (sameMonth) {
+        return '${format.format(start)} – ${DateFormat('d').format(end)} ${DateFormat('MMM').format(end)}';
+      } else if (start.year == end.year) {
+        return '${format.format(start)} – ${format.format(end)}';
+      } else {
+        return '${formatWithYear.format(start)} – ${formatWithYear.format(end)}';
+      }
+    } catch (e) {
+      return '$startDate – $endDate';
+    }
+  }
+
+  /// 🧮 Returns number of leave days inclusive (e.g. 3 days for 12–14 Jul)
+  int get leaveDuration {
+    try {
+      final start = DateTime.parse(startDate);
+      final end = DateTime.parse(endDate);
+      return end.difference(start).inDays + 1;
+    } catch (e) {
+      return 1;
+    }
+  }
 }

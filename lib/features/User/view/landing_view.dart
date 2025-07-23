@@ -34,7 +34,7 @@ class _LandingViewState extends State<LandingView> {
       child: Scaffold(
         backgroundColor: Colors.white,
         extendBody: true,
-        appBar: CustomAppBar(userName: 'Heth'),
+        appBar: CustomAppBar(),
         body: SafeArea(
           bottom: true, // This adds padding for the bottom bar
           child: _screens[_currentIndex],
