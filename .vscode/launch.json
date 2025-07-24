@@ -8,21 +8,21 @@
             "name": "leavify",
             "request": "launch",
             "type": "dart",
-            "program": "lib/app/main.dart",
+            "program": "lib/main.dart",
         },
         {
             "name": "leavify (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile",
-            "program": "lib/app/main.dart",
+            "program": "lib/main.dart",
         },
         {
             "name": "leavify (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release",
-            "program": "lib/app/main.dart",
+            "program": "lib/main.dart",
         }
     ]
 }
