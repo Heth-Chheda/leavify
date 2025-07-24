@@ -7,4 +7,7 @@ class ApiEndpoints {
   // Authentication
   static final String login = '$baseUrl/auth/login';
   static final String register = '$baseUrl/auth/register';
+
+  // Leaves
+  static final String applyLeave = '$baseUrl/request/apply';
 }

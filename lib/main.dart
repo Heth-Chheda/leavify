@@ -3,6 +3,7 @@ import 'package:leavify/app/app.dart';
 import 'package:leavify/core/config/app_environment.dart';
 import 'package:leavify/features/Authentication/viewmodal/login_view_model.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -13,6 +14,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => LoginViewModel()),
         ChangeNotifierProvider(create: (_) => HomeViewModel()..initialize()),
+        ChangeNotifierProvider(create: (_)=> LeaveViewModel()),
       ],
       child: const MyApp(),
     ),
