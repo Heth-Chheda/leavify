@@ -3,6 +3,7 @@ import 'package:leavify/features/User/components/custom_app_bar.dart';
 import 'package:leavify/features/User/components/custom_bottom_nav_bar.dart';
 import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
 import 'package:leavify/features/User/view/home_screen.dart';
+import 'package:leavify/features/User/view/leave_history.dart';
 
 import '../../../core/storage/app_storage.dart';
 import '../../Authentication/domain/response/login_response.dart';
@@ -79,7 +80,7 @@ class _LandingViewState extends State<LandingView> {
         case 2:
           return const ApplyLeaveScreen(); // Add
         case 3:
-          return const Placeholder(); // History
+          return const HistoryScreen(); // History
         case 4:
           return const Placeholder(); // Pending
         default:
@@ -93,7 +94,7 @@ class _LandingViewState extends State<LandingView> {
         case 1:
           return const ApplyLeaveScreen(); // Add
         case 2:
-          return const Placeholder(); // History
+          return const HistoryScreen(); // History
         default:
           return const HomeScreen();
       }
