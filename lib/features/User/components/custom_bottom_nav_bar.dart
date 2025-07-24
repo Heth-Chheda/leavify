@@ -12,7 +12,7 @@ class CustomBottomNavBar extends StatefulWidget {
     super.key,
     required this.currentIndex,
     required this.onTabSelected,
-    this.role = UserRole.manager,
+    required this.role,
   });
 
   @override
