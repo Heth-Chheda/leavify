@@ -143,7 +143,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.accentViolet.withOpacity(0.3),
+                    color: AppTheme.accentNavy.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),

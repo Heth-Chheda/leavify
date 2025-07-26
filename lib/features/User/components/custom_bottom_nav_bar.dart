@@ -45,7 +45,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
       ),
     );
 
-    _elevationAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _elevationAnimation = Tween<double>(begin: 1.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animationController,
         curve: Curves.easeInOutCubic,
@@ -142,7 +142,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
               animationValue: _slideAnimation,
               positionAnimation: _positionAnimation,
             ),
-            child: Container(
+            child: SizedBox(
               height: 60,
               width: double.infinity,
               child: Row(
@@ -174,7 +174,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
       child: GestureDetector(
         onTap: () => widget.onTabSelected(item.index),
         behavior: HitTestBehavior.opaque,
-        child: Container(
+        child: SizedBox(
           height: 80,
           child: Center(
             child: Opacity(
@@ -182,7 +182,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
               child: Icon(
                 item.icon,
                 size: 32,
-                color: Colors.white.withOpacity(0.7),
+                color: const Color(0xFFD6E8EE), // Light blue-gray for unselected icons
               ),
             ),
           ),
@@ -192,12 +192,19 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
   }
 
   Widget _buildElevatedIcon(List<_NavItemData> navItems) {
-    final selectedItem = navItems[widget.currentIndex];
-    final double itemWidth =
-        MediaQuery.of(context).size.width / navItems.length;
+    final double itemWidth = MediaQuery.of(context).size.width / navItems.length;
+    final double iconPosition = (_positionAnimation.value * itemWidth) + (itemWidth / 2);
 
-    final double animatedIndex = _positionAnimation.value;
-    final double iconPosition = (animatedIndex * itemWidth) + (itemWidth / 2);
+    // Determine which icon to show based on animation progress
+    final double animationProgress = _positionAnimation.value;
+    final int fromIndex = _previousIndex;
+    final int toIndex = widget.currentIndex;
+
+    // Show the previous icon during the first half of animation, then switch to new icon
+    final bool showPreviousIcon = (animationProgress - fromIndex).abs() < 0.5;
+    final IconData iconToShow = showPreviousIcon
+        ? navItems[fromIndex].icon
+        : navItems[toIndex].icon;
 
     return Positioned(
       left: iconPosition - 25,
@@ -206,17 +213,34 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
         width: 50,
         height: 50,
         decoration: BoxDecoration(
-          color: Colors.green,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF001B48), // Light blue
+              Color(0xFF001B48), // Light blue
+              // Color(0xFF97CADB), // Medium blue
+            ],
+          ),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              offset: Offset(0, 4),
+              color: const Color(0xFF02457A).withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: const Color(0xFF001B48).withOpacity(0.9),
+              blurRadius: 2,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Icon(selectedItem.icon, size: 24, color: Colors.black),
+        child: Icon(
+          iconToShow,
+          size: 28,
+          color: const Color(0xFFFFFFFF), // Dark navy for icon
+        ),
       ),
     );
   }
@@ -238,27 +262,28 @@ class _NavBarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..shader = LinearGradient(
+      ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          AppTheme.primaryBlueDark.withOpacity(0.9),
-          AppTheme.primaryBlueDark.withOpacity(0.8),
+          Color(0xFF02457A), // Deep navy
+          Color(0xFF018ABE), // Dark blue
+          Color(0xFF97CADB), // Medium blue
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
     final borderPaint = Paint()
-      ..color = Colors.white.withOpacity(0.2)
+      ..color = const Color(0xFF97CADB).withOpacity(0.3) // Light blue border
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = 1.5;
 
     final shadowPaint = Paint()
-      ..color = AppTheme.primaryBlueDark.withOpacity(0.3)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      ..color = const Color(0xFF001B48).withOpacity(0.4)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
 
     final path = Path();
     final itemWidth = size.width / itemCount;
-    final depressionRadius = 33.0; // Bigger depression to fit the 50px circle
+    final depressionRadius = 60.0; // Bigger depression to fit the 50px circle
     final depressionDepth = 35.0; // Depth of the notch cut into the nav bar
 
     // Calculate the center position of the selected item
@@ -279,27 +304,25 @@ class _NavBarPainter extends CustomPainter {
     // Create depression that cuts INTO the nav bar (downward curve)
     if (animationValue.value > 0) {
       // Create a smooth downward arc that cuts into the nav bar
-      final controlPoint1 = Offset(
-        depressionStart + depressionRadius * 0.0,
-        animatedDepth * 0.9,
-      );
-      final controlPoint2 = Offset(
-        depressionEnd - depressionRadius * 0.0,
-        animatedDepth * 0.9,
-      );
+
+      final double controlPointOffset = depressionRadius * 0.6;
+
       final bottomPoint = Offset(selectedCenter, animatedDepth);
 
-      // Smooth curve down into the depression
-      path.quadraticBezierTo(
-        controlPoint1.dx,
-        controlPoint1.dy,
+      path.cubicTo(
+        depressionStart + (controlPointOffset * 0.5),
+        0,
+        selectedCenter - (controlPointOffset * 0.8),
+        animatedDepth,
         bottomPoint.dx,
         bottomPoint.dy,
       );
-      // Smooth curve back up out of the depression
-      path.quadraticBezierTo(
-        controlPoint2.dx,
-        controlPoint2.dy,
+
+      path.cubicTo(
+        selectedCenter + (controlPointOffset * 0.8),
+        animatedDepth,
+        depressionEnd - (controlPointOffset * 0.5),
+        0,
         depressionEnd,
         0,
       );
