@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/components/shimmer_widget.dart';
 import 'package:leavify/features/User/components/announcement_card.dart';
 import 'package:leavify/features/User/components/calender_widget.dart';
+import 'package:leavify/features/User/components/leave_card.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,15 +20,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Map<String, String>> _dummyAnnouncements = [
     {
-      "title": "📣 Company Holiday",
+      "title": "Company Holiday",
       "message": "We will be closed on 15th Aug for Independence Day.",
     },
     {
-      "title": "📢 Leave Policy Updated",
+      "title": "Leave Policy Updated",
       "message": "New leave carry-forward rules apply from this month.",
     },
     {
-      "title": "🚨 Server Maintenance",
+      "title": "Server Maintenance",
       "message": "Portal will be offline on Sunday 12–3 AM.",
     },
   ];
@@ -53,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // MARK: MAIN BUILD SECTION
   @override
   Widget build(BuildContext context) {
     if (_viewModel.isLoading) {
@@ -66,7 +68,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return RefreshIndicator(
       onRefresh: _viewModel.refresh,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -103,22 +104,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // MARK: ANNOUNCEMENTS SECTION
   Widget _buildAnnouncementSection() {
     final bool hasAnnouncements = _dummyAnnouncements.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Announcements",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
+        _buildAnnouncementHeaderSection(),
         const SizedBox(height: 12),
         if (hasAnnouncements) ...[
           SizedBox(
             height: 140,
             child: PageView.builder(
-              controller: _pageController,
+              controller: PageController(
+                viewportFraction: 0.89,
+              ), // This shows peek of next/previous cards
               itemCount: _dummyAnnouncements.length,
               onPageChanged: (index) {
                 setState(() {
@@ -134,26 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
           ),
-          const SizedBox(height: 8),
-          Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: List.generate(_dummyAnnouncements.length, (index) {
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: _currentPage == index ? 8 : 4,
-                  height: _currentPage == index ? 8 : 4,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _currentPage == index
-                        ? Colors.blue
-                        : Colors.grey.shade400,
-                  ),
-                );
-              }),
-            ),
-          ),
+          // Removed the dot indicator section completely
         ] else
           Container(
             width: double.infinity,
@@ -175,20 +157,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // MARK: ANNOUNCEMENT HEADER
+  Widget _buildAnnouncementHeaderSection() {
+    return Padding(
+      padding: EdgeInsets.only(top: 16, left: 16),
+      child: const Text(
+        "Announcements",
+        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  // MARK: CALENDAR SECTION
   Widget _buildCalendarSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CalendarWidget(
-          selectedDate: _selectedDate,
-          onDateSelected: (date) {
-            setState(() {
-              _selectedDate = date;
-            });
-            _handleDateSelection(date);
-          },
-          showToggle: true,
-          userLeaves: _viewModel.teamUpcomingLeaves,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10.0),
+          child: CalendarWidget(
+            selectedDate: _selectedDate,
+            onDateSelected: (date) {
+              setState(() {
+                _selectedDate = date;
+              });
+              _handleDateSelection(date);
+            },
+            showToggle: true,
+            userLeaves: _viewModel.teamUpcomingLeaves,
+          ),
         ),
       ],
     );
@@ -218,9 +215,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // MARK: UPCOMING LEAVES SECTION
   Widget _buildUpcomingEventsSection() {
     // Get actual leave events from ViewModel
-    final upcomingLeaves = _selectedDate != null
+    final teamUpcomingLeaves = _selectedDate != null
         ? _viewModel.teamUpcomingLeaves
               .where((leave) => _isDateInLeaveRange(leave, _selectedDate!))
               .toList()
@@ -237,14 +235,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          _selectedDate != null
-              ? "Leaves for ${_formatDate(_selectedDate!)}"
-              : "Upcoming Leaves",
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
+        _buildTeamUpcomingLeaveSection(),
         const SizedBox(height: 12),
-        if (upcomingLeaves.isEmpty)
+        if (teamUpcomingLeaves.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -266,150 +259,25 @@ class _HomeScreenState extends State<HomeScreen> {
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: upcomingLeaves.length,
+            itemCount: teamUpcomingLeaves.length,
             separatorBuilder: (context, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
-              final leave = upcomingLeaves[index];
-              return _buildLeaveCard(leave);
+              final leave = teamUpcomingLeaves[index];
+              return LeaveCard(leave: leave);
             },
           ),
       ],
     );
   }
 
-  Widget _buildLeaveCard(dynamic leave) {
-    Color getStatusColor(String status) {
-      switch (status.toLowerCase()) {
-        case 'approved':
-          return Colors.green;
-        case 'pending':
-          return Colors.orange;
-        case 'rejected':
-          return Colors.red;
-        default:
-          return Colors.grey;
-      }
-    }
-
-    IconData getStatusIcon(String status) {
-      switch (status.toLowerCase()) {
-        case 'approved':
-          return Icons.check_circle;
-        case 'pending':
-          return Icons.schedule;
-        case 'rejected':
-          return Icons.cancel;
-        default:
-          return Icons.info;
-      }
-    }
-
-    final color = getStatusColor(leave.status);
-    final isMyLeave = leave.userId == _viewModel.homeData?.currentUser?.id;
-
+  Widget _buildTeamUpcomingLeaveSection() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.05),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(getStatusIcon(leave.status), color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        leave.employeeName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    if (isMyLeave)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          'You',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.blue,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "${leave.reason} • ${leave.formattedDateRange}",
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        leave.status,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: color,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      "${leave.leaveDuration} day${leave.leaveDuration > 1 ? 's' : ''}",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: Colors.grey.shade400),
-        ],
+      padding: EdgeInsets.only(left: 16),
+      child: Text(
+        _selectedDate != null
+            ? "Leaves for ${_formatDate(_selectedDate!)}"
+            : "Upcoming Team Leaves",
+        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -418,10 +286,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // Add your logic here for when a date is selected
     // For example: navigate to detailed view, show events, etc.
     print("Selected date: ${_formatDate(date)}");
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   String _formatDate(DateTime date) {

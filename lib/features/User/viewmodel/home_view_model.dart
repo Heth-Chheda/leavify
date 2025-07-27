@@ -35,7 +35,6 @@ class HomeViewModel extends ChangeNotifier {
       _isLoading = true;
       _error = null;
       notifyListeners();
-
       // Get user data from SharedPreferences
       final userData = await AppStorage.getObject<LoginResponseModel>(
         "user_details",
