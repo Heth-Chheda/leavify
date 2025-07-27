@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/components/shimmer_widget.dart';
 import 'package:leavify/features/User/components/announcement_card.dart';
-import 'package:leavify/features/User/components/calender_widget.dart';
+import 'package:leavify/features/User/components/home_calender_widget.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -179,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CalendarWidget(
+        HomeCalendarWidget(
           selectedDate: _selectedDate,
           onDateSelected: (date) {
             setState(() {

@@ -2,13 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 
-class CalendarWidget extends StatefulWidget {
+class HomeCalendarWidget extends StatefulWidget {
   final Function(DateTime)? onDateSelected;
   final DateTime? selectedDate;
   final bool showToggle;
   final List<Leave> userLeaves;
 
-  const CalendarWidget({
+  const HomeCalendarWidget({
     super.key,
     this.onDateSelected,
     this.selectedDate,
@@ -17,10 +17,10 @@ class CalendarWidget extends StatefulWidget {
   });
 
   @override
-  State<CalendarWidget> createState() => _CalendarWidgetState();
+  State<HomeCalendarWidget> createState() => _HomeCalendarWidgetState();
 }
 
-class _CalendarWidgetState extends State<CalendarWidget> {
+class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
   bool _isWeekView = true;
   late DateTime _currentDate;
   late DateTime _selectedDate;
