@@ -30,11 +30,12 @@ class _LandingViewState extends State<LandingView> {
     try {
       final loginResponse = await AppStorage.getObject<LoginResponseModel>(
         "user_details",
-            (json) => LoginResponseModel.fromJson(json),
+        (json) => LoginResponseModel.fromJson(json),
       );
 
       if (loginResponse != null) {
-        final userRoleString = loginResponse.currentUser?.role.toLowerCase() ?? 'employee';
+        final userRoleString =
+            loginResponse.currentUser?.role.toLowerCase() ?? 'employee';
 
         // Map string role to UserRole enum
         switch (userRoleString) {
@@ -68,7 +69,8 @@ class _LandingViewState extends State<LandingView> {
   }
 
   Widget _getScreenForIndex(int index) {
-    final bool isManagerOrHR = _userRole == UserRole.manager || _userRole == UserRole.hr;
+    final bool isManagerOrHR =
+        _userRole == UserRole.manager || _userRole == UserRole.hr;
 
     if (isManagerOrHR) {
       // Manager/HR navigation: Home, Analytics, Add, History, Pending
@@ -104,11 +106,7 @@ class _LandingViewState extends State<LandingView> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return PopScope(
@@ -117,10 +115,7 @@ class _LandingViewState extends State<LandingView> {
         backgroundColor: Colors.white,
         extendBody: true,
         appBar: CustomAppBar(),
-        body: SafeArea(
-          bottom: true,
-          child: _getScreenForIndex(_currentIndex),
-        ),
+        body: SafeArea(bottom: true, child: _getScreenForIndex(_currentIndex)),
         bottomNavigationBar: CustomBottomNavBar(
           currentIndex: _currentIndex,
           onTabSelected: _onTabSelected,

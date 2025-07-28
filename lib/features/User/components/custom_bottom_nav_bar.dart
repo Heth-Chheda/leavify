@@ -22,79 +22,48 @@ class CustomBottomNavBar extends StatefulWidget {
 class _CustomBottomNavBarState extends State<CustomBottomNavBar>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _slideAnimation;
-  late Animation<double> _elevationAnimation;
-  late Animation<double> _positionAnimation;
-  late int _previousIndex;
+  late Animation<double> _underlineAnimation;
+  double _underlinePosition = 0.0;
+  double _itemWidth = 0.0;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(
-        milliseconds: 600,
-      ), // Reduced duration for smoother feel
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-
-    // Changed to smooth easeInOutCubic curve instead of elasticOut
-    _slideAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOutCubic,
-      ),
+    _underlineAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOutCubic,
     );
-
-    _elevationAnimation = Tween<double>(begin: 1.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOutCubic,
-      ),
-    );
-
-    _animationController.forward();
-
-    _previousIndex = widget.currentIndex;
-
-    _positionAnimation =
-        Tween<double>(
-          begin: _previousIndex.toDouble(),
-          end: widget.currentIndex.toDouble(),
-        ).animate(
-          CurvedAnimation(
-            parent: _animationController,
-            curve: Curves.easeInOutCubic,
-          ),
-        );
-  }
-
-  @override
-  void didUpdateWidget(CustomBottomNavBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.currentIndex != widget.currentIndex) {
-      _previousIndex = oldWidget.currentIndex;
-
-      _positionAnimation =
-          Tween<double>(
-            begin: _previousIndex.toDouble(),
-            end: widget.currentIndex.toDouble(),
-          ).animate(
-            CurvedAnimation(
-              parent: _animationController,
-              curve: Curves.easeInOutCubic,
-            ),
-          );
-
-      _animationController.reset();
-      _animationController.forward();
-    }
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  void _updateUnderlinePosition(int index, double itemWidth) {
+    final newPosition = index * itemWidth + (itemWidth / 2) - 20;
+
+    setState(() {
+      _itemWidth = itemWidth;
+    });
+
+    final tween = Tween<double>(begin: _underlinePosition, end: newPosition);
+
+    _underlineAnimation = tween.animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOutCubic,
+      ),
+    );
+
+    _animationController.forward(from: 0.0).then((_) {
+      _underlinePosition = newPosition;
+    });
   }
 
   @override
@@ -130,224 +99,162 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
     }
 
     return Container(
-      margin: const EdgeInsets.only(left: 0, right: 0, bottom: 0),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Main navigation bar with depression
-          CustomPaint(
-            painter: _NavBarPainter(
-              currentIndex: widget.currentIndex,
-              itemCount: navItems.length,
-              animationValue: _slideAnimation,
-              positionAnimation: _positionAnimation,
-            ),
-            child: SizedBox(
-              height: 60,
-              width: double.infinity,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: navItems.asMap().entries.map((entry) {
-                  int index = entry.key;
-                  _NavItemData item = entry.value;
-                  return _buildNavItem(item, navItems.length);
-                }).toList(),
-              ),
-            ),
-          ),
-          // Elevated selected icon
-          AnimatedBuilder(
-            animation: _slideAnimation,
-            builder: (context, child) {
-              return _buildElevatedIcon(navItems);
-            },
+      height: 85,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, -2),
+            blurRadius: 20,
+            spreadRadius: 0,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(_NavItemData item, int totalItems) {
-    final bool isSelected = widget.currentIndex == item.index;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => widget.onTabSelected(item.index),
-        behavior: HitTestBehavior.opaque,
-        child: SizedBox(
-          height: 80,
-          child: Center(
-            child: Opacity(
-              opacity: isSelected ? 0.0 : 1.0,
-              child: Icon(
-                item.icon,
-                size: 32,
-                color: const Color(0xFFD6E8EE), // Light blue-gray for unselected icons
-              ),
-            ),
-          ),
+        border: Border(
+          top: BorderSide(color: Colors.black.withOpacity(0.1), width: 0.5),
         ),
       ),
-    );
-  }
-
-  Widget _buildElevatedIcon(List<_NavItemData> navItems) {
-    final double itemWidth = MediaQuery.of(context).size.width / navItems.length;
-    final double iconPosition = (_positionAnimation.value * itemWidth) + (itemWidth / 2);
-
-    // Determine which icon to show based on animation progress
-    final double animationProgress = _positionAnimation.value;
-    final int fromIndex = _previousIndex;
-    final int toIndex = widget.currentIndex;
-
-    // Show the previous icon during the first half of animation, then switch to new icon
-    final bool showPreviousIcon = (animationProgress - fromIndex).abs() < 0.5;
-    final IconData iconToShow = showPreviousIcon
-        ? navItems[fromIndex].icon
-        : navItems[toIndex].icon;
-
-    return Positioned(
-      left: iconPosition - 25,
-      top: -25 * _elevationAnimation.value,
-      child: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF001B48), // Light blue
-              Color(0xFF001B48), // Light blue
-              // Color(0xFF97CADB), // Medium blue
-            ],
+      child: Stack(
+        children: [
+          // Navigation Items
+          Row(
+            children: navItems.map((item) {
+              return Expanded(
+                child: _NavItem(
+                  icon: item.icon,
+                  isSelected: widget.currentIndex == item.index,
+                  onTap: () {
+                    widget.onTabSelected(item.index);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final itemWidth = screenWidth / navItems.length;
+                      _updateUnderlinePosition(item.index, itemWidth);
+                    });
+                  },
+                ),
+              );
+            }).toList(),
           ),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF02457A).withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+          // Animated Underline
+          Positioned(
+            bottom: 27,
+            child: AnimatedBuilder(
+              animation: _underlineAnimation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(_underlineAnimation.value, 0),
+                  child: Container(
+                    width: 40,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: AppTheme.infoBlue,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                );
+              },
             ),
-            BoxShadow(
-              color: const Color(0xFF001B48).withOpacity(0.9),
-              blurRadius: 2,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(
-          iconToShow,
-          size: 28,
-          color: const Color(0xFFFFFFFF), // Dark navy for icon
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _NavBarPainter extends CustomPainter {
-  final int currentIndex;
-  final int itemCount;
-  final Animation<double> animationValue;
-  final Animation<double> positionAnimation;
+class _NavItem extends StatefulWidget {
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
 
-  _NavBarPainter({
-    required this.currentIndex,
-    required this.itemCount,
-    required this.animationValue,
-    required this.positionAnimation,
-  }) : super(repaint: animationValue);
+  const _NavItem({
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0xFF02457A), // Deep navy
-          Color(0xFF018ABE), // Dark blue
-          Color(0xFF97CADB), // Medium blue
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+  State<_NavItem> createState() => _NavItemState();
+}
 
-    final borderPaint = Paint()
-      ..color = const Color(0xFF97CADB).withOpacity(0.3) // Light blue border
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+class _NavItemState extends State<_NavItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
 
-    final shadowPaint = Paint()
-      ..color = const Color(0xFF001B48).withOpacity(0.4)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
 
-    final path = Path();
-    final itemWidth = size.width / itemCount;
-    final depressionRadius = 60.0; // Bigger depression to fit the 50px circle
-    final depressionDepth = 35.0; // Depth of the notch cut into the nav bar
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 10.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    // Calculate the center position of the selected item
-    final animatedIndex = positionAnimation.value;
-    final selectedCenter = (animatedIndex * itemWidth) + (itemWidth / 2);
-    final animatedDepth = depressionDepth * animationValue.value;
+    _opacityAnimation = Tween<double>(
+      begin: 0.1,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    // Start from top-left
-    path.moveTo(0, 0);
-
-    // Draw the top edge with depression cut INTO the nav bar
-    final depressionStart = selectedCenter - depressionRadius;
-    final depressionEnd = selectedCenter + depressionRadius;
-
-    // Left part of top edge
-    path.lineTo(depressionStart, 0);
-
-    // Create depression that cuts INTO the nav bar (downward curve)
-    if (animationValue.value > 0) {
-      // Create a smooth downward arc that cuts into the nav bar
-
-      final double controlPointOffset = depressionRadius * 0.6;
-
-      final bottomPoint = Offset(selectedCenter, animatedDepth);
-
-      path.cubicTo(
-        depressionStart + (controlPointOffset * 0.5),
-        0,
-        selectedCenter - (controlPointOffset * 0.8),
-        animatedDepth,
-        bottomPoint.dx,
-        bottomPoint.dy,
-      );
-
-      path.cubicTo(
-        selectedCenter + (controlPointOffset * 0.8),
-        animatedDepth,
-        depressionEnd - (controlPointOffset * 0.5),
-        0,
-        depressionEnd,
-        0,
-      );
+    if (widget.isSelected) {
+      _controller.forward();
     }
-
-    // Right part of top edge
-    path.lineTo(size.width, 0);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    // Draw shadow
-    canvas.drawPath(path, shadowPaint);
-
-    // Draw main shape
-    canvas.drawPath(path, paint);
-
-    // Draw border
-    canvas.drawPath(path, borderPaint);
   }
 
   @override
-  bool shouldRepaint(_NavBarPainter oldDelegate) {
-    return oldDelegate.currentIndex != currentIndex ||
-        oldDelegate.animationValue != animationValue;
+  void didUpdateWidget(_NavItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSelected != oldWidget.isSelected) {
+      if (widget.isSelected) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.translucent,
+      child: Container(
+        padding: EdgeInsets.only(bottom: 25),
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _scaleAnimation.value,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      widget.icon,
+                      size: 32,
+                      color: widget.isSelected
+                          ? AppTheme.infoBlue
+                          : Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }
 

@@ -1,6 +1,8 @@
 // calendar_widget.dart
 import 'package:flutter/material.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
+import 'package:leavify/features/User/components/calendar/month_calendar_view.dart';
+import 'package:leavify/features/User/components/calendar/week_calendar_view.dart';
 
 class CalendarWidget extends StatefulWidget {
   final Function(DateTime)? onDateSelected;
@@ -25,25 +27,23 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   late DateTime _currentDate;
   late DateTime _selectedDate;
   late PageController _weekPageController;
-  int _initialWeekPage = 52; // Start from middle to allow backward scrolling
+  final int _initialWeekPage =
+      52; // Start from middle to allow backward scrolling
 
-  // Color palette for different users
+  // Modern color palette for different users
   final List<Color> _userColors = [
-    Colors.red,
-    Colors.green,
-    Colors.orange,
-    Colors.purple,
-    Colors.teal,
-    Colors.pink,
-    Colors.indigo,
-    Colors.amber,
-    Colors.cyan,
-    Colors.lime,
-    Colors.deepOrange,
-    Colors.brown,
+    const Color(0xFF10B981), // Emerald
+    const Color(0xFFF59E0B), // Amber
+    const Color(0xFFEF4444), // Red
+    const Color(0xFF06B6D4), // Cyan
+    const Color(0xFFF97316), // Orange
+    const Color(0xFFEC4899), // Pink
+    const Color(0xFF84CC16), // Lime
+    const Color(0xFF64748B), // Slate
+    const Color(0xFF0EA5E9), // Sky
   ];
 
-  Map<String, Color> _userColorMap = {};
+  final Map<String, Color> _userColorMap = {};
 
   @override
   void initState() {
@@ -73,39 +73,48 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(28),
+        border: Border(left: BorderSide(color: Colors.red, width: 5.0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: const Color(0xFF1A1A1A).withOpacity(0.2),
             spreadRadius: 0,
-            blurRadius: 20,
+            blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(children: [_buildHeader(), _buildCalendarContent()]),
+      child: Column(
+        children: [
+          _buildHeader(),
+          Padding(
+            padding: const EdgeInsets.all(5),
+            child: _buildCalendarContent(),
+          ),
+        ],
+      ),
     );
   }
 
+  // MARK: BUILD HEADER
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.blue.shade600, Colors.blue.shade700],
-        ),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
         ),
       ),
       child: Column(
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Column(
@@ -114,29 +123,37 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                     Text(
                       _getHeaderTitle(),
                       style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _getSubtitle(),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.8),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F2937),
+                        letterSpacing: -1.0,
+                        height: 1.1,
                       ),
                     ),
                   ],
                 ),
               ),
               if (widget.showToggle) ...[
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 _buildToggleButton(),
               ],
             ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            height: 1,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Colors.transparent,
+                  const Color(0xFF6366F1).withOpacity(0.3),
+                  Colors.transparent,
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -146,9 +163,16 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   Widget _buildToggleButton() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF64748B).withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -158,31 +182,47 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               if (!_isWeekView) {
                 setState(() {
                   _isWeekView = true;
-                  _currentDate = DateTime.now(); // Reset to current week
+                  _currentDate = DateTime.now();
                 });
               }
             },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: _isWeekView ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
+                color: _isWeekView
+                    ? const Color(0xFF6366F1)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: _isWeekView
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF6366F1).withOpacity(0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.view_week,
-                    size: 14,
-                    color: _isWeekView ? Colors.blue.shade700 : Colors.white,
+                    Icons.view_week_rounded,
+                    size: 16,
+                    color: _isWeekView ? Colors.white : const Color(0xFF64748B),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
                   Text(
                     'Week',
                     style: TextStyle(
-                      color: _isWeekView ? Colors.blue.shade700 : Colors.white,
-                      fontSize: 11,
+                      color: _isWeekView
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
+                      letterSpacing: -0.2,
                     ),
                   ),
                 ],
@@ -197,27 +237,45 @@ class _CalendarWidgetState extends State<CalendarWidget> {
                 });
               }
             },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: !_isWeekView ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
+                color: !_isWeekView
+                    ? const Color(0xFF6366F1)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: !_isWeekView
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF6366F1).withOpacity(0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.calendar_month,
-                    size: 14,
-                    color: !_isWeekView ? Colors.blue.shade700 : Colors.white,
+                    Icons.calendar_month_rounded,
+                    size: 16,
+                    color: !_isWeekView
+                        ? Colors.white
+                        : const Color(0xFF64748B),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
                   Text(
                     'Month',
                     style: TextStyle(
-                      color: !_isWeekView ? Colors.blue.shade700 : Colors.white,
-                      fontSize: 11,
+                      color: !_isWeekView
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
+                      letterSpacing: -0.2,
                     ),
                   ),
                 ],
@@ -230,11 +288,29 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   }
 
   Widget _buildCalendarContent() {
-    return AnimatedContainer(
+    return AnimatedSwitcher(
       duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOutCubic,
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0.0, 0.15),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
+            child: child,
+          ),
+        );
+      },
       child: _isWeekView
           ? WeekCalendarView(
+              key: const ValueKey('week'),
               currentDate: _currentDate,
               selectedDate: _selectedDate,
               onDateSelected: _onDateSelected,
@@ -249,6 +325,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               userColorMap: _userColorMap,
             )
           : MonthCalendarView(
+              key: const ValueKey('month'),
               currentDate: _currentDate,
               selectedDate: _selectedDate,
               onDateSelected: _onDateSelected,
@@ -275,21 +352,6 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       }
     } else {
       return '${_getMonthName(_currentDate.month)} ${_currentDate.year}';
-    }
-  }
-
-  String _getSubtitle() {
-    if (_isWeekView) {
-      final weekStart = _getWeekStart(_currentDate);
-      final weekEnd = weekStart.add(const Duration(days: 6));
-      return '${weekStart.day} - ${weekEnd.day}';
-    } else {
-      final daysInMonth = DateTime(
-        _currentDate.year,
-        _currentDate.month + 1,
-        0,
-      ).day;
-      return '$daysInMonth days';
     }
   }
 
@@ -340,562 +402,4 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     ];
     return months[month - 1];
   }
-}
-
-class WeekCalendarView extends StatefulWidget {
-  final DateTime currentDate;
-  final DateTime selectedDate;
-  final Function(DateTime) onDateSelected;
-  final PageController pageController;
-  final int initialPage;
-  final Function(DateTime) onWeekChanged;
-  final List<Leave> userLeaves;
-  final Map<String, Color> userColorMap;
-
-  const WeekCalendarView({
-    super.key,
-    required this.currentDate,
-    required this.selectedDate,
-    required this.onDateSelected,
-    required this.pageController,
-    required this.initialPage,
-    required this.onWeekChanged,
-    required this.userLeaves,
-    required this.userColorMap,
-  });
-
-  @override
-  State<WeekCalendarView> createState() => _WeekCalendarViewState();
-}
-
-class _WeekCalendarViewState extends State<WeekCalendarView> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          _buildWeekDaysHeader(),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 60,
-            child: PageView.builder(
-              controller: widget.pageController,
-              onPageChanged: (page) {
-                final weeksFromInitial = page - widget.initialPage;
-                final newDate = DateTime.now().add(
-                  Duration(days: weeksFromInitial * 7),
-                );
-                widget.onWeekChanged(newDate);
-              },
-              itemBuilder: (context, page) {
-                final weeksFromInitial = page - widget.initialPage;
-                final weekStart = _getWeekStart(
-                  DateTime.now().add(Duration(days: weeksFromInitial * 7)),
-                );
-                return _buildWeekDates(weekStart);
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.swipe_left, size: 16, color: Colors.grey.shade400),
-              const SizedBox(width: 8),
-              Text(
-                'Swipe to navigate weeks',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade500,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(Icons.swipe_right, size: 16, color: Colors.grey.shade400),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWeekDaysHeader() {
-    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: weekDays
-          .map(
-            (day) => Expanded(
-              child: Center(
-                child: Text(
-                  day,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ),
-            ),
-          )
-          .toList(),
-    );
-  }
-
-  Widget _buildWeekDates(DateTime weekStart) {
-    final today = DateTime.now();
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: List.generate(7, (index) {
-        final date = weekStart.add(Duration(days: index));
-        final isToday = _isSameDay(date, today);
-        final isSelected = _isSameDay(date, widget.selectedDate);
-        final leaveInfo = _getLeaveInfoForDate(date);
-
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => widget.onDateSelected(date),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              child: Stack(
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                          ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.blue.shade500,
-                                Colors.blue.shade600,
-                              ],
-                            )
-                          : null,
-                      color: isSelected
-                          ? null
-                          : isToday
-                          ? Colors.blue.shade50
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
-                      border: isToday && !isSelected
-                          ? Border.all(color: Colors.blue.shade300, width: 2)
-                          : null,
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: Colors.blue.withOpacity(0.3),
-                                spreadRadius: 0,
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${date.day}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: isToday || isSelected
-                              ? FontWeight.bold
-                              : FontWeight.w500,
-                          color: isSelected
-                              ? Colors.white
-                              : isToday
-                              ? Colors.blue.shade700
-                              : Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Leave indicators
-                  if (leaveInfo.isNotEmpty)
-                    Positioned(
-                      bottom: 4,
-                      left: 0,
-                      right: 0,
-                      child: _buildLeaveIndicators(leaveInfo, date),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildLeaveIndicators(List<LeaveInfo> leaveInfo, DateTime date) {
-    return Column(
-      children: leaveInfo.map((info) {
-        final color = widget.userColorMap[info.userId] ?? Colors.grey;
-
-        if (info.isSingleDay) {
-          // Single day leave - show dot
-          return Container(
-            margin: const EdgeInsets.only(bottom: 1),
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          );
-        } else {
-          // Multi-day leave - show underline
-          return Container(
-            margin: const EdgeInsets.only(bottom: 1),
-            height: 2,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(1),
-            ),
-          );
-        }
-      }).toList(),
-    );
-  }
-
-  List<LeaveInfo> _getLeaveInfoForDate(DateTime date) {
-    final List<LeaveInfo> leaveInfo = [];
-
-    for (final leave in widget.userLeaves) {
-      try {
-        final startDate = DateTime.parse(leave.startDate);
-        final endDate = DateTime.parse(leave.endDate);
-
-        // Check if date falls within leave period
-        if (_isSameDay(date, startDate) ||
-            _isSameDay(date, endDate) ||
-            (date.isAfter(startDate) && date.isBefore(endDate))) {
-          final isSingleDay = _isSameDay(startDate, endDate);
-          leaveInfo.add(
-            LeaveInfo(
-              userId: leave.userId,
-              isSingleDay: isSingleDay,
-              isStart: _isSameDay(date, startDate),
-              isEnd: _isSameDay(date, endDate),
-            ),
-          );
-        }
-      } catch (e) {
-        // Handle date parsing errors
-        continue;
-      }
-    }
-
-    return leaveInfo;
-  }
-
-  DateTime _getWeekStart(DateTime date) {
-    return date.subtract(Duration(days: date.weekday - 1));
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-}
-
-class MonthCalendarView extends StatelessWidget {
-  final DateTime currentDate;
-  final DateTime selectedDate;
-  final Function(DateTime) onDateSelected;
-  final Function(DateTime) onMonthChanged;
-  final List<Leave> userLeaves;
-  final Map<String, Color> userColorMap;
-
-  const MonthCalendarView({
-    super.key,
-    required this.currentDate,
-    required this.selectedDate,
-    required this.onDateSelected,
-    required this.onMonthChanged,
-    required this.userLeaves,
-    required this.userColorMap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          _buildMonthNavigation(),
-          const SizedBox(height: 20),
-          _buildWeekDaysHeader(),
-          const SizedBox(height: 16),
-          _buildMonthGrid(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMonthNavigation() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildNavButton(Icons.chevron_left, () => _navigateMonth(-1)),
-        _buildNavButton(Icons.chevron_right, () => _navigateMonth(1)),
-      ],
-    );
-  }
-
-  Widget _buildNavButton(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Icon(icon, size: 20, color: Colors.grey.shade600),
-      ),
-    );
-  }
-
-  Widget _buildWeekDaysHeader() {
-    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: weekDays
-          .map(
-            (day) => Expanded(
-              child: Center(
-                child: Text(
-                  day,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ),
-            ),
-          )
-          .toList(),
-    );
-  }
-
-  Widget _buildMonthGrid() {
-    final firstDayOfMonth = DateTime(currentDate.year, currentDate.month, 1);
-    final lastDayOfMonth = DateTime(currentDate.year, currentDate.month + 1, 0);
-    final firstWeekday = firstDayOfMonth.weekday;
-    final daysInMonth = lastDayOfMonth.day;
-    final today = DateTime.now();
-
-    final daysFromPrevMonth = firstWeekday - 1;
-    final prevMonth = DateTime(currentDate.year, currentDate.month - 1, 0);
-    final totalCells = ((daysFromPrevMonth + daysInMonth) / 7).ceil() * 7;
-
-    return Column(
-      children: List.generate((totalCells / 7).ceil(), (weekIndex) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(7, (dayIndex) {
-              final cellIndex = weekIndex * 7 + dayIndex;
-              DateTime date;
-              bool isCurrentMonth = true;
-
-              if (cellIndex < daysFromPrevMonth) {
-                date = DateTime(
-                  prevMonth.year,
-                  prevMonth.month,
-                  prevMonth.day - (daysFromPrevMonth - cellIndex - 1),
-                );
-                isCurrentMonth = false;
-              } else if (cellIndex < daysFromPrevMonth + daysInMonth) {
-                date = DateTime(
-                  currentDate.year,
-                  currentDate.month,
-                  cellIndex - daysFromPrevMonth + 1,
-                );
-              } else {
-                date = DateTime(
-                  currentDate.year,
-                  currentDate.month + 1,
-                  cellIndex - daysFromPrevMonth - daysInMonth + 1,
-                );
-                isCurrentMonth = false;
-              }
-
-              final isToday = _isSameDay(date, today);
-              final isSelected = _isSameDay(date, selectedDate);
-              final leaveInfo = _getLeaveInfoForDate(date);
-
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => onDateSelected(date),
-                  child: Container(
-                    margin: const EdgeInsets.all(2),
-                    child: Stack(
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            gradient: isSelected
-                                ? LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Colors.blue.shade500,
-                                      Colors.blue.shade600,
-                                    ],
-                                  )
-                                : null,
-                            color: isSelected
-                                ? null
-                                : isToday
-                                ? Colors.blue.shade50
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                            border: isToday && !isSelected
-                                ? Border.all(
-                                    color: Colors.blue.shade300,
-                                    width: 2,
-                                  )
-                                : null,
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color: Colors.blue.withOpacity(0.3),
-                                      spreadRadius: 0,
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${date.day}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: isToday || isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.w500,
-                                color: isSelected
-                                    ? Colors.white
-                                    : isToday
-                                    ? Colors.blue.shade700
-                                    : isCurrentMonth
-                                    ? Colors.grey.shade700
-                                    : Colors.grey.shade400,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Leave indicators
-                        if (leaveInfo.isNotEmpty)
-                          Positioned(
-                            bottom: 2,
-                            left: 0,
-                            right: 0,
-                            child: _buildLeaveIndicators(leaveInfo, date),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildLeaveIndicators(List<LeaveInfo> leaveInfo, DateTime date) {
-    return Column(
-      children: leaveInfo.map((info) {
-        final color = userColorMap[info.userId] ?? Colors.grey;
-
-        if (info.isSingleDay) {
-          // Single day leave - show dot
-          return Container(
-            margin: const EdgeInsets.only(bottom: 1),
-            width: 5,
-            height: 5,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          );
-        } else {
-          // Multi-day leave - show underline
-          return Container(
-            margin: const EdgeInsets.only(bottom: 1),
-            height: 2,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(1),
-            ),
-          );
-        }
-      }).toList(),
-    );
-  }
-
-  List<LeaveInfo> _getLeaveInfoForDate(DateTime date) {
-    final List<LeaveInfo> leaveInfo = [];
-
-    for (final leave in userLeaves) {
-      try {
-        final startDate = DateTime.parse(leave.startDate);
-        final endDate = DateTime.parse(leave.endDate);
-
-        // Check if date falls within leave period
-        if (_isSameDay(date, startDate) ||
-            _isSameDay(date, endDate) ||
-            (date.isAfter(startDate) && date.isBefore(endDate))) {
-          final isSingleDay = _isSameDay(startDate, endDate);
-          leaveInfo.add(
-            LeaveInfo(
-              userId: leave.userId,
-              isSingleDay: isSingleDay,
-              isStart: _isSameDay(date, startDate),
-              isEnd: _isSameDay(date, endDate),
-            ),
-          );
-        }
-      } catch (e) {
-        // Handle date parsing errors
-        continue;
-      }
-    }
-
-    return leaveInfo;
-  }
-
-  void _navigateMonth(int direction) {
-    final newDate = DateTime(
-      currentDate.year,
-      currentDate.month + direction,
-      1,
-    );
-    onMonthChanged(newDate);
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-}
-
-// Helper class to store leave information for a specific date
-class LeaveInfo {
-  final String userId;
-  final bool isSingleDay;
-  final bool isStart;
-  final bool isEnd;
-
-  LeaveInfo({
-    required this.userId,
-    required this.isSingleDay,
-    required this.isStart,
-    required this.isEnd,
-  });
 }
