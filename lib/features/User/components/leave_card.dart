@@ -31,7 +31,7 @@ class LeaveCard extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              minRadius: 40,
+              minRadius: 35,
               foregroundImage: NetworkImage('https://picsum.photos/200'),
               child: Text('A'), // fallback if the image fails to load
             ),
@@ -55,7 +55,7 @@ class LeaveCard extends StatelessWidget {
                     Text(
                       "${Formatters.formatDate(leave.startDate)} → ${Formatters.formatDate(leave.endDate)}",
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         color: Colors.black87,
                       ),
                     ),

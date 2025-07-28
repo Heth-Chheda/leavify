@@ -37,6 +37,18 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
       parent: _animationController,
       curve: Curves.easeInOutCubic,
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final screenWidth = MediaQuery.of(context).size.width;
+
+      final bool isManagerOrHR =
+          widget.role == UserRole.manager || widget.role == UserRole.hr;
+
+      final itemCount = isManagerOrHR ? 5 : 3;
+      final itemWidth = screenWidth / itemCount;
+
+      // Set initial position
+      _updateUnderlinePosition(widget.currentIndex, itemWidth);
+    });
   }
 
   @override
@@ -192,7 +204,7 @@ class _NavItemState extends State<_NavItem>
 
     _scaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 10.0,
+      end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _opacityAnimation = Tween<double>(
