@@ -110,64 +110,70 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
       ]);
     }
 
-    return Container(
-      height: 85,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            offset: const Offset(0, -2),
-            blurRadius: 20,
-            spreadRadius: 0,
+    return SafeArea(
+      bottom: true,
+      right: false,
+      top: false,
+      left: false,
+      child: Container(
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              offset: const Offset(0, -2),
+              blurRadius: 20,
+              spreadRadius: 0,
+            ),
+          ],
+          border: Border(
+            top: BorderSide(color: Colors.black.withOpacity(0.1), width: 0.5),
           ),
-        ],
-        border: Border(
-          top: BorderSide(color: Colors.black.withOpacity(0.1), width: 0.5),
         ),
-      ),
-      child: Stack(
-        children: [
-          // Navigation Items
-          Row(
-            children: navItems.map((item) {
-              return Expanded(
-                child: _NavItem(
-                  icon: item.icon,
-                  isSelected: widget.currentIndex == item.index,
-                  onTap: () {
-                    widget.onTabSelected(item.index);
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      final screenWidth = MediaQuery.of(context).size.width;
-                      final itemWidth = screenWidth / navItems.length;
-                      _updateUnderlinePosition(item.index, itemWidth);
-                    });
-                  },
-                ),
-              );
-            }).toList(),
-          ),
-          // Animated Underline
-          Positioned(
-            bottom: 27,
-            child: AnimatedBuilder(
-              animation: _underlineAnimation,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(_underlineAnimation.value, 0),
-                  child: Container(
-                    width: 40,
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: AppTheme.infoBlue,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+        child: Stack(
+          children: [
+            // Navigation Items
+            Row(
+              children: navItems.map((item) {
+                return Expanded(
+                  child: _NavItem(
+                    icon: item.icon,
+                    isSelected: widget.currentIndex == item.index,
+                    onTap: () {
+                      widget.onTabSelected(item.index);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final itemWidth = screenWidth / navItems.length;
+                        _updateUnderlinePosition(item.index, itemWidth);
+                      });
+                    },
                   ),
                 );
-              },
+              }).toList(),
             ),
-          ),
-        ],
+            // Animated Underline
+            Positioned(
+              bottom: 8,
+              child: AnimatedBuilder(
+                animation: _underlineAnimation,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(_underlineAnimation.value, 0),
+                    child: Container(
+                      width: 40,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: AppTheme.infoBlue,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -241,7 +247,6 @@ class _NavItemState extends State<_NavItem>
       onTap: widget.onTap,
       behavior: HitTestBehavior.translucent,
       child: Container(
-        padding: EdgeInsets.only(bottom: 25),
         child: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
