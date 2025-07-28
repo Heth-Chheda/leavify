@@ -4,13 +4,13 @@ import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/User/components/calendar/month_calendar_view.dart';
 import 'package:leavify/features/User/components/calendar/week_calendar_view.dart';
 
-class CalendarWidget extends StatefulWidget {
+class HomeCalendarWidget extends StatefulWidget {
   final Function(DateTime)? onDateSelected;
   final DateTime? selectedDate;
   final bool showToggle;
   final List<Leave> userLeaves;
 
-  const CalendarWidget({
+  const HomeCalendarWidget({
     super.key,
     this.onDateSelected,
     this.selectedDate,
@@ -19,10 +19,10 @@ class CalendarWidget extends StatefulWidget {
   });
 
   @override
-  State<CalendarWidget> createState() => _CalendarWidgetState();
+  State<HomeCalendarWidget> createState() => _HomeCalendarWidgetState();
 }
 
-class _CalendarWidgetState extends State<CalendarWidget> {
+class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
   bool _isWeekView = true;
   late DateTime _currentDate;
   late DateTime _selectedDate;

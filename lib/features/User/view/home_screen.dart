@@ -3,6 +3,7 @@ import 'package:leavify/core/utils/components/shimmer_widget.dart';
 import 'package:leavify/features/User/components/announcement_card.dart';
 import 'package:leavify/features/User/components/calender_widget.dart';
 import 'package:leavify/features/User/components/leave_card.dart';
+import 'package:leavify/features/User/components/home_calender_widget.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -54,7 +55,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // MARK: MAIN BUILD SECTION
   @override
   Widget build(BuildContext context) {
     if (_viewModel.isLoading) {
@@ -68,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return RefreshIndicator(
       onRefresh: _viewModel.refresh,
       child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -173,19 +174,16 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10.0),
-          child: CalendarWidget(
-            selectedDate: _selectedDate,
-            onDateSelected: (date) {
-              setState(() {
-                _selectedDate = date;
-              });
-              _handleDateSelection(date);
-            },
-            showToggle: true,
-            userLeaves: _viewModel.teamUpcomingLeaves,
-          ),
+        HomeCalendarWidget(
+          selectedDate: _selectedDate,
+          onDateSelected: (date) {
+            setState(() {
+              _selectedDate = date;
+            });
+            _handleDateSelection(date);
+          },
+          showToggle: true,
+          userLeaves: _viewModel.teamUpcomingLeaves,
         ),
       ],
     );
