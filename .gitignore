@@ -52,12 +52,16 @@ ios/Podfile.lock
 
 # macOS build artifacts
 macos/
+./macos
 
 
 # CocoaPods
 Podfile.lock
 Pods/
 DerivedData/
+
+
+pubspec.lock
 
 # Windows
 windows/
