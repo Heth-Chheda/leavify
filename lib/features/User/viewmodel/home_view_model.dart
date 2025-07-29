@@ -19,7 +19,6 @@ class HomeViewModel extends ChangeNotifier {
       '${_homeData?.currentUser?.firstName ?? ''} ${_homeData?.currentUser?.lastName ?? ''}'
           .trim();
   String get userEmail => _homeData?.currentUser?.email ?? '';
-  String get userMobile => _homeData?.currentUser?.mobile ?? '';
   int get leaveBalance => _homeData?.currentUser?.balance ?? 0;
   int get approvedLeaves => _homeData?.currentUser?.approved ?? 0;
   int get rejectedLeaves => _homeData?.currentUser?.rejected ?? 0;
