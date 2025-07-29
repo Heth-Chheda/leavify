@@ -1,7 +1,9 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/theme/app_theme.dart';
+import 'package:leavify/features/Authentication/domain/response/login_response.dart';
 import 'package:leavify/features/User/components/ApplyLeave/custom_calendar_component.dart';
 import 'package:leavify/features/User/domain/request/apply_leave_request_model.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
@@ -205,8 +207,16 @@ class _LeaveFormState extends State<LeaveForm> {
         _uploadedDocumentUrls = await _uploadDocuments();
       }
 
+      // Load user ID from SharedPreferences
+      final userId = await _loadUserId();
+      if (userId == null || userId.isEmpty) {
+        setState(() => _isLoading = false);
+        _showSnackBar('User ID not found. Please login again.', Colors.red);
+        return;
+      }
+
       // Create and submit request
-      final request = _createLeaveRequest();
+      final request = await _createLeaveRequest();
       final success = await widget.leaveViewModel.submitLeaveRequest(request);
 
       setState(() => _isLoading = false);
@@ -242,10 +252,23 @@ class _LeaveFormState extends State<LeaveForm> {
     return true;
   }
 
-  ApplyLeaveRequestModel _createLeaveRequest() {
-    // This is a simplified version - adjust according to your actual model
+  // MARK: LOAD USER ID
+  Future<String?> _loadUserId() async {
+    final user = await AppStorage.getObject<LoginResponseModel>(
+      "user_details",
+      (json) => LoginResponseModel.fromJson(json),
+    );
+    final id = user?.currentUser?.id;
+    return id;
+  }
+
+  // MARK: CREATE LEAVE REQUEST
+  Future<ApplyLeaveRequestModel> _createLeaveRequest() async {
+    // Load user ID from SharedPreferences
+    final userId = await _loadUserId();
+
     return ApplyLeaveRequestModel(
-      userId: '', // Will be set from SharedPreferences
+      userId: userId ?? '', // Use the loaded user ID
       type: _getLeaveType(),
       fromDate: _selectedStartDate!.toUtc().toIso8601String(),
       toDate: (_selectedEndDate ?? _selectedStartDate)!
@@ -265,7 +288,7 @@ class _LeaveFormState extends State<LeaveForm> {
       case LeaveFormType.extra:
         return 'EXTRA';
       case LeaveFormType.workFromHome:
-        return 'WORK_FROM_HOME';
+        return 'WFH';
     }
   }
 
@@ -359,6 +382,7 @@ class _LeaveFormState extends State<LeaveForm> {
     super.dispose();
   }
 
+  // MARK: MAIN BUILD SECTION
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -402,6 +426,7 @@ class _LeaveFormState extends State<LeaveForm> {
     );
   }
 
+  // MARK: TITLE SECTION
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
@@ -412,6 +437,7 @@ class _LeaveFormState extends State<LeaveForm> {
     );
   }
 
+  // MARK: DATE SELECTION SECTION
   Widget _buildDateSelectionSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,6 +508,7 @@ class _LeaveFormState extends State<LeaveForm> {
     );
   }
 
+  // MARK: REASON SECTION
   Widget _buildLeaveDurationSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -564,6 +591,7 @@ class _LeaveFormState extends State<LeaveForm> {
     );
   }
 
+  // MARK: COMP OFF SECTION
   Widget _buildCompOffSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -728,6 +756,7 @@ class _LeaveFormState extends State<LeaveForm> {
     );
   }
 
+  // MARK: RADIO BUTTON
   Widget _buildRadioOption({
     required String title,
     required bool value,
@@ -766,6 +795,7 @@ class _LeaveFormState extends State<LeaveForm> {
     );
   }
 
+  // MARK: REASION SECTION
   Widget _buildReasonSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -863,6 +893,7 @@ class _LeaveFormState extends State<LeaveForm> {
     );
   }
 
+  // MARK: DOCUMENT SECTION
   Widget _buildDocumentsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -987,6 +1018,7 @@ class _LeaveFormState extends State<LeaveForm> {
     );
   }
 
+  // MARK: SUBMIT BUTTON
   Widget _buildSubmitButton() {
     return SizedBox(
       width: double.infinity,
