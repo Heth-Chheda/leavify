@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:leavify/core/api/api_endpoints.dart';
 import 'package:leavify/core/network/perform_request.dart';
 import 'package:leavify/features/User/domain/request/apply_leave_request_model.dart';
@@ -7,7 +8,10 @@ import 'package:leavify/features/User/domain/response/apply_leave_response_model
 class LeaveRepository {
   final _api = PerformRequest();
 
-  Future<ApplyLeaveResponseModel> applyLeave(ApplyLeaveRequestModel request) async {
+  // MARK: APPLY FOR LEAVE
+  Future<ApplyLeaveResponseModel> applyLeave(
+    ApplyLeaveRequestModel request,
+  ) async {
     final response = await _api.performRequest(
       url: ApiEndpoints.applyLeave,
       method: RequestType.post,

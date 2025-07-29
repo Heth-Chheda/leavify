@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/components/shimmer_widget.dart';
 import 'package:leavify/features/User/components/announcement_card.dart';
 import 'package:leavify/features/User/components/home_calender_widget.dart';
-import 'package:leavify/features/User/components/leave_card.dart';
+import 'package:leavify/features/User/components/home_screen_leave_card.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 
 class HomeScreen extends StatefulWidget {

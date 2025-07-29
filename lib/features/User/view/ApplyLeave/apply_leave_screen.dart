@@ -407,7 +407,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
       case 0:
         return _buildTabWrapper(ApplyLeaveTab(leaveViewModel: leaveViewModel));
       case 1:
-        // Using HalfDayTab for Extra as requested
         return _buildTabWrapper(ExtraDayTab(leaveViewModel: leaveViewModel));
       case 2:
         return _buildTabWrapper(

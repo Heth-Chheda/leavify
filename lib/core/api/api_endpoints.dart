@@ -9,5 +9,5 @@ class ApiEndpoints {
   static final String register = '$baseUrl/auth/register';
 
   // Leaves
-  static final String applyLeave = '$baseUrl/request/apply';
+  static final String applyLeave = '$baseUrl/api/applyLeave';
 }

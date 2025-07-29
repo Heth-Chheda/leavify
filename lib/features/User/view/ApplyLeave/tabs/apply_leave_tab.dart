@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:leavify/features/User/components/leave_form.dart';
+import 'package:leavify/features/User/components/ApplyLeave/leave_form.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
 
 class ApplyLeaveTab extends StatelessWidget {
