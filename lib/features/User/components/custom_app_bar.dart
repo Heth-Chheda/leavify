@@ -30,7 +30,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   : _buildContent(viewModel.userFullName),
             ),
             // Action Icons
-            _buildActionIcons(),
+            _buildActionIcons(context),
           ],
         ),
       ),
@@ -177,7 +177,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildActionIcons() {
+  Widget _buildActionIcons(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -186,14 +186,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           icon: Icons.notifications_none_rounded,
           onTap: () {
             // TODO: Handle notifications
-          },
-        ),
-        const SizedBox(width: 12),
-        // Settings Icon
-        _buildGlassIcon(
-          icon: Icons.settings,
-          onTap: () {
-            // TODO: Navigate to settings screen
+            Navigator.pushNamed(context, '/notifications');
           },
         ),
       ],

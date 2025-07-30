@@ -19,63 +19,13 @@ class CustomBottomNavBar extends StatefulWidget {
   State<CustomBottomNavBar> createState() => _CustomBottomNavBarState();
 }
 
-class _CustomBottomNavBarState extends State<CustomBottomNavBar>
-    with TickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _underlineAnimation;
-  double _underlinePosition = 0.0;
-  double _itemWidth = 0.0;
+class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
+  bool _isPositionCalculated = false;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _underlineAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOutCubic,
-    );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final screenWidth = MediaQuery.of(context).size.width;
-
-      final bool isManagerOrHR =
-          widget.role == UserRole.manager || widget.role == UserRole.hr;
-
-      final itemCount = isManagerOrHR ? 5 : 3;
-      final itemWidth = screenWidth / itemCount;
-
-      // Set initial position
-      _updateUnderlinePosition(widget.currentIndex, itemWidth);
-    });
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _updateUnderlinePosition(int index, double itemWidth) {
-    final newPosition = index * itemWidth + (itemWidth / 2) - 20;
-
-    setState(() {
-      _itemWidth = itemWidth;
-    });
-
-    final tween = Tween<double>(begin: _underlinePosition, end: newPosition);
-
-    _underlineAnimation = tween.animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOutCubic,
-      ),
-    );
-
-    _animationController.forward(from: 0.0).then((_) {
-      _underlinePosition = newPosition;
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
   @override
@@ -90,23 +40,19 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
       navItems.addAll([
         _NavItemData(icon: Icons.home_rounded, label: 'Home', index: 0),
         _NavItemData(
-          icon: Icons.analytics_rounded,
+          icon: Icons.pending_actions_rounded,
           label: 'Analytics',
           index: 1,
         ),
         _NavItemData(icon: Icons.add_rounded, label: 'Add', index: 2),
-        _NavItemData(icon: Icons.history_rounded, label: 'History', index: 3),
-        _NavItemData(
-          icon: Icons.pending_actions_rounded,
-          label: 'Pending',
-          index: 4,
-        ),
+        _NavItemData(icon: Icons.bar_chart, label: 'Statistics', index: 3),
+        _NavItemData(icon: Icons.person_rounded, label: 'Profile', index: 4),
       ]);
     } else {
       navItems.addAll([
         _NavItemData(icon: Icons.home_rounded, label: 'Home', index: 0),
         _NavItemData(icon: Icons.add_rounded, label: 'Add', index: 1),
-        _NavItemData(icon: Icons.history_rounded, label: 'History', index: 2),
+        _NavItemData(icon: Icons.person_rounded, label: 'History', index: 2),
       ]);
     }
 
@@ -139,38 +85,14 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar>
                 return Expanded(
                   child: _NavItem(
                     icon: item.icon,
-                    isSelected: widget.currentIndex == item.index,
+                    // Only home tab (index 0) should be selected since others navigate away
+                    isSelected: item.index == 0,
                     onTap: () {
                       widget.onTabSelected(item.index);
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        final screenWidth = MediaQuery.of(context).size.width;
-                        final itemWidth = screenWidth / navItems.length;
-                        _updateUnderlinePosition(item.index, itemWidth);
-                      });
                     },
                   ),
                 );
               }).toList(),
-            ),
-            // Animated Underline
-            Positioned(
-              bottom: 8,
-              child: AnimatedBuilder(
-                animation: _underlineAnimation,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(_underlineAnimation.value, 0),
-                    child: Container(
-                      width: 40,
-                      height: 3,
-                      decoration: BoxDecoration(
-                        color: AppTheme.infoBlue,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  );
-                },
-              ),
             ),
           ],
         ),

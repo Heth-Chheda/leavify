@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/features/User/components/custom_app_bar.dart';
 import 'package:leavify/features/User/components/custom_bottom_nav_bar.dart';
-import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
 import 'package:leavify/features/User/view/home_screen.dart';
-import 'package:leavify/features/User/view/leave_history.dart';
 
 import '../../../core/storage/app_storage.dart';
 import '../../Authentication/domain/response/login_response.dart';
@@ -17,7 +15,7 @@ class LandingView extends StatefulWidget {
 
 class _LandingViewState extends State<LandingView> {
   int _currentIndex = 0;
-  UserRole _userRole = UserRole.employee; // Default role
+  UserRole _userRole = UserRole.manager; // Default role
   bool _isLoading = true;
 
   @override
@@ -47,13 +45,13 @@ class _LandingViewState extends State<LandingView> {
             break;
           case 'employee':
           default:
-            _userRole = UserRole.employee;
+            _userRole = UserRole.manager;
             break;
         }
       }
     } catch (e) {
       // Handle error - default to employee role
-      _userRole = UserRole.employee;
+      _userRole = UserRole.manager;
       debugPrint('Error loading user role: $e');
     } finally {
       setState(() {
@@ -63,12 +61,6 @@ class _LandingViewState extends State<LandingView> {
   }
 
   void _onTabSelected(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-  }
-
-  Widget _getScreenForIndex(int index) {
     final bool isManagerOrHR =
         _userRole == UserRole.manager || _userRole == UserRole.hr;
 
@@ -76,31 +68,53 @@ class _LandingViewState extends State<LandingView> {
       // Manager/HR navigation: Home, Analytics, Add, History, Pending
       switch (index) {
         case 0:
-          return const HomeScreen();
+          // Home - stay on current screen
+          setState(() {
+            _currentIndex = index;
+          });
+          break;
         case 1:
-          return const Placeholder(); // Analytics
+          // Analytics - navigate to new screen
+
+          Navigator.pushNamed(context, '/pending');
+          break;
         case 2:
-          return const ApplyLeaveScreen(); // Add
+          // Add Leave - navigate to new screen
+          Navigator.pushNamed(context, '/apply-leave');
+          break;
         case 3:
-          return const HistoryScreen(); // History
+          Navigator.pushNamed(context, '/analytics');
+          break;
         case 4:
-          return const Placeholder(); // Pending
-        default:
-          return const HomeScreen();
+          // Pending - navigate to new screen
+          Navigator.pushNamed(context, '/profile');
+          break;
       }
     } else {
       // Employee navigation: Home, Add, History
       switch (index) {
         case 0:
-          return const HomeScreen();
+          // Home - stay on current screen
+          setState(() {
+            _currentIndex = index;
+          });
+          break;
         case 1:
-          return const ApplyLeaveScreen(); // Add
+          // Add Leave - navigate to new screen
+          Navigator.pushNamed(context, '/apply-leave');
+          break;
         case 2:
-          return const HistoryScreen(); // History
-        default:
-          return const HomeScreen();
+          // History - navigate to new screen
+          Navigator.pushNamed(context, '/profile');
+          break;
       }
     }
+  }
+
+  Widget _getCurrentScreen() {
+    // Only show HomeScreen in the landing view
+    // All other screens will be navigated to as separate pages
+    return const HomeScreen();
   }
 
   @override
@@ -115,7 +129,7 @@ class _LandingViewState extends State<LandingView> {
         backgroundColor: Colors.white,
         extendBody: true,
         appBar: CustomAppBar(),
-        body: SafeArea(bottom: true, child: _getScreenForIndex(_currentIndex)),
+        body: SafeArea(bottom: true, child: _getCurrentScreen()),
         bottomNavigationBar: CustomBottomNavBar(
           currentIndex: _currentIndex,
           onTabSelected: _onTabSelected,
