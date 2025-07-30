@@ -3,6 +3,7 @@ import 'package:leavify/core/utils/theme/app_theme.dart';
 import 'package:leavify/features/User/view/ApplyLeave/tabs/apply_leave_tab.dart';
 import 'package:leavify/features/User/view/ApplyLeave/tabs/extra_tab.dart';
 import 'package:leavify/features/User/view/ApplyLeave/tabs/work_from_home_tab.dart';
+import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -72,7 +73,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
             child: Column(
               children: [
                 _buildStatsHeaderSection(),
-                _buildTabSection(),
+                // _buildTabSection(),
                 _buildTabContent(leaveViewModel),
               ],
             ),
@@ -84,6 +85,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
 
   // MARK: BUILD HEADER SECTION
   Widget _buildStatsHeaderSection() {
+    final homeViewModel = context.watch<HomeViewModel>();
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 20),
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -112,15 +114,15 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
+                  children: [
+                    const Text(
                       'Leave Balance',
                       style: TextStyle(fontSize: 14, color: Colors.grey),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      '8',
-                      style: TextStyle(
+                      '${homeViewModel.leaveBalance}',
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,

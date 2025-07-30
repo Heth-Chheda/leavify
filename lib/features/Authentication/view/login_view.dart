@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/utils/components/custom_loading_screen.dart';
 import 'package:leavify/core/utils/theme/app_theme.dart'; // Import your theme file
 import 'package:leavify/features/Authentication/viewmodal/login_view_model.dart';
 import 'package:provider/provider.dart';
@@ -30,8 +31,10 @@ class _LoginPageState extends State<LoginPage>
     super.dispose();
   }
 
+  // MARK: MAIN BUILD SECTION
   @override
   Widget build(BuildContext context) {
+    final viewModel = context.watch<LoginViewModel>();
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -54,12 +57,15 @@ class _LoginPageState extends State<LoginPage>
                 ),
               ),
             ),
+
+            if (viewModel.isLoading) const CustomLoadingScreen(),
           ],
         ),
       ),
     );
   }
 
+  // MARK: BACKGROUND
   Widget _buildBackground() {
     return Stack(
       children: [
@@ -108,6 +114,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
+  // MARK: HEADER
   Widget _buildHeader() {
     return Column(
       children: [
@@ -188,6 +195,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
+  // MARK: MAIN CARD
   Widget _buildMainCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -222,6 +230,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
+  // MARK: TAB BAR
   Widget _buildTabBar() {
     return Container(
       height: 65,
@@ -262,6 +271,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
+  // MARK: LOGIN FORM
   Widget _buildLoginForm() {
     return SizedBox(
       height: 220,
@@ -272,6 +282,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
+  // MARK: EMAIL FORM
   Widget _buildEmailForm() {
     return Column(
       children: [
@@ -288,6 +299,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
+  // MARK: PHONE FORM
   Widget _buildPhoneForm() {
     return Column(
       children: [
@@ -304,6 +316,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
+  // MARK: USERNAME FIELD
   Widget _buildUsernameField({
     required String label,
     required String hintText,
@@ -371,6 +384,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
+  // MARK: PASSWORD FIELD
   Widget _buildPasswordField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -450,6 +464,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
+  // MARK: FORGOT PASSWORD
   Widget _buildForgotPassword() {
     return Align(
       alignment: Alignment.centerRight,
@@ -473,6 +488,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
+  // MARK: LOGIN BUTTON
   Widget _buildLoginButton() {
     return Consumer<LoginViewModel>(
       builder: (context, viewModel, child) {
@@ -501,37 +517,26 @@ class _LoginPageState extends State<LoginPage>
                   ),
                 ),
                 child: Center(
-                  child: viewModel.isLoading
-                      ? const SizedBox(
-                          width: 28,
-                          height: 28,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.white,
-                            ),
-                          ),
-                        )
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Sign In',
-                              style: TextStyle(
-                                color: AppTheme.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              color: AppTheme.white,
-                              size: 20,
-                            ),
-                          ],
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Sign In',
+                        style: TextStyle(
+                          color: AppTheme.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
                         ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        color: AppTheme.white,
+                        size: 20,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

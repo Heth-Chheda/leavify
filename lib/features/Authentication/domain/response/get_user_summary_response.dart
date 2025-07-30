@@ -1,19 +1,19 @@
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/Authentication/domain/models/user.dart';
 
-class LoginResponseModel {
+class GetUserSummaryResponse {
   final User? currentUser;
   final List<Leave>? myUpcomingLeaves;
   final List<Leave>? teamUpcomingLeaves;
 
-  LoginResponseModel({
+  GetUserSummaryResponse({
     this.currentUser,
     this.myUpcomingLeaves,
     this.teamUpcomingLeaves,
   });
 
-  factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
-    return LoginResponseModel(
+  factory GetUserSummaryResponse.fromJson(Map<String, dynamic> json) {
+    return GetUserSummaryResponse(
       currentUser: json['currentUser'] != null
           ? User.fromJson(json['currentUser'])
           : null,

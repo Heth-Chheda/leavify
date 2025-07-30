@@ -1,8 +1,11 @@
 import 'dart:convert';
+
 import 'package:leavify/core/api/api_endpoints.dart';
 import 'package:leavify/core/network/perform_request.dart';
+import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
+
 import '../domain/request/login_request.dart';
-import '../domain/response/login_response.dart';
 
 class AuthenticationRepository {
   final PerformRequest _performRequest;
@@ -10,16 +13,64 @@ class AuthenticationRepository {
   AuthenticationRepository({PerformRequest? performRequest})
     : _performRequest = performRequest ?? PerformRequest();
 
-  Future<LoginResponseModel> login(LoginRequest request) async {
+  final get = RequestType.get;
+  final post = RequestType.post;
+
+  Future<void> login(LoginRequest request) async {
     try {
       final response = await _performRequest.performRequest(
         url: ApiEndpoints.login,
-        method: RequestType.post,
+        method: post,
         body: request.toJson(),
       );
+      // switch case for the response
+      switch (response.statusCode) {
+        case 200:
+          AppStorage.saveBoolean('USER_IS_ALREADY_LOGGED_IN', true);
+          return;
 
-      final Map<String, dynamic> json = jsonDecode(response.body);
-      return LoginResponseModel.fromJson(json);
+        case 400:
+          throw ('Invalid credentials. Please try again.');
+
+        case 401:
+          throw ('Unauthorized access.');
+
+        case 500:
+          throw ('Internal server error.');
+
+        default:
+          throw Exception('Unexpected error occurred ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // for testing : 6877b8beae03e3763635516d
+  Future<GetUserSummaryResponse> getUserSummary(String userId) async {
+    try {
+      final getUserSummaryResponse = await _performRequest.performRequest(
+        url: '${ApiEndpoints.getUserSummary}/$userId',
+        method: get,
+      );
+      switch (getUserSummaryResponse.statusCode) {
+        case 200:
+          final Map<String, dynamic> json = jsonDecode(
+            getUserSummaryResponse.body,
+          );
+          return GetUserSummaryResponse.fromJson(json);
+
+        case 400:
+          throw ('Something went wrong. Please try logging in again.');
+
+        case 500:
+          throw ('Internal server error. Please try again later.');
+
+        default:
+          throw Exception(
+            'Unknow error occurred ${getUserSummaryResponse.statusCode}',
+          );
+      }
     } catch (e) {
       rethrow;
     }

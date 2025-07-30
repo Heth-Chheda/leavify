@@ -5,5 +5,5 @@ class AppEnvironment {
     await dotenv.load(fileName: '.env');
   }
 
-  static String get baseUrl => dotenv.env['MOCK_BASE_URL'] ?? '';
+  static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
 }

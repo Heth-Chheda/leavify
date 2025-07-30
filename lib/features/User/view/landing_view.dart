@@ -4,7 +4,7 @@ import 'package:leavify/features/User/components/custom_bottom_nav_bar.dart';
 import 'package:leavify/features/User/view/home_screen.dart';
 
 import '../../../core/storage/app_storage.dart';
-import '../../Authentication/domain/response/login_response.dart';
+import '../../Authentication/domain/response/get_user_summary_response.dart';
 
 class LandingView extends StatefulWidget {
   const LandingView({super.key});
@@ -15,7 +15,7 @@ class LandingView extends StatefulWidget {
 
 class _LandingViewState extends State<LandingView> {
   int _currentIndex = 0;
-  UserRole _userRole = UserRole.manager; // Default role
+  UserRole _userRole = UserRole.employee; // Default role
   bool _isLoading = true;
 
   @override
@@ -26,9 +26,9 @@ class _LandingViewState extends State<LandingView> {
 
   Future<void> _loadUserRole() async {
     try {
-      final loginResponse = await AppStorage.getObject<LoginResponseModel>(
+      final loginResponse = await AppStorage.getObject<GetUserSummaryResponse>(
         "user_details",
-        (json) => LoginResponseModel.fromJson(json),
+        (json) => GetUserSummaryResponse.fromJson(json),
       );
 
       if (loginResponse != null) {
@@ -45,13 +45,13 @@ class _LandingViewState extends State<LandingView> {
             break;
           case 'employee':
           default:
-            _userRole = UserRole.manager;
+            _userRole = UserRole.employee;
             break;
         }
       }
     } catch (e) {
       // Handle error - default to employee role
-      _userRole = UserRole.manager;
+      _userRole = UserRole.employee;
       debugPrint('Error loading user role: $e');
     } finally {
       setState(() {

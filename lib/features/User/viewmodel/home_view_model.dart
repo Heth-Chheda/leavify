@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
-import 'package:leavify/features/Authentication/domain/response/login_response.dart';
+import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 
 class HomeViewModel extends ChangeNotifier {
-  LoginResponseModel? _homeData;
+  final AuthenticationRepository _authenticationRepository =
+      AuthenticationRepository();
+
+  GetUserSummaryResponse? _homeData;
   bool _isLoading = true;
   String? _error;
 
   // Getters
-  LoginResponseModel? get homeData => _homeData;
+  GetUserSummaryResponse? get homeData => _homeData;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // User specific getters for easy access
+  // User-specific getters
   String get userName => _homeData?.currentUser?.firstName ?? 'User';
   String get userFullName =>
       '${_homeData?.currentUser?.firstName ?? ''} ${_homeData?.currentUser?.lastName ?? ''}'
@@ -24,48 +28,37 @@ class HomeViewModel extends ChangeNotifier {
   int get rejectedLeaves => _homeData?.currentUser?.rejected ?? 0;
   int get pendingLeaves => _homeData?.currentUser?.pending ?? 0;
 
-  // Initialize and load data
   Future<void> initialize() async {
-    await loadHomeData();
+    await _loadUserSummaryFromApi();
   }
 
-  Future<void> loadHomeData() async {
+  Future<void> _loadUserSummaryFromApi() async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
-      // Get user data from SharedPreferences
-      final userData = await AppStorage.getObject<LoginResponseModel>(
-        "user_details",
-        (json) => LoginResponseModel.fromJson(json),
-      );
 
-      if (userData != null) {
-        _homeData = userData;
-      } else {
-        _error = "No user data found";
-      }
+      // Replace with actual user ID (ideally get from AppStorage or token decoding)
+      const userId = '6877b8beae03e3763635516d';
+      final response = await _authenticationRepository.getUserSummary(userId);
+
+      _homeData = response;
+      await AppStorage.saveObject("user_details", response.toJson());
     } catch (e) {
       _error = "Failed to load user data: $e";
-      debugPrint("HomeViewModel error: $e");
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Refresh data
   Future<void> refresh() async {
-    await loadHomeData();
+    await _loadUserSummaryFromApi();
   }
 
-  // Get upcoming leaves for current user
   List<Leave> get myUpcomingLeaves => _homeData?.myUpcomingLeaves ?? [];
-
-  // Get team upcoming leaves
   List<Leave> get teamUpcomingLeaves => _homeData?.teamUpcomingLeaves ?? [];
 
-  // Get all upcoming leaves (my + team)
   List<Leave> get allUpcomingLeaves {
     final all = <Leave>[];
     all.addAll(myUpcomingLeaves);
@@ -73,9 +66,6 @@ class HomeViewModel extends ChangeNotifier {
     return all;
   }
 
-  // Check if user has any upcoming leaves
   bool get hasUpcomingLeaves => myUpcomingLeaves.isNotEmpty;
-
-  // Check if team has any upcoming leaves
   bool get hasTeamUpcomingLeaves => teamUpcomingLeaves.isNotEmpty;
 }
