@@ -314,10 +314,11 @@ class LeaveViewModel extends ChangeNotifier {
     }
   }
 
+  // MARK: SUBMIT LEAVE REQUEST
   Future<bool> submitLeaveRequest(ApplyLeaveRequestModel request) async {
     final response = await _repository.applyLeave(request);
 
-    if (response.success) {
+    if (response.success != null) {
       successLeaveId = response.leaveId;
       errorMessage = null;
       return true;
@@ -328,6 +329,7 @@ class LeaveViewModel extends ChangeNotifier {
     }
   }
 
+  // MARK: CREATE LEAVE REQUEST
   Future<ApplyLeaveRequestModel> _createLeaveRequest(String userId) async {
     final adjustedRange = getAdjustedDateRange();
     List<String> compOffDateStrings = selectedCompOffDates.map((date) {
@@ -355,6 +357,8 @@ class LeaveViewModel extends ChangeNotifier {
       documents: uploadedDocumentUrls,
     );
   }
+
+  // MARK: MANAGER SPECIFIC FUNCTIONS
 
   // MARK: - UTILITY METHODS
   Future<String?> _loadUserId() async {

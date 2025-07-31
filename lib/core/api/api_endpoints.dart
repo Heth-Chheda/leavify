@@ -10,9 +10,15 @@ class ApiEndpoints {
 
   // User
   static final String getUserSummary = '$baseUrl/employee/summary';
+  static final String uploadProfileImage = '$baseUrl/employee/upload-profile';
 
   // Leaves
   static final String applyLeave = '$baseUrl/request/apply';
   static final String getMyLeaves = '$baseUrl/request/getmyleaves';
   static final String editMyLeave = '$baseUrl/request/edit';
+  static final String sendReminderForLeave = '$baseUrl/request/sendReminder';
+  static final String cancelLeave = '$baseUrl/request/cancel';
+
+  // Leaves // Manager
+  static final String processLeave = '$baseUrl/request/process';
 }
