@@ -39,7 +39,7 @@ class HomeViewModel extends ChangeNotifier {
       notifyListeners();
 
       // Replace with actual user ID (ideally get from AppStorage or token decoding)
-      const userId = '6877b8beae03e3763635516d';
+      final userId = await AppStorage.getString("USER_ID") ?? "";
       final response = await _authenticationRepository.getUserSummary(userId);
 
       _homeData = response;
