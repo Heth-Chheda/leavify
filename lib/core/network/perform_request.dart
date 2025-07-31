@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:http/http.dart' as http;
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:retry/retry.dart';
@@ -20,48 +21,50 @@ class PerformRequest {
     Map<String, String>? multipartFiles,
   }) async {
     try {
+      final token = await AppStorage.getString('JWT_TOKEN');
       final authHeaders = await _buildHeaders(headers);
 
       return await _retry.retry(
-            () async {
+        () async {
           switch (method) {
             case RequestType.get:
               return await http.get(Uri.parse(url), headers: authHeaders);
 
             case RequestType.post:
-              return await http.post(
-                Uri.parse(url),
-                headers: authHeaders,
-                body: jsonEncode(body),
-              );
-
             case RequestType.put:
-              return await http.put(
+              final updatedJsonBody = _prepareJsonBody(
+                body,
+                token,
+                key: 'jwtToken',
+              );
+              final requestFn = method == RequestType.post
+                  ? http.post
+                  : http.put;
+              return await requestFn(
                 Uri.parse(url),
                 headers: authHeaders,
-                body: jsonEncode(body),
+                body: jsonEncode(updatedJsonBody),
               );
 
             case RequestType.delete:
-              return await http.delete(
-                Uri.parse(url),
-                headers: authHeaders,
-              );
+              return await http.delete(Uri.parse(url), headers: authHeaders);
 
             case RequestType.urlEncoded:
               final encodedHeaders = await _buildUrlEncodedHeaders(headers);
+              final updatedFormBody = _prepareFormBody(urlEncodedBody, token);
               return await http.post(
                 Uri.parse(url),
                 headers: encodedHeaders,
-                body: urlEncodedBody,
+                body: updatedFormBody,
               );
 
             case RequestType.multipart:
               var request = http.MultipartRequest("POST", Uri.parse(url));
-              if (authHeaders != null) request.headers.addAll(authHeaders);
-              if (multipartFields != null) {
-                request.fields.addAll(multipartFields);
-              }
+              request.headers.addAll(authHeaders);
+
+              final updatedFields = _prepareFormBody(multipartFields, token);
+              request.fields.addAll(updatedFields);
+
               if (multipartFiles != null) {
                 for (var entry in multipartFiles.entries) {
                   request.files.add(
@@ -69,12 +72,13 @@ class PerformRequest {
                   );
                 }
               }
+
               final streamed = await request.send();
               return await http.Response.fromStream(streamed);
           }
         },
         retryIf: (e) =>
-        e is SocketException ||
+            e is SocketException ||
             e is http.ClientException ||
             e is TimeoutException,
       );
@@ -83,22 +87,33 @@ class PerformRequest {
     }
   }
 
+  Map<String, dynamic> _prepareJsonBody(
+    Map<String, dynamic>? original,
+    String? token, {
+    String key = 'token',
+  }) {
+    return {...?original, if (token != null && token.isNotEmpty) key: token};
+  }
+
+  Map<String, String> _prepareFormBody(
+    Map<String, String>? original,
+    String? token, {
+    String key = 'token',
+  }) {
+    return {...?original, if (token != null && token.isNotEmpty) key: token};
+  }
+
   Future<Map<String, String>> _buildHeaders(Map<String, String>? custom) async {
-    final token = await AppStorage.getString('JWT_TOKEN');
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
       ...?custom,
     };
   }
 
-  Future<Map<String, String>> _buildUrlEncodedHeaders(Map<String, String>? custom) async {
-    final token = await AppStorage.getString('JWT_TOKEN');
-    return {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
-      ...?custom,
-    };
+  Future<Map<String, String>> _buildUrlEncodedHeaders(
+    Map<String, String>? custom,
+  ) async {
+    return {'Content-Type': 'application/x-www-form-urlencoded', ...?custom};
   }
 }
