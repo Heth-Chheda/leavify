@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/components/custom_loading_screen.dart';
 import 'package:leavify/core/utils/theme/app_theme.dart'; // Import your theme file
-import 'package:leavify/features/Authentication/viewmodal/login_view_model.dart';
+import 'package:leavify/features/Authentication/viewmodel/login_view_model.dart';
 import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {

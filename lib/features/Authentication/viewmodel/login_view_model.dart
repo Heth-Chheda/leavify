@@ -49,7 +49,7 @@ class LoginViewModel extends ChangeNotifier {
         password: password,
         loginType: 'EMAIL',
         fcmToken:
-            '', // also get the fcm token on generation. For temp keeping it anything
+            'kuch toh hai', // also get the fcm token on generation. For temp keeping it anything
       );
 
       // logins only
