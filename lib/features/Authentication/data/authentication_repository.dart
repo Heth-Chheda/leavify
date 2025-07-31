@@ -4,6 +4,7 @@ import 'package:leavify/core/api/api_endpoints.dart';
 import 'package:leavify/core/network/perform_request.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
+import 'package:leavify/features/Authentication/domain/response/login_response.dart';
 
 import '../domain/request/login_request.dart';
 
@@ -16,7 +17,7 @@ class AuthenticationRepository {
   final get = RequestType.get;
   final post = RequestType.post;
 
-  Future<void> login(LoginRequest request) async {
+  Future<LoginResponse> login(LoginRequest request) async {
     try {
       final response = await _performRequest.performRequest(
         url: ApiEndpoints.login,
@@ -26,8 +27,15 @@ class AuthenticationRepository {
       // switch case for the response
       switch (response.statusCode) {
         case 200:
-          AppStorage.saveBoolean('USER_IS_ALREADY_LOGGED_IN', true);
-          return;
+          final Map<String, dynamic> data = jsonDecode(response.body);
+          final loginResponse = LoginResponse.fromJson(data);
+
+          if (loginResponse.success) {
+            AppStorage.saveBoolean('USER_IS_ALREADY_LOGGED_IN', true);
+            AppStorage.saveString('JWT_TOKEN', loginResponse.jwtToken ?? '');
+            AppStorage.saveString('USER_ID', loginResponse.userId ?? '');
+          }
+          return loginResponse;
 
         case 400:
           throw ('Invalid credentials. Please try again.');
@@ -46,7 +54,6 @@ class AuthenticationRepository {
     }
   }
 
-  // for testing : 6877b8beae03e3763635516d
   Future<GetUserSummaryResponse> getUserSummary(String userId) async {
     try {
       final getUserSummaryResponse = await _performRequest.performRequest(
@@ -68,7 +75,7 @@ class AuthenticationRepository {
 
         default:
           throw Exception(
-            'Unknow error occurred ${getUserSummaryResponse.statusCode}',
+            'Unknown error occurred ${getUserSummaryResponse.statusCode}',
           );
       }
     } catch (e) {
