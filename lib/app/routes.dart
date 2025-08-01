@@ -6,6 +6,7 @@ import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
 import 'package:leavify/features/User/view/PendingRequests/pending_requests_screen.dart';
 import 'package:leavify/features/User/view/landing_view.dart';
 import 'package:leavify/features/User/view/profile/profile_screen.dart';
+import 'package:leavify/services/force_update_checker.dart';
 
 class Routes {
   static const String login = '/login';
@@ -18,95 +19,100 @@ class Routes {
   static const String leaveDetail = '/leave-detail';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
+    Widget page;
+
     switch (settings.name) {
       case login:
-        return MaterialPageRoute(builder: (_) => const LoginPage());
+        page = const LoginPage();
+        break;
 
       case home:
-        return MaterialPageRoute(builder: (_) => const LandingView());
+        page = const LandingView();
+        break;
 
       case applyLeave:
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            appBar: AppBar(
-              title: const Text('Apply Leave'),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 0.5,
-            ),
-            body: const ApplyLeaveScreen(),
+        page = Scaffold(
+          appBar: AppBar(
+            title: const Text('Apply Leave'),
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            elevation: 0.5,
           ),
+          body: const ApplyLeaveScreen(),
         );
+        break;
 
       case profile:
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            appBar: AppBar(
-              title: const Text('Profile'),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 0.5,
-            ),
-            body: const ProfileScreen(),
+        page = Scaffold(
+          appBar: AppBar(
+            title: const Text('Profile'),
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            elevation: 0.5,
           ),
+          body: const ProfileScreen(),
         );
+        break;
 
       case leaveDetail:
         final args = settings.arguments as Map<String, dynamic>?;
         if (args != null &&
             args['leave'] is MyLeaves &&
             args['userId'] is String) {
-          return MaterialPageRoute(
-            builder: (_) => LeaveDetailScreen(
-              leave: args['leave'] as MyLeaves,
-              userId: args['userId'] as String,
-            ),
+          page = LeaveDetailScreen(
+            leave: args['leave'] as MyLeaves,
+            userId: args['userId'] as String,
           );
+          break;
         }
         return _errorRoute('Invalid arguments for leave detail');
 
       case analytics:
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            appBar: AppBar(
-              title: const Text('Analytics'),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 0.5,
-            ),
-            body: const Placeholder(), // You'll need to create this
+        page = Scaffold(
+          appBar: AppBar(
+            title: const Text('Analytics'),
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            elevation: 0.5,
           ),
+          body: const Placeholder(), // You'll need to create this
         );
+        break;
 
       case pending:
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            appBar: AppBar(
-              title: const Text('Pending Requests'),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 0.5,
-            ),
-            body: const PendingRequestsScreen(), // You'll need to create this
+        page = Scaffold(
+          appBar: AppBar(
+            title: const Text('Pending Requests'),
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            elevation: 0.5,
           ),
+          body: const PendingRequestsScreen(), // You'll need to create this
         );
+        break;
 
       case notifications:
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            appBar: AppBar(
-              title: const Text('Notifications'),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 0.5,
-            ),
-            body: const Placeholder(),
+        page = Scaffold(
+          appBar: AppBar(
+            title: const Text('Notifications'),
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            elevation: 0.5,
           ),
+          body: const Placeholder(),
         );
+        break;
 
       default:
         return _errorRoute('No Route Defined');
     }
+
+    // Wrap only the login page (initial route) with ForceUpdateWrapper
+    if (settings.name == login) {
+      page = ForceUpdateWrapper(child: page);
+    }
+
+    return MaterialPageRoute(builder: (_) => page);
   }
 
   static MaterialPageRoute _errorRoute(String message) {
