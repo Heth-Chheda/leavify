@@ -3,12 +3,14 @@ class LoginResponse {
   final String? message;
   final String? userId;
   final String? jwtToken;
+  final String? error;
 
   LoginResponse({
     required this.success,
     this.message,
     this.userId,
     this.jwtToken,
+    this.error,
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class LoginResponse {
       message: json['message'],
       userId: json['userId'],
       jwtToken: json['jwtToken'],
+      error: json['error'],
     );
   }
 }

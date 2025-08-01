@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:leavify/features/User/data/leave_repository.dart';
+import 'package:leavify/features/User/data/user_repository.dart';
 import 'package:leavify/features/User/domain/models/leave_document.dart';
 import 'package:leavify/features/User/domain/models/my_leaves.dart';
 
@@ -7,6 +8,7 @@ enum ProfileViewState { loading, success, error }
 
 class ProfileViewModel extends ChangeNotifier {
   final LeaveRepository _repository = LeaveRepository();
+  final UserRepository _userRepository = UserRepository();
 
   ProfileViewState _state = ProfileViewState.loading;
   LeaveData? _leaveData;
@@ -26,6 +28,7 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // MARK: LOAD USER LEAVES
   Future<void> loadUserLeaves(String userId) async {
     _setState(ProfileViewState.loading);
 
@@ -47,6 +50,7 @@ class ProfileViewModel extends ChangeNotifier {
     loadUserLeaves(userId);
   }
 
+  // MARK: UPDATE LEAVE
   Future<bool> updateLeave({
     required String leaveId,
     required String userId,
@@ -116,6 +120,29 @@ class ProfileViewModel extends ChangeNotifier {
       notifyListeners();
       return true; // TODO: HANDLING THE RESPONSE
       // return success;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // MARK: UPLOAD PROFILE IMAGE
+  Future<bool> uploadProfileImage(String imagePath) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _userRepository.uploadProfileImage(profileImagePath: imagePath);
+      _isLoading = false;
+
+      // Optionally reload user data if needed here
+      // await loadUserLeaves(userId);
+
+      notifyListeners();
+      return true;
     } catch (e) {
       _errorMessage = e.toString();
       _isLoading = false;

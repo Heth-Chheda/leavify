@@ -17,6 +17,7 @@ class AuthenticationRepository {
   final get = RequestType.get;
   final post = RequestType.post;
 
+  // MARK: LOGIN
   Future<LoginResponse> login(LoginRequest request) async {
     try {
       final response = await _performRequest.performRequest(
@@ -54,6 +55,7 @@ class AuthenticationRepository {
     }
   }
 
+  // MARK: GET USER SUMMARY
   Future<GetUserSummaryResponse> getUserSummary(String userId) async {
     try {
       final getUserSummaryResponse = await _performRequest.performRequest(
