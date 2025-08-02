@@ -43,7 +43,7 @@ class _ForceUpdateWrapperState extends State<ForceUpdateWrapper> {
 
       // Compare versions: if outdated, prompt update
       // NOTE: Using `true ||` forces the update dialog to always show for now
-      if (true || _isVersionOutdated(currentVersion, latestVersion)) {
+      if (_isVersionOutdated(currentVersion, latestVersion)) {
         if (mounted) {
           await _showForceUpdateDialog(context);
         }
@@ -59,7 +59,7 @@ class _ForceUpdateWrapperState extends State<ForceUpdateWrapper> {
   Future<String> _getRequiredVersionFromServer() async {
     // Simulate network delay (optional - remove in production for faster check)
     await Future.delayed(const Duration(milliseconds: 500));
-    return '2.0.0'; // Example: Server mandates 2.0.0 or above
+    return '1.0.0'; // Example: Server mandates 2.0.0 or above
   }
 
   /// Compares the current version to the required one

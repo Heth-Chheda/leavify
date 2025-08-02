@@ -99,6 +99,7 @@ class LeaveViewModel extends ChangeNotifier {
             initialDate: selectedStartDate ?? now,
             firstDate: now,
             lastDate: DateTime(now.year + 1),
+            onClose: () => Navigator.of(context).pop(),
             onDateRangeSelected: (startDate, endDate) {
               selectedStartDate = startDate;
               selectedEndDate = endDate;

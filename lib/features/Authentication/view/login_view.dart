@@ -1,5 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/components/custom_loading_screen.dart';
+import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/core/utils/theme/app_theme.dart'; // Import your theme file
 import 'package:leavify/features/Authentication/viewmodel/login_view_model.dart';
 import 'package:provider/provider.dart';
@@ -38,28 +41,29 @@ class _LoginPageState extends State<LoginPage>
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: AppTheme.backgroundPrimary,
-        body: Stack(
-          children: [
-            // Enhanced gradient wave background
-            _buildBackground(),
-            SafeArea(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 30),
-                    _buildHeader(),
-                    const SizedBox(height: 40),
-                    _buildMainCard(),
-                    const SizedBox(height: 40),
-                  ],
-                ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+            return AnimatedPadding(
+              duration: const Duration(milliseconds: 200),
+              padding: EdgeInsets.only(bottom: bottomInset),
+              child: Stack(
+                children: [
+                  _buildBackground(),
+                  SafeArea(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [const SizedBox(height: 10), _buildHeader()],
+                      ),
+                    ),
+                  ),
+                  _buildMainCard(),
+                  if (viewModel.isLoading) const CustomLoadingScreen(),
+                ],
               ),
-            ),
-
-            if (viewModel.isLoading) const CustomLoadingScreen(),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -69,125 +73,61 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildBackground() {
     return Stack(
       children: [
-        // Primary wave with blue gradient
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: ClipPath(
-            clipper: EnhancedWaveClipper(),
-            child: Container(
-              height: 350,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: AppTheme.waveGradient,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
+        // Full-screen gradient background
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0A0A1F), Color(0xFF203A74)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
           ),
         ),
-        // Secondary overlay wave for depth with indigo/purple gradient
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          child: ClipPath(
-            clipper: SecondaryWaveClipper(),
-            child: Container(
-              height: 320,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.accentIndigo.withOpacity(0.3),
-                    AppTheme.accentPurple.withOpacity(0.3),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-          ),
-        ),
+
+        // Wave texture overlays
+        Positioned.fill(child: CustomPaint(painter: WaveTexturePainter())),
       ],
     );
   }
 
   // MARK: HEADER
   Widget _buildHeader() {
-    return Column(
+    return Row(
       children: [
-        // Enhanced logo with glassmorphism effect
+        // Enhanced logo with glass morphism effect
         Container(
-          width: 100,
-          height: 100,
+          margin: EdgeInsets.only(left: 10),
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: AppTheme.logoGradient,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.white.withOpacity(0.3),
-                blurRadius: 30,
-                offset: const Offset(0, 15),
-                spreadRadius: 0,
-              ),
-              BoxShadow(
-                color: AppTheme.accentIndigo.withOpacity(0.2),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-                spreadRadius: -5,
-              ),
-            ],
-            border: Border.all(
-              color: AppTheme.white.withOpacity(0.5),
-              width: 2,
-            ),
+            color: AppColors.highlightBlue,
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryBlue.withOpacity(0.1),
-                  AppTheme.primaryBlueDark.withOpacity(0.1),
-                ],
-              ),
-            ),
-            child: const Icon(
-              Icons.eco_rounded,
-              color: AppTheme.primaryBlueDark,
-              size: 50,
+        ),
+        Container(
+          margin: EdgeInsets.only(left: 15),
+          decoration: BoxDecoration(),
+          child: const Text(
+            'rite',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFFF0000),
+              letterSpacing: -0.2,
+              height: 1.2,
             ),
           ),
         ),
-        const SizedBox(height: 24),
-        // Enhanced app name with gradient text effect
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: AppTheme.logoGradient,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ).createShader(bounds),
+        Container(
+          decoration: BoxDecoration(),
           child: const Text(
-            "Leavify",
+            'Technologies',
             style: TextStyle(
-              fontSize: 38,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.white,
-              letterSpacing: 2.0,
-              fontFamily: 'Montserrat',
-              shadows: [
-                Shadow(
-                  offset: Offset(0, 4),
-                  blurRadius: 8,
-                  color: AppTheme.shadowDark,
-                ),
-              ],
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: -0.2,
+              height: 1.2,
             ),
           ),
         ),
@@ -197,87 +137,70 @@ class _LoginPageState extends State<LoginPage>
 
   // MARK: MAIN CARD
   Widget _buildMainCard() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppTheme.backgroundSecondary,
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 40,
-              offset: const Offset(0, 20),
-              spreadRadius: -5,
+    final notchDepth = 55.0;
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Main card with notch
+          ClipPath(
+            clipper: TopNotchClipper(),
+            child: Container(
+              width: double.infinity,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.80,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 100),
+                    _buildEmailForm(),
+                    _buildForgotPassword(),
+                    const SizedBox(height: 20),
+                    _buildLoginButton(),
+                    const SizedBox(height: 50),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            children: [
-              _buildTabBar(),
-              const SizedBox(height: 32),
-              _buildLoginForm(),
-              const SizedBox(height: 10),
-              _buildForgotPassword(),
-              _buildLoginButton(),
-            ],
           ),
-        ),
-      ),
-    );
-  }
-
-  // MARK: TAB BAR
-  Widget _buildTabBar() {
-    return Container(
-      height: 65,
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: AppTheme.backgroundCard,
-        borderRadius: BorderRadius.circular(35),
-        border: Border.all(color: AppTheme.borderLight, width: 1.5),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        indicator: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: AppTheme.secondaryGradient,
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
+          Positioned(
+            top: -notchDepth,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: const BoxDecoration(
+                  color: Colors.black,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.fingerprint,
+                  color: Colors.green,
+                  size: 42,
+                ),
+              ),
+            ),
           ),
-          borderRadius: BorderRadius.circular(29),
-        ),
-        labelColor: AppTheme.white,
-        unselectedLabelColor: AppTheme.textMuted,
-        labelStyle: const TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 16,
-          letterSpacing: 0.5,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 16,
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: AppTheme.transparent,
-        tabs: const [
-          Tab(text: 'Email'),
-          Tab(text: 'Phone'),
         ],
-      ),
-    );
-  }
-
-  // MARK: LOGIN FORM
-  Widget _buildLoginForm() {
-    return SizedBox(
-      height: 220,
-      child: TabBarView(
-        controller: _tabController,
-        children: [_buildEmailForm(), _buildPhoneForm()],
       ),
     );
   }
@@ -299,23 +222,6 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  // MARK: PHONE FORM
-  Widget _buildPhoneForm() {
-    return Column(
-      children: [
-        _buildUsernameField(
-          label: 'Phone Number',
-          hintText: 'Enter your phone number',
-          prefixIcon: Icons.phone_rounded,
-          keyboardType: TextInputType.phone,
-          gradientColors: AppTheme.phoneGradient,
-        ),
-        const SizedBox(height: 25),
-        _buildPasswordField(),
-      ],
-    );
-  }
-
   // MARK: USERNAME FIELD
   Widget _buildUsernameField({
     required String label,
@@ -330,9 +236,9 @@ class _LoginPageState extends State<LoginPage>
         Text(
           label,
           style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textSecondary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.blueAccent,
             letterSpacing: 0.3,
           ),
         ),
@@ -353,6 +259,7 @@ class _LoginPageState extends State<LoginPage>
             ),
             decoration: InputDecoration(
               hintText: hintText,
+              fillColor: Colors.transparent,
               hintStyle: const TextStyle(
                 color: AppTheme.textHint,
                 fontWeight: FontWeight.w500,
@@ -368,11 +275,13 @@ class _LoginPageState extends State<LoginPage>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(prefixIcon, color: AppTheme.white, size: 18),
               ),
               border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 20,
                 vertical: 18,
@@ -392,9 +301,9 @@ class _LoginPageState extends State<LoginPage>
         const Text(
           'Password',
           style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textSecondary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.blueAccent,
             letterSpacing: 0.3,
           ),
         ),
@@ -407,6 +316,7 @@ class _LoginPageState extends State<LoginPage>
           ),
           child: TextFormField(
             controller: _viewModel.passwordController,
+            onFieldSubmitted: (_) => _handleLogin(),
             obscureText: !_isPasswordVisible,
             style: const TextStyle(
               fontSize: 16,
@@ -415,6 +325,7 @@ class _LoginPageState extends State<LoginPage>
             ),
             decoration: InputDecoration(
               hintText: 'Enter your password',
+              fillColor: Colors.transparent,
               hintStyle: const TextStyle(
                 color: AppTheme.textHint,
                 fontWeight: FontWeight.w500,
@@ -453,6 +364,8 @@ class _LoginPageState extends State<LoginPage>
                 },
               ),
               border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 20,
                 vertical: 18,
@@ -496,11 +409,7 @@ class _LoginPageState extends State<LoginPage>
           width: double.infinity,
           height: 65,
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: AppTheme.buttonGradient,
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
+            color: AppColors.highlightBlue,
             borderRadius: BorderRadius.all(Radius.circular(25)),
           ),
           child: Material(
@@ -551,45 +460,51 @@ class _LoginPageState extends State<LoginPage>
   }
 }
 
-// Enhanced wave clipper with more curvy and realistic wave pattern
-class EnhancedWaveClipper extends CustomClipper<Path> {
+class TopNotchClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
+    const notchWidth = 180.0;
+    const notchDepth = 60.0;
+
     final path = Path();
+    path.moveTo(0, 0);
 
-    // Start from top-left
-    path.lineTo(0, size.height - 120);
+    // Calculate notch boundaries (centered)
+    final leftNotchStart = (size.width - notchWidth) / 2;
+    final rightNotchEnd = (size.width + notchWidth) / 2;
+    final notchCenter = size.width / 2;
 
-    // Create multiple wave curves for more realistic and curvy wave effect
-    var firstControlPoint = Offset(size.width * 0.15, size.height - 40);
-    var firstEndPoint = Offset(size.width * 0.35, size.height - 80);
+    path.lineTo(leftNotchStart, 0);
+
+    // Ultra-smooth left curve into notch with very gentle control points
     path.quadraticBezierTo(
-      firstControlPoint.dx,
-      firstControlPoint.dy,
-      firstEndPoint.dx,
-      firstEndPoint.dy,
+      leftNotchStart + notchWidth * 0.15, // very gentle control point
+      notchDepth * 0.1, // shallow control for gradual curve
+      notchCenter - notchWidth * 0.268,
+      notchDepth * 0.38,
     );
 
-    var secondControlPoint = Offset(size.width * 0.55, size.height - 140);
-    var secondEndPoint = Offset(size.width * 0.75, size.height - 60);
+    // Center curve (bottom of notch) for ultra-smooth transition - made smoother
     path.quadraticBezierTo(
-      secondControlPoint.dx,
-      secondControlPoint.dy,
-      secondEndPoint.dx,
-      secondEndPoint.dy,
+      notchCenter,
+      notchDepth * 1.05, // slightly deeper for smoother curve
+      notchCenter + notchWidth * 0.268, // symmetric to left side
+      notchDepth * 0.38, // symmetric to left side
     );
 
-    var thirdControlPoint = Offset(size.width * 0.9, size.height - 20);
-    var thirdEndPoint = Offset(size.width, size.height - 50);
+    // Ultra-smooth right curve out of notch - made symmetric to left
     path.quadraticBezierTo(
-      thirdControlPoint.dx,
-      thirdControlPoint.dy,
-      thirdEndPoint.dx,
-      thirdEndPoint.dy,
+      rightNotchEnd - notchWidth * 0.15, // symmetric to left side
+      notchDepth * 0.1, // symmetric shallow control
+      rightNotchEnd,
+      0,
     );
 
     path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
     path.close();
+
     return path;
   }
 
@@ -597,47 +512,92 @@ class EnhancedWaveClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
-// Secondary wave for layered effect with more curves
-class SecondaryWaveClipper extends CustomClipper<Path> {
+class WaveTexturePainter extends CustomPainter {
   @override
-  Path getClip(Size size) {
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.fill
+      ..blendMode = BlendMode.overlay;
+
+    // Create multiple wave layers for texture
+    _paintWaveLayer(
+      canvas,
+      size,
+      paint,
+      color: Colors.white.withOpacity(0.05),
+      amplitude: 30,
+      frequency: 0.02,
+      phase: 0,
+      yOffset: size.height * 0.1,
+    );
+
+    _paintWaveLayer(
+      canvas,
+      size,
+      paint,
+      color: Colors.white.withOpacity(0.08),
+      amplitude: 45,
+      frequency: 0.015,
+      phase: math.pi / 3,
+      yOffset: size.height * 0.3,
+    );
+
+    _paintWaveLayer(
+      canvas,
+      size,
+      paint,
+      color: Colors.blue.withOpacity(0.08),
+      amplitude: 25,
+      frequency: 0.025,
+      phase: math.pi / 2,
+      yOffset: size.height * 0.7,
+    );
+
+    _paintWaveLayer(
+      canvas,
+      size,
+      paint,
+      color: Colors.white.withOpacity(0.02),
+      amplitude: 60,
+      frequency: 0.01,
+      phase: math.pi,
+      yOffset: size.height * 0.8,
+    );
+  }
+
+  void _paintWaveLayer(
+    Canvas canvas,
+    Size size,
+    Paint paint, {
+    required Color color,
+    required double amplitude,
+    required double frequency,
+    required double phase,
+    required double yOffset,
+  }) {
+    paint.color = color;
+
     final path = Path();
+    path.moveTo(0, size.height);
 
-    path.lineTo(0, size.height - 90);
+    // Create wave points
+    for (double x = 0; x <= size.width; x += 2) {
+      final y = yOffset + amplitude * math.sin(frequency * x + phase);
+      if (x == 0) {
+        path.lineTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
 
-    // More control points for curvier waves
-    var firstControlPoint = Offset(size.width * 0.2, size.height - 30);
-    var firstEndPoint = Offset(size.width * 0.4, size.height - 70);
-    path.quadraticBezierTo(
-      firstControlPoint.dx,
-      firstControlPoint.dy,
-      firstEndPoint.dx,
-      firstEndPoint.dy,
-    );
-
-    var secondControlPoint = Offset(size.width * 0.6, size.height - 120);
-    var secondEndPoint = Offset(size.width * 0.8, size.height - 40);
-    path.quadraticBezierTo(
-      secondControlPoint.dx,
-      secondControlPoint.dy,
-      secondEndPoint.dx,
-      secondEndPoint.dy,
-    );
-
-    var thirdControlPoint = Offset(size.width * 0.95, size.height - 10);
-    var thirdEndPoint = Offset(size.width, size.height - 30);
-    path.quadraticBezierTo(
-      thirdControlPoint.dx,
-      thirdControlPoint.dy,
-      thirdEndPoint.dx,
-      thirdEndPoint.dy,
-    );
-
-    path.lineTo(size.width, 0);
+    // Close the path to fill the bottom area
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
     path.close();
-    return path;
+
+    canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

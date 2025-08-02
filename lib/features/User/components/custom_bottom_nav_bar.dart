@@ -20,8 +20,6 @@ class CustomBottomNavBar extends StatefulWidget {
 }
 
 class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
-  bool _isPositionCalculated = false;
-
   @override
   void initState() {
     super.initState();
@@ -56,46 +54,42 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       ]);
     }
 
-    return SafeArea(
-      bottom: true,
-      right: false,
-      top: false,
-      left: false,
-      child: Container(
-        height: 60,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              offset: const Offset(0, -2),
-              blurRadius: 20,
-              spreadRadius: 0,
-            ),
-          ],
-          border: Border(
-            top: BorderSide(color: Colors.black.withOpacity(0.1), width: 0.5),
+    return Container(
+      margin: EdgeInsets.all(16),
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, -2),
+            blurRadius: 20,
+            spreadRadius: 0,
           ),
+        ],
+        border: Border(
+          top: BorderSide(color: Colors.black.withOpacity(0.1), width: 0.5),
         ),
-        child: Stack(
-          children: [
-            // Navigation Items
-            Row(
-              children: navItems.map((item) {
-                return Expanded(
-                  child: _NavItem(
-                    icon: item.icon,
-                    // Only home tab (index 0) should be selected since others navigate away
-                    isSelected: item.index == 0,
-                    onTap: () {
-                      widget.onTabSelected(item.index);
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
+      ),
+      child: Stack(
+        children: [
+          // Navigation Items
+          Row(
+            children: navItems.map((item) {
+              return Expanded(
+                child: _NavItem(
+                  icon: item.icon,
+                  // Only home tab (index 0) should be selected since others navigate away
+                  isSelected: item.index == 0,
+                  onTap: () {
+                    widget.onTabSelected(item.index);
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }

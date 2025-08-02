@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/view/login_view.dart';
 import 'package:leavify/features/User/components/profile/leave_detail_screeen.dart';
 import 'package:leavify/features/User/domain/models/my_leaves.dart';
@@ -17,11 +18,60 @@ class Routes {
   static const String pending = '/pending';
   static const String notifications = '/notifications';
   static const String leaveDetail = '/leave-detail';
+  static const String announcements = '/announcements';
+  static const String userSettings = '/settings';
+
+  // Custom AppBar builder that adapts to theme
+  static PreferredSizeWidget _buildThemedAppBar({
+    required BuildContext context,
+    required String title,
+    bool showBackButton = true,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return AppBar(
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 24,
+          color: isDark ? AppColors.darkText : AppColors.lightText,
+        ),
+      ),
+      centerTitle: true,
+      backgroundColor: isDark
+          ? AppColors.darkBackground
+          : AppColors.lightBackground,
+      foregroundColor: isDark ? AppColors.darkText : AppColors.lightText,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      leading: showBackButton
+          ? IconButton(
+              icon: Icon(
+                Icons.chevron_left,
+                size: 45,
+                color: isDark ? AppColors.darkText : AppColors.lightText,
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          : null,
+    );
+  }
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     Widget page;
 
     switch (settings.name) {
+      case userSettings:
+        page = Builder(
+          builder: (context) => Scaffold(
+            appBar: _buildThemedAppBar(context: context, title: 'Settings'),
+            body: const Placeholder(),
+          ),
+        );
+        break;
+
       case login:
         page = const LoginPage();
         break;
@@ -31,26 +81,20 @@ class Routes {
         break;
 
       case applyLeave:
-        page = Scaffold(
-          appBar: AppBar(
-            title: const Text('Apply Leave'),
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            elevation: 0.5,
+        page = Builder(
+          builder: (context) => Scaffold(
+            appBar: _buildThemedAppBar(context: context, title: 'Apply Leave'),
+            body: const ApplyLeaveScreen(),
           ),
-          body: const ApplyLeaveScreen(),
         );
         break;
 
       case profile:
-        page = Scaffold(
-          appBar: AppBar(
-            title: const Text('Profile'),
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            elevation: 0.5,
+        page = Builder(
+          builder: (context) => Scaffold(
+            appBar: _buildThemedAppBar(context: context, title: 'Profile'),
+            body: const ProfileScreen(),
           ),
-          body: const ProfileScreen(),
         );
         break;
 
@@ -59,47 +103,64 @@ class Routes {
         if (args != null &&
             args['leave'] is MyLeaves &&
             args['userId'] is String) {
-          page = LeaveDetailScreen(
-            leave: args['leave'] as MyLeaves,
-            userId: args['userId'] as String,
+          page = Builder(
+            builder: (context) => Scaffold(
+              appBar: _buildThemedAppBar(
+                context: context,
+                title: 'Leave Details',
+              ),
+              body: LeaveDetailScreen(
+                leave: args['leave'] as MyLeaves,
+                userId: args['userId'] as String,
+              ),
+            ),
           );
           break;
         }
         return _errorRoute('Invalid arguments for leave detail');
 
       case analytics:
-        page = Scaffold(
-          appBar: AppBar(
-            title: const Text('Analytics'),
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            elevation: 0.5,
+        page = Builder(
+          builder: (context) => Scaffold(
+            appBar: _buildThemedAppBar(context: context, title: 'Analytics'),
+            body: const Placeholder(),
           ),
-          body: const Placeholder(), // You'll need to create this
         );
         break;
 
       case pending:
-        page = Scaffold(
-          appBar: AppBar(
-            title: const Text('Pending Requests'),
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            elevation: 0.5,
+        page = Builder(
+          builder: (context) => Scaffold(
+            appBar: _buildThemedAppBar(
+              context: context,
+              title: 'Pending Requests',
+            ),
+            body: const PendingRequestsScreen(),
           ),
-          body: const PendingRequestsScreen(), // You'll need to create this
         );
         break;
 
       case notifications:
-        page = Scaffold(
-          appBar: AppBar(
-            title: const Text('Notifications'),
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            elevation: 0.5,
+        page = Builder(
+          builder: (context) => Scaffold(
+            appBar: _buildThemedAppBar(
+              context: context,
+              title: 'Notifications',
+            ),
+            body: const Placeholder(),
           ),
-          body: const Placeholder(),
+        );
+        break;
+
+      case announcements:
+        page = Builder(
+          builder: (context) => Scaffold(
+            appBar: _buildThemedAppBar(
+              context: context,
+              title: 'Announcements',
+            ),
+            body: const Placeholder(),
+          ),
         );
         break;
 
@@ -117,24 +178,99 @@ class Routes {
 
   static MaterialPageRoute _errorRoute(String message) {
     return MaterialPageRoute(
-      builder: (_) => Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text(
-                message,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        return Scaffold(
+          backgroundColor: isDark
+              ? AppColors.darkBackground
+              : AppColors.lightBackground,
+          appBar: _buildThemedAppBar(
+            context: context,
+            title: 'Error',
+            showBackButton: true,
           ),
-        ),
-      ),
+          body: Center(
+            child: Container(
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [
+                          Colors.red.withOpacity(0.2),
+                          Colors.red.withOpacity(0.1),
+                        ]
+                      : [
+                          Colors.red.withOpacity(0.1),
+                          Colors.red.withOpacity(0.05),
+                        ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.red.withOpacity(0.3)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Colors.red,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Oops!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppColors.darkText : AppColors.lightText,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDark
+                          ? AppColors.darkText.withOpacity(0.8)
+                          : AppColors.lightText.withOpacity(0.8),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Go Back',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

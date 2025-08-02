@@ -25,10 +25,10 @@ class AuthenticationRepository {
         method: post,
         body: request.toJson(),
       );
+      final Map<String, dynamic> data = jsonDecode(response.body);
       // switch case for the response
       switch (response.statusCode) {
         case 200:
-          final Map<String, dynamic> data = jsonDecode(response.body);
           final loginResponse = LoginResponse.fromJson(data);
 
           if (loginResponse.success) {
@@ -39,7 +39,7 @@ class AuthenticationRepository {
           return loginResponse;
 
         case 400:
-          throw ('Invalid credentials. Please try again.');
+          throw ('Something went wrong please try again.');
 
         case 401:
           throw ('Unauthorized access.');
