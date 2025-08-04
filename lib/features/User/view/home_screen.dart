@@ -59,8 +59,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onTabSelected(int index) {
-    final bool isManagerOrHR =
-        _userRole == UserRole.manager || _userRole == UserRole.hr;
+    final role = _viewModel.userRole.toLowerCase();
+    final bool isManagerOrHR = role == 'manager' || role == 'hr';
 
     if (isManagerOrHR) {
       // Manager/HR navigation: Home, Analytics, Add, History, Pending
@@ -109,7 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   int _currentIndex = 0;
-  UserRole _userRole = UserRole.employee;
 
   @override
   Widget build(BuildContext context) {
@@ -175,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: CustomBottomNavBar(
               currentIndex: _currentIndex,
               onTabSelected: _onTabSelected,
-              role: _userRole,
+              role: _viewModel.userRole,
             ),
           ),
         ),

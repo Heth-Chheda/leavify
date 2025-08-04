@@ -6,7 +6,7 @@ enum UserRole { employee, manager, hr }
 class CustomBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final Function(int) onTabSelected;
-  final UserRole role;
+  final String role;
 
   const CustomBottomNavBar({
     super.key,
@@ -28,8 +28,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isManagerOrHR =
-        widget.role == UserRole.manager || widget.role == UserRole.hr;
+    final bool isManagerOrHR = widget.role != 'employee';
 
     // Navigation items based on role
     final List<_NavItemData> navItems = [];

@@ -359,8 +359,6 @@ class LeaveViewModel extends ChangeNotifier {
     );
   }
 
-  // MARK: MANAGER SPECIFIC FUNCTIONS
-
   // MARK: - UTILITY METHODS
   Future<String?> _loadUserId() async {
     final user = await AppStorage.getObject<GetUserSummaryResponse>(
