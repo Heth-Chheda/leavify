@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Leavify',
       debugShowCheckedModeBanner: false,
-      initialRoute: Routes.home,
+      initialRoute: Routes.login,
       onGenerateRoute: Routes.generateRoute,
       theme: AppTheme2.lightTheme,
       darkTheme: AppTheme2.darkTheme,
