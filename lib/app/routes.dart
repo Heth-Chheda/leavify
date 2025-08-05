@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/utils/components/work_in_progress.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/view/login_view.dart';
 import 'package:leavify/features/User/components/profile/leave_detail_screeen.dart';
 import 'package:leavify/features/User/domain/models/my_leaves.dart';
 import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
-import 'package:leavify/features/User/view/PendingRequests/pending_requests_screen.dart';
 import 'package:leavify/features/User/view/landing_view.dart';
+import 'package:leavify/features/User/view/manager/PendingRequests/pending_request.dart';
 import 'package:leavify/features/User/view/profile/profile_screen.dart';
 import 'package:leavify/services/force_update_checker.dart';
 
@@ -123,7 +124,7 @@ class Routes {
         page = Builder(
           builder: (context) => Scaffold(
             appBar: _buildThemedAppBar(context: context, title: 'Analytics'),
-            body: const Placeholder(),
+            body: const WorkInProgressScreen(),
           ),
         );
         break;
@@ -135,7 +136,8 @@ class Routes {
               context: context,
               title: 'Pending Requests',
             ),
-            body: const PendingRequestsScreen(),
+            body: const PendingLeavesScreen(),
+            // body: const PendingRequestsScreen(),
           ),
         );
         break;

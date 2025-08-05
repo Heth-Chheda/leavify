@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:leavify/core/api/api_endpoints.dart';
 import 'package:leavify/core/network/perform_request.dart';
+import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/User/domain/models/my_leaves.dart';
 import 'package:leavify/features/User/domain/request/apply_leave_request_model.dart';
 import 'package:leavify/features/User/domain/response/apply_leave_response_model.dart';
@@ -155,7 +156,6 @@ class LeaveRepository {
   // MARK: PROCESS LEAVES
   Future<GeneralResponse> processLeave({
     required String leaveId,
-    required String userId,
     required String status,
     required String
     actionTakenBy, // user_id of the manager or hr or super admin
@@ -166,9 +166,9 @@ class LeaveRepository {
         method: RequestType.post,
         body: {
           'leaveId': leaveId,
-          'userId': userId,
           'status': status,
           'actionTakenBy': actionTakenBy,
+          'comment': 'lhjaslfjhslfhjslfj',
         },
       );
       final jsonData = json.decode(processLeaveResponse.body);
@@ -190,6 +190,45 @@ class LeaveRepository {
           throw Exception(
             'Unexpected error: ${processLeaveResponse.statusCode}',
           );
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // MARK: GET PENDING LEAVES
+  Future<List<GetAllResponse>> getPendingLeaves({
+    required String userId,
+  }) async {
+    try {
+      final response = await _api.performRequest(
+        url: ApiEndpoints.getPendingLeaves,
+        method: RequestType.post,
+        body: {'userId': userId},
+      );
+
+      switch (response.statusCode) {
+        case 200:
+          final data = jsonDecode(response.body);
+          final result = data['result'] as List<dynamic>;
+
+          final pendingLeaves = result
+              .map((leaveJson) => GetAllResponse.fromJson(leaveJson))
+              .toList();
+
+          return pendingLeaves;
+
+        case 400:
+          throw Exception(
+            "Bad Request: The server could not understand the request.",
+          );
+        case 401:
+          throw Exception("Unauthorized: Please login again.");
+        case 500:
+          throw Exception("Server Error: Please try again later.");
+
+        default:
+          throw Exception("Unexpected Error: ${response.statusCode}");
       }
     } catch (e) {
       rethrow;

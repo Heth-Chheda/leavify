@@ -16,6 +16,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -185,38 +186,34 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
   }
 
   Widget _buildLeaveForm(bool isDark, LeaveViewModel leaveViewModel) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      child: Form(
-        key: leaveViewModel.formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Date Selection Section
-            _buildDateSelectionSection(leaveViewModel, isDark),
-            const SizedBox(height: 24),
-
-            // // Leave Duration Section
-            // _buildLeaveDurationSection(leaveViewModel, isDark),
-            // const SizedBox(height: 24),
-            //
-            // // Comp Off Section
-            // _buildCompOffSection(leaveViewModel, isDark),
-            // const SizedBox(height: 24),
-
-            // Reason Section
-            _buildReasonSection(leaveViewModel, isDark),
-            const SizedBox(height: 24),
-
-            // Documents Section
-            _buildDocumentsSection(leaveViewModel, isDark),
-            const SizedBox(height: 150),
-
-            // Submit Button
-            _buildSubmitButton(leaveViewModel, isDark),
-          ],
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 80), // leave space for button
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDateSelectionSection(leaveViewModel, isDark),
+                  const SizedBox(height: 24),
+                  _buildReasonSection(leaveViewModel, isDark),
+                  const SizedBox(height: 24),
+                  _buildDocumentsSection(leaveViewModel, isDark),
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
+        Positioned(
+          bottom: 20,
+          left: 20,
+          right: 20,
+          child: _buildSubmitButton(leaveViewModel, isDark),
+        ),
+      ],
     );
   }
 

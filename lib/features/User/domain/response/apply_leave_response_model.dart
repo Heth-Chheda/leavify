@@ -12,4 +12,9 @@ class ApplyLeaveResponseModel {
       error: json['error'],
     );
   }
+
+  @override
+  String toString() {
+    return 'ApplyLeaveResponseModel(success: $success, leaveId: $leaveId, error: $error)';
+  }
 }

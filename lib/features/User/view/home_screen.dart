@@ -60,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onTabSelected(int index) {
     final role = _viewModel.userRole.toLowerCase();
-    final bool isManagerOrHR = role == 'manager' || role == 'hr';
+    final bool isManagerOrHR = role != 'employee';
 
     if (isManagerOrHR) {
       // Manager/HR navigation: Home, Analytics, Add, History, Pending

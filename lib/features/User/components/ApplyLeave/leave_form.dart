@@ -20,6 +20,7 @@ class LeaveForm extends StatefulWidget {
 }
 
 class _LeaveFormState extends State<LeaveForm> {
+  final _formKey = GlobalKey<FormState>();
   @override
   void initState() {
     super.initState();
@@ -45,7 +46,7 @@ class _LeaveFormState extends State<LeaveForm> {
         return SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Form(
-            key: leaveViewModel.formKey,
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

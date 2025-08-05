@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/User/components/ApplyLeave/custom_calendar_component.dart';
 
@@ -15,7 +16,6 @@ class LeaveViewModel extends ChangeNotifier {
 
   // MARK: - FORM CONTROLLERS
   final TextEditingController reasonController = TextEditingController();
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   // MARK: - DATE SELECTION PROPERTIES
   DateTime? selectedStartDate;
@@ -46,6 +46,10 @@ class LeaveViewModel extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
   String? successLeaveId;
+
+  // MARK: - GET ALL PENDING LEAVES (MANAGER)
+  List<GetAllResponse> _getAllPendingLeaves = [];
+  List<GetAllResponse> get getAllPendingLeaves => _getAllPendingLeaves;
 
   // MARK: - FORM TYPE PROPERTY
   LeaveFormType? currentFormType;
@@ -250,8 +254,6 @@ class LeaveViewModel extends ChangeNotifier {
 
   // MARK: - FORM VALIDATION METHODS
   bool validateForm(Function(String, Color) showSnackBar) {
-    if (!formKey.currentState!.validate()) return false;
-
     if (selectedStartDate == null) {
       showSnackBar('Please select a date', Colors.red);
       return false;
@@ -369,6 +371,66 @@ class LeaveViewModel extends ChangeNotifier {
       (json) => GetUserSummaryResponse.fromJson(json),
     );
     return user?.currentUser?.id;
+  }
+
+  // MARK: - MANAGER FUNCTIONS
+  /// FETCH PENDING LEAVES
+  Future<void> fetchPendingLeaves() async {
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+    final userId = await _loadUserId();
+    try {
+      if (userId != null) {
+        final leaves = await _repository.getPendingLeaves(userId: userId);
+        _getAllPendingLeaves = leaves;
+      }
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// PROCESS LEAVES
+  Future<bool> processLeaveRequest({
+    required String leaveId,
+    required String status,
+    required BuildContext context,
+  }) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      notifyListeners();
+
+      final userId = await _loadUserId();
+
+      final response = await _repository.processLeave(
+        leaveId: leaveId,
+        status: status,
+        actionTakenBy: userId ?? '',
+      );
+
+      if (response.success == true) {
+        // Refresh pending leaves if needed
+        await fetchPendingLeaves();
+
+        // Navigate back to pending screen
+        Navigator.of(context).pop(); // or popUntil() if needed
+
+        return true;
+      } else {
+        errorMessage = response.error ?? 'Something went wrong.';
+        return false;
+      }
+    } catch (e) {
+      errorMessage = e.toString();
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   String _getLeaveType() {

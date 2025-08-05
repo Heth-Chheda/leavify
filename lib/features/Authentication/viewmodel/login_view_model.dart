@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/storage/app_storage.dart';
-import 'package:leavify/core/utils/validation_utils.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/request/login_request.dart';
 
