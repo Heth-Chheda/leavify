@@ -1,9 +1,9 @@
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/components/custom_loading_screen.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
-import 'package:leavify/core/utils/theme/app_theme.dart'; // Import your theme file
 import 'package:leavify/features/Authentication/viewmodel/login_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -38,6 +38,9 @@ class _LoginPageState extends State<LoginPage>
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<LoginViewModel>();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -58,7 +61,7 @@ class _LoginPageState extends State<LoginPage>
                       ),
                     ),
                   ),
-                  _buildMainCard(),
+                  _buildMainCard(isDark),
                   if (viewModel.isLoading) const CustomLoadingScreen(),
                 ],
               ),
@@ -69,11 +72,11 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  // MARK: BACKGROUND
+  // MARK: BACKGROUND (Always blue gradient)
   Widget _buildBackground() {
     return Stack(
       children: [
-        // Full-screen gradient background
+        // Full-screen gradient background (always blue)
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -83,7 +86,6 @@ class _LoginPageState extends State<LoginPage>
             ),
           ),
         ),
-
         // Wave texture overlays
         Positioned.fill(child: CustomPaint(painter: WaveTexturePainter())),
       ],
@@ -96,7 +98,7 @@ class _LoginPageState extends State<LoginPage>
       children: [
         // Enhanced logo with glass morphism effect
         Container(
-          margin: EdgeInsets.only(left: 10),
+          margin: const EdgeInsets.only(left: 10),
           width: 40,
           height: 40,
           decoration: BoxDecoration(
@@ -105,8 +107,7 @@ class _LoginPageState extends State<LoginPage>
           ),
         ),
         Container(
-          margin: EdgeInsets.only(left: 15),
-          decoration: BoxDecoration(),
+          margin: const EdgeInsets.only(left: 15),
           child: const Text(
             'rite',
             style: TextStyle(
@@ -118,26 +119,25 @@ class _LoginPageState extends State<LoginPage>
             ),
           ),
         ),
-        Container(
-          decoration: BoxDecoration(),
-          child: const Text(
-            'Technologies',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              letterSpacing: -0.2,
-              height: 1.2,
-            ),
+        const Text(
+          'Technologies',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            letterSpacing: -0.2,
+            height: 1.2,
           ),
         ),
       ],
     );
   }
 
-  // MARK: MAIN CARD
-  Widget _buildMainCard() {
+  // MARK: MAIN CARD (Theme-aware)
+  Widget _buildMainCard(bool isDark) {
     final notchDepth = 55.0;
+    final cardColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: Stack(
@@ -151,12 +151,20 @@ class _LoginPageState extends State<LoginPage>
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.80,
               ),
-              decoration: const BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(32),
                   topRight: Radius.circular(32),
                 ),
+                // Add subtle shadow for light mode
+                boxShadow: isDark ? null : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
@@ -164,8 +172,8 @@ class _LoginPageState extends State<LoginPage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const SizedBox(height: 100),
-                    _buildEmailForm(),
-                    _buildForgotPassword(),
+                    _buildEmailForm(isDark),
+                    _buildForgotPassword(isDark),
                     const SizedBox(height: 20),
                     _buildLoginButton(),
                     const SizedBox(height: 50),
@@ -174,6 +182,7 @@ class _LoginPageState extends State<LoginPage>
               ),
             ),
           ),
+          // Floating fingerprint icon
           Positioned(
             top: -notchDepth,
             left: 0,
@@ -181,21 +190,21 @@ class _LoginPageState extends State<LoginPage>
             child: Center(
               child: Container(
                 padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
-                  color: Colors.black,
+                decoration: BoxDecoration(
+                  color: cardColor,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
+                      color: Colors.black.withOpacity(isDark ? 0.5 : 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: const Icon(
-                  Icons.fingerprint,
-                  color: Colors.green,
-                  size: 42,
+                  Icons.lock_person,
+                  color: AppColors.highlightGreen,
+                  size: 40,
                 ),
               ),
             ),
@@ -206,7 +215,7 @@ class _LoginPageState extends State<LoginPage>
   }
 
   // MARK: EMAIL FORM
-  Widget _buildEmailForm() {
+  Widget _buildEmailForm(bool isDark) {
     return Column(
       children: [
         _buildUsernameField(
@@ -214,10 +223,11 @@ class _LoginPageState extends State<LoginPage>
           hintText: 'Enter your email',
           prefixIcon: Icons.email_rounded,
           keyboardType: TextInputType.emailAddress,
-          gradientColors: AppTheme.emailGradient,
+          gradientColors: [AppColors.highlightBlue, AppColors.highlightTeal],
+          isDark: isDark,
         ),
         const SizedBox(height: 25),
-        _buildPasswordField(),
+        _buildPasswordField(isDark),
       ],
     );
   }
@@ -229,16 +239,23 @@ class _LoginPageState extends State<LoginPage>
     required IconData prefixIcon,
     TextInputType? keyboardType,
     required List<Color> gradientColors,
+    required bool isDark,
   }) {
+    final textColor = isDark ? AppColors.darkText : AppColors.lightText;
+    final fieldColor = isDark ? AppColors.darkSurface : Colors.white;
+    final borderColor = isDark
+        ? Colors.white.withOpacity(0.2)
+        : Colors.grey.withOpacity(0.3);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Colors.blueAccent,
+            color: AppColors.highlightBlue,
             letterSpacing: 0.3,
           ),
         ),
@@ -246,22 +263,29 @@ class _LoginPageState extends State<LoginPage>
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: AppTheme.backgroundCard,
-            border: Border.all(color: AppTheme.borderLight, width: 2),
+            color: fieldColor,
+            border: Border.all(color: borderColor, width: 2),
+            boxShadow: isDark ? null : [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: TextFormField(
             controller: _viewModel.usernameController,
             keyboardType: keyboardType,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: textColor,
             ),
             decoration: InputDecoration(
               hintText: hintText,
               fillColor: Colors.transparent,
-              hintStyle: const TextStyle(
-                color: AppTheme.textHint,
+              hintStyle: TextStyle(
+                color: textColor.withOpacity(0.5),
                 fontWeight: FontWeight.w500,
                 fontSize: 15,
               ),
@@ -277,7 +301,7 @@ class _LoginPageState extends State<LoginPage>
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(prefixIcon, color: AppTheme.white, size: 18),
+                child: Icon(prefixIcon, color: Colors.white, size: 18),
               ),
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
@@ -294,16 +318,22 @@ class _LoginPageState extends State<LoginPage>
   }
 
   // MARK: PASSWORD FIELD
-  Widget _buildPasswordField() {
+  Widget _buildPasswordField(bool isDark) {
+    final textColor = isDark ? AppColors.darkText : AppColors.lightText;
+    final fieldColor = isDark ? AppColors.darkSurface : Colors.white;
+    final borderColor = isDark
+        ? Colors.white.withOpacity(0.2)
+        : Colors.grey.withOpacity(0.3);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Password',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Colors.blueAccent,
+            color: AppColors.highlightBlue,
             letterSpacing: 0.3,
           ),
         ),
@@ -311,23 +341,30 @@ class _LoginPageState extends State<LoginPage>
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: AppTheme.backgroundCard,
-            border: Border.all(color: AppTheme.borderLight, width: 2),
+            color: fieldColor,
+            border: Border.all(color: borderColor, width: 2),
+            boxShadow: isDark ? null : [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(2, 2),
+              ),
+            ],
           ),
           child: TextFormField(
             controller: _viewModel.passwordController,
             onFieldSubmitted: (_) => _handleLogin(),
             obscureText: !_isPasswordVisible,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: textColor,
             ),
             decoration: InputDecoration(
               hintText: 'Enter your password',
               fillColor: Colors.transparent,
-              hintStyle: const TextStyle(
-                color: AppTheme.textHint,
+              hintStyle: TextStyle(
+                color: textColor.withOpacity(0.5),
                 fontWeight: FontWeight.w500,
                 fontSize: 15,
               ),
@@ -337,7 +374,7 @@ class _LoginPageState extends State<LoginPage>
                 height: 20,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: AppTheme.passwordGradient,
+                    colors: [AppColors.highlightPink, AppColors.highlightOrange],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -345,7 +382,7 @@ class _LoginPageState extends State<LoginPage>
                 ),
                 child: const Icon(
                   Icons.lock_rounded,
-                  color: AppTheme.white,
+                  color: Colors.white,
                   size: 18,
                 ),
               ),
@@ -354,7 +391,7 @@ class _LoginPageState extends State<LoginPage>
                   _isPasswordVisible
                       ? Icons.visibility_off_rounded
                       : Icons.visibility_rounded,
-                  color: AppTheme.textTertiary,
+                  color: textColor.withOpacity(0.6),
                   size: 22,
                 ),
                 onPressed: () {
@@ -378,7 +415,7 @@ class _LoginPageState extends State<LoginPage>
   }
 
   // MARK: FORGOT PASSWORD
-  Widget _buildForgotPassword() {
+  Widget _buildForgotPassword(bool isDark) {
     return Align(
       alignment: Alignment.centerRight,
       child: TextButton(
@@ -386,7 +423,7 @@ class _LoginPageState extends State<LoginPage>
           // Handle forgot password
         },
         style: TextButton.styleFrom(
-          foregroundColor: AppTheme.accentViolet,
+          foregroundColor: AppColors.highlightBlue,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         ),
         child: const Text(
@@ -409,11 +446,23 @@ class _LoginPageState extends State<LoginPage>
           width: double.infinity,
           height: 65,
           decoration: const BoxDecoration(
-            color: AppColors.highlightBlue,
+            gradient: LinearGradient(
+              colors: [AppColors.highlightBlue, AppColors.highlightTeal],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
             borderRadius: BorderRadius.all(Radius.circular(25)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.highlightBlue,
+                blurRadius: 12,
+                offset: Offset(0, 4),
+                spreadRadius: -2,
+              ),
+            ],
           ),
           child: Material(
-            color: AppTheme.transparent,
+            color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(25),
               onTap: viewModel.isLoading ? null : () => _handleLogin(),
@@ -421,18 +470,18 @@ class _LoginPageState extends State<LoginPage>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(25),
                   border: Border.all(
-                    color: AppTheme.white.withOpacity(0.2),
+                    color: Colors.white.withOpacity(0.2),
                     width: 1,
                   ),
                 ),
-                child: Center(
-                  child: const Row(
+                child: const Center(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         'Sign In',
                         style: TextStyle(
-                          color: AppTheme.white,
+                          color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.0,
@@ -441,7 +490,7 @@ class _LoginPageState extends State<LoginPage>
                       SizedBox(width: 8),
                       Icon(
                         Icons.arrow_forward_rounded,
-                        color: AppTheme.white,
+                        color: Colors.white,
                         size: 20,
                       ),
                     ],

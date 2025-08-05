@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/validation_utils.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/request/login_request.dart';
@@ -41,22 +42,28 @@ class LoginViewModel extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
+    final fcmToken = await AppStorage.getString('USER_FCM_TOKEN');
+    if (!context.mounted) return;
     try {
       // Create login request with username (can be email or phone)
       // keeping it email for now later can be changed to dynamic according to the requirement
+      if (fcmToken == null || fcmToken.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('FCM token is not available')));
+        return;
+      }
+
       final loginRequest = LoginRequest(
         username: username,
         password: password,
         loginType: 'EMAIL',
-        fcmToken:
-            'kuch toh hai', // also get the fcm token on generation. For temp keeping it anything
+        fcmToken: fcmToken,
       );
 
       // logins only
       await _authenticationRepository.login(loginRequest);
-
       if (!context.mounted) return;
-
       Navigator.pushNamed(context, '/home');
     } catch (e) {
       debugPrint("Login error: $e");
