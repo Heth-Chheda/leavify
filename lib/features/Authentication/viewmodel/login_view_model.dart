@@ -20,15 +20,15 @@ class LoginViewModel extends ChangeNotifier {
     final username = usernameController.text.trim();
 
     // Validation of email.
-    final usernameValidation = ValidationUtils.validateUsernameAsEmailOrPhone(
-      username,
-    );
-    if (usernameValidation != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(usernameValidation)));
-      return;
-    }
+    // final usernameValidation = ValidationUtils.validateUsernameAsEmailOrPhone(
+    //   username,
+    // );
+    // if (usernameValidation != null) {
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(SnackBar(content: Text(usernameValidation)));
+    //   return;
+    // }
 
     // Validation of password.
     // final passwordValidation = ValidationUtils.validatePassword(password);
@@ -60,6 +60,8 @@ class LoginViewModel extends ChangeNotifier {
         loginType: 'EMAIL',
         fcmToken: fcmToken,
       );
+
+      debugPrint("Login Request: ${loginRequest.toJson()}");
 
       // logins only
       await _authenticationRepository.login(loginRequest);

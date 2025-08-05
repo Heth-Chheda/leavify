@@ -315,9 +315,11 @@ class LeaveViewModel extends ChangeNotifier {
     }
   }
 
-  // MARK: SUBMIT LEAVE REQUEST
+  // MARK: - SUBMIT LEAVE REQUEST
   Future<bool> submitLeaveRequest(ApplyLeaveRequestModel request) async {
+    debugPrint("Apply Leave Request: ${request.toJson()}");
     final response = await _repository.applyLeave(request);
+    debugPrint("Apply Leave Response: ${response.toString()}");
 
     if (response.success != null) {
       successLeaveId = response.leaveId;
@@ -325,6 +327,7 @@ class LeaveViewModel extends ChangeNotifier {
       return true;
     } else {
       errorMessage = response.error;
+      debugPrint("Error applying leave: $errorMessage");
       successLeaveId = null;
       return false;
     }

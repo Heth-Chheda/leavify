@@ -12,7 +12,7 @@ class AuthenticationRepository {
   final PerformRequest _performRequest;
 
   AuthenticationRepository({PerformRequest? performRequest})
-    : _performRequest = performRequest ?? PerformRequest();
+      : _performRequest = performRequest ?? PerformRequest();
 
   final get = RequestType.get;
   final post = RequestType.post;
@@ -25,30 +25,80 @@ class AuthenticationRepository {
         method: post,
         body: request.toJson(),
       );
-      final Map<String, dynamic> data = jsonDecode(response.body);
-      // switch case for the response
+      // Handle response based on status code
       switch (response.statusCode) {
         case 200:
-          final loginResponse = LoginResponse.fromJson(data);
+        // Only decode JSON for successful responses
+          try {
+            final Map<String, dynamic> data = jsonDecode(response.body);
+            final loginResponse = LoginResponse.fromJson(data);
 
-          if (loginResponse.success) {
-            AppStorage.saveBoolean('USER_IS_ALREADY_LOGGED_IN', true);
-            AppStorage.saveString('JWT_TOKEN', loginResponse.jwtToken ?? '');
-            AppStorage.saveString('USER_ID', loginResponse.userId ?? '');
+            if (loginResponse.success) {
+              AppStorage.saveBoolean('USER_IS_ALREADY_LOGGED_IN', true);
+              AppStorage.saveString('JWT_TOKEN', loginResponse.jwtToken ?? '');
+              AppStorage.saveString('USER_ID', loginResponse.userId ?? '');
+            }
+            return loginResponse;
+          } catch (e) {
+            // If JSON decode fails, create a generic error response
+            throw Exception('Invalid response format from server');
           }
-          return loginResponse;
 
         case 400:
-          throw ('Something went wrong please try again.');
+        // Try to get error message from response, fallback to generic message
+          String errorMessage;
+          try {
+            final Map<String, dynamic> errorData = jsonDecode(response.body);
+            errorMessage = errorData['message'] ?? errorData['error'] ?? 'Bad request';
+          } catch (e) {
+            // Response body is not JSON, use it as plain text or fallback
+            errorMessage = response.body.isNotEmpty
+                ? response.body
+                : 'Something went wrong please try again.';
+          }
+          throw Exception(errorMessage);
 
         case 401:
-          throw ('Unauthorized access.');
+        // Try to get error message from response, fallback to generic message
+          String errorMessage;
+          try {
+            final Map<String, dynamic> errorData = jsonDecode(response.body);
+            errorMessage = errorData['message'] ?? errorData['error'] ?? 'Unauthorized access';
+          } catch (e) {
+            // Response body is not JSON, use it as plain text or fallback
+            errorMessage = response.body.isNotEmpty
+                ? response.body
+                : 'Unauthorized access.';
+          }
+          throw Exception(errorMessage);
 
         case 500:
-          throw ('Internal server error.');
+        // Try to get error message from response, fallback to generic message
+          String errorMessage;
+          try {
+            final Map<String, dynamic> errorData = jsonDecode(response.body);
+            errorMessage = errorData['message'] ?? errorData['error'] ?? 'Internal server error';
+          } catch (e) {
+            // Response body is not JSON, use it as plain text or fallback
+            errorMessage = response.body.isNotEmpty
+                ? response.body
+                : 'Internal server error.';
+          }
+          throw Exception(errorMessage);
 
         default:
-          throw Exception('Unexpected error occurred ${response.statusCode}');
+        // For any other status codes
+          String errorMessage;
+          try {
+            final Map<String, dynamic> errorData = jsonDecode(response.body);
+            errorMessage = errorData['message'] ?? errorData['error'] ?? 'Unexpected error occurred';
+          } catch (e) {
+            // Response body is not JSON, use it as plain text or fallback
+            errorMessage = response.body.isNotEmpty
+                ? response.body
+                : 'Unexpected error occurred';
+          }
+          throw Exception('$errorMessage (${response.statusCode})');
       }
     } catch (e) {
       rethrow;
@@ -62,23 +112,53 @@ class AuthenticationRepository {
         url: '${ApiEndpoints.getUserSummary}/$userId',
         method: get,
       );
+
       switch (getUserSummaryResponse.statusCode) {
         case 200:
-          final Map<String, dynamic> json = jsonDecode(
-            getUserSummaryResponse.body,
-          );
-          return GetUserSummaryResponse.fromJson(json);
+          try {
+            final Map<String, dynamic> json = jsonDecode(
+              getUserSummaryResponse.body,
+            );
+            return GetUserSummaryResponse.fromJson(json);
+          } catch (e) {
+            throw Exception('Invalid response format from server');
+          }
 
         case 400:
-          throw ('Something went wrong. Please try logging in again.');
+          String errorMessage;
+          try {
+            final Map<String, dynamic> errorData = jsonDecode(getUserSummaryResponse.body);
+            errorMessage = errorData['message'] ?? errorData['error'] ?? 'Bad request';
+          } catch (e) {
+            errorMessage = getUserSummaryResponse.body.isNotEmpty
+                ? getUserSummaryResponse.body
+                : 'Something went wrong. Please try logging in again.';
+          }
+          throw Exception(errorMessage);
 
         case 500:
-          throw ('Internal server error. Please try again later.');
+          String errorMessage;
+          try {
+            final Map<String, dynamic> errorData = jsonDecode(getUserSummaryResponse.body);
+            errorMessage = errorData['message'] ?? errorData['error'] ?? 'Internal server error';
+          } catch (e) {
+            errorMessage = getUserSummaryResponse.body.isNotEmpty
+                ? getUserSummaryResponse.body
+                : 'Internal server error. Please try again later.';
+          }
+          throw Exception(errorMessage);
 
         default:
-          throw Exception(
-            'Unknown error occurred ${getUserSummaryResponse.statusCode}',
-          );
+          String errorMessage;
+          try {
+            final Map<String, dynamic> errorData = jsonDecode(getUserSummaryResponse.body);
+            errorMessage = errorData['message'] ?? errorData['error'] ?? 'Unknown error occurred';
+          } catch (e) {
+            errorMessage = getUserSummaryResponse.body.isNotEmpty
+                ? getUserSummaryResponse.body
+                : 'Unknown error occurred';
+          }
+          throw Exception('$errorMessage (${getUserSummaryResponse.statusCode})');
       }
     } catch (e) {
       rethrow;
