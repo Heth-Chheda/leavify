@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/components/shimmer_widget.dart';
+import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -9,35 +10,35 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(90.0);
 
-  //
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<HomeViewModel>();
+    final theme = Theme.of(context);
+
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
-      toolbarHeight: 100,
+      toolbarHeight: 80,
       flexibleSpace: Container(
-        margin: const EdgeInsets.only(top: 30),
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             // Profile Section
             Expanded(
               child: viewModel.isLoading
-                  ? _buildShimmerContent()
-                  : _buildContent(viewModel.userFullName),
+                  ? _buildShimmerContent(theme)
+                  : _buildContent(viewModel.userName, theme),
             ),
             // Action Icons
-            _buildActionIcons(context),
+            _buildActionIcons(context, viewModel.userRole, theme),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildShimmerContent() {
+  Widget _buildShimmerContent(ThemeData theme) {
     return Row(
       children: [
         // Profile Image Shimmer
@@ -46,7 +47,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           height: 68,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
-            color: Colors.white.withOpacity(0.2),
+            color: theme.colorScheme.onBackground.withOpacity(0.1),
           ),
           child: ShimmerWidget(
             width: 68,
@@ -79,37 +80,42 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildContent(String userName) {
+  Widget _buildContent(String userName, ThemeData theme) {
     final displayName = userName.isNotEmpty ? userName : 'Loading ...';
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     return Row(
       children: [
-        // Modern Profile Avatar
+        // Profile Avatar
         Container(
-          width: 75,
-          height: 75,
+          width: 60,
+          height: 60,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: Colors.blueAccent, width: 2.0),
+            borderRadius: BorderRadius.circular(38),
+            border: Border.all(color: AppColors.highlightBlue, width: 2.0),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withOpacity(0.95),
-                Colors.white.withOpacity(0.85),
-              ],
+              colors: isDarkMode
+                  ? [
+                      theme.colorScheme.surface.withOpacity(0.95),
+                      theme.colorScheme.surface.withOpacity(0.85),
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.95),
+                      Colors.white.withOpacity(0.85),
+                    ],
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: theme.shadowColor.withOpacity(0.1),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
-                spreadRadius: 0,
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(38),
             child: Image.network(
               'https://picsum.photos/200',
               fit: BoxFit.cover,
@@ -120,21 +126,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withOpacity(0.95),
-                        Colors.white.withOpacity(0.85),
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _getInitials(displayName),
-                      style: TextStyle(
-                        color: const Color(0xFF667EEA),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 24,
-                        letterSpacing: -0.5,
-                      ),
+                      colors: isDarkMode
+                          ? [
+                              theme.colorScheme.surface.withOpacity(0.95),
+                              theme.colorScheme.surface.withOpacity(0.85),
+                            ]
+                          : [
+                              Colors.white.withOpacity(0.95),
+                              Colors.white.withOpacity(0.85),
+                            ],
                     ),
                   ),
                 );
@@ -142,8 +142,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
         ),
-        const SizedBox(width: 10),
-        // Greeting and Name Section
+        const SizedBox(width: 12),
+
+        // Greeting and Name in Column
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,23 +153,22 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               Text(
                 _getGreeting(),
                 style: TextStyle(
-                  color: Colors.black.withOpacity(0.85),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.2,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onBackground.withOpacity(0.8),
+                  letterSpacing: -0.1,
                 ),
               ),
-              const SizedBox(height: 4),
               Text(
                 displayName,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.4,
-                  height: 1.1,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onBackground,
+                  letterSpacing: -0.2,
                 ),
                 overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ],
           ),
@@ -177,71 +177,84 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildActionIcons(BuildContext context) {
+  Widget _buildActionIcons(BuildContext context, String role, ThemeData theme) {
+    final isManagerOrHr = role.toLowerCase() != 'employee';
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (isManagerOrHr)
+          _buildIcon(
+            icon: Icons.campaign_rounded,
+            onTap: () {
+              Navigator.pushNamed(context, '/announcements');
+            },
+            theme: theme,
+          ),
+
+        if (isManagerOrHr) const SizedBox(width: 12),
         // Notifications Icon
-        _buildGlassIcon(
-          icon: Icons.notifications_none_rounded,
+        _buildIcon(
+          icon: Icons.settings,
           onTap: () {
-            // TODO: Handle notifications
             Navigator.pushNamed(context, '/notifications');
           },
+          theme: theme,
         ),
       ],
     );
   }
 
-  Widget _buildGlassIcon({
+  Widget _buildIcon({
     required IconData icon,
     required VoidCallback onTap,
+    required ThemeData theme,
   }) {
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Container(
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.blueAccent.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+        color: isDarkMode
+            ? theme.colorScheme.surface.withOpacity(0.1)
+            : Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.onBackground.withOpacity(0.2),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 0,
-            offset: const Offset(0, 4),
+            color: theme.shadowColor.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           onTap: onTap,
-          splashColor: Colors.white.withOpacity(0.2),
-          highlightColor: Colors.white.withOpacity(0.1),
-          child: Center(child: Icon(icon, color: Colors.white, size: 24)),
+          splashColor: theme.colorScheme.onBackground.withOpacity(0.1),
+          highlightColor: theme.colorScheme.onBackground.withOpacity(0.05),
+          child: Center(
+            child: Icon(icon, color: theme.colorScheme.onBackground, size: 24),
+          ),
         ),
       ),
     );
   }
 
-  static String _getInitials(String name) {
-    if (name.trim().isEmpty) return 'U';
-    final parts = name.trim().split(' ');
-    if (parts.length > 1) {
-      return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-    }
-    return parts.first[0].toUpperCase();
-  }
-
   static String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
-      return 'Good morning!';
+      return 'Morning,';
     } else if (hour < 17) {
-      return 'Good afternoon!';
+      return 'Afternoon,';
     } else {
-      return 'Good evening!';
+      return 'Evening,';
     }
   }
 }

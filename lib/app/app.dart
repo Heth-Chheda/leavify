@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/app/routes.dart';
-import 'package:leavify/core/utils/theme/app_theme.dart';
+import 'package:leavify/core/utils/theme/app_colors.dart';
+import 'package:leavify/main.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -12,7 +13,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: Routes.login,
       onGenerateRoute: Routes.generateRoute,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme2.lightTheme,
+      darkTheme: AppTheme2.darkTheme,
+      themeMode: ThemeMode.system,
     );
   }
 }

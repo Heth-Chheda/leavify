@@ -99,6 +99,7 @@ class LeaveViewModel extends ChangeNotifier {
             initialDate: selectedStartDate ?? now,
             firstDate: now,
             lastDate: DateTime(now.year + 1),
+            onClose: () => Navigator.of(context).pop(),
             onDateRangeSelected: (startDate, endDate) {
               selectedStartDate = startDate;
               selectedEndDate = endDate;
@@ -314,9 +315,11 @@ class LeaveViewModel extends ChangeNotifier {
     }
   }
 
-  // MARK: SUBMIT LEAVE REQUEST
+  // MARK: - SUBMIT LEAVE REQUEST
   Future<bool> submitLeaveRequest(ApplyLeaveRequestModel request) async {
+    debugPrint("Apply Leave Request: ${request.toJson()}");
     final response = await _repository.applyLeave(request);
+    debugPrint("Apply Leave Response: ${response.toString()}");
 
     if (response.success != null) {
       successLeaveId = response.leaveId;
@@ -324,6 +327,7 @@ class LeaveViewModel extends ChangeNotifier {
       return true;
     } else {
       errorMessage = response.error;
+      debugPrint("Error applying leave: $errorMessage");
       successLeaveId = null;
       return false;
     }
@@ -357,8 +361,6 @@ class LeaveViewModel extends ChangeNotifier {
       documents: uploadedDocumentUrls,
     );
   }
-
-  // MARK: MANAGER SPECIFIC FUNCTIONS
 
   // MARK: - UTILITY METHODS
   Future<String?> _loadUserId() async {

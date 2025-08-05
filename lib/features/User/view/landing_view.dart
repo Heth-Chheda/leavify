@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:leavify/features/User/components/custom_app_bar.dart';
 import 'package:leavify/features/User/components/custom_bottom_nav_bar.dart';
 import 'package:leavify/features/User/view/home_screen.dart';
 
@@ -128,13 +127,12 @@ class _LandingViewState extends State<LandingView> {
       child: Scaffold(
         backgroundColor: Colors.white,
         extendBody: true,
-        appBar: CustomAppBar(),
-        body: SafeArea(bottom: true, child: _getCurrentScreen()),
-        bottomNavigationBar: CustomBottomNavBar(
-          currentIndex: _currentIndex,
-          onTabSelected: _onTabSelected,
-          role: _userRole, // Use the loaded role
-        ),
+        body: _getCurrentScreen(),
+        // bottomNavigationBar: CustomBottomNavBar(
+        //   currentIndex: _currentIndex,
+        //   onTabSelected: _onTabSelected,
+        //   role: _userRole, // Use the loaded role
+        // ),
       ),
     );
   }

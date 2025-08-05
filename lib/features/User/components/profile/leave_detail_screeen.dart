@@ -5,9 +5,6 @@ import 'package:leavify/features/User/domain/models/my_leaves.dart';
 import 'package:leavify/features/User/viewmodel/profile_view_model.dart';
 import 'package:provider/provider.dart';
 
-// Import your custom calendar component
-// import 'package:leavify/widgets/custom_calendar_component.dart';
-
 class LeaveDetailScreen extends StatefulWidget {
   final MyLeaves leave;
   final String userId;
@@ -55,20 +52,12 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Consumer<ProfileViewModel>(
       builder: (context, viewModel, child) {
         return Scaffold(
-          backgroundColor: Colors.grey[50],
-          appBar: AppBar(
-            title: const Text('Leave Details'),
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black87,
-            elevation: 0,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(1),
-              child: Container(height: 1, color: Colors.grey[200]),
-            ),
-          ),
+          backgroundColor: Theme.of(context).colorScheme.background,
           body: Form(
             key: _formKey,
             child: Column(
@@ -79,27 +68,23 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Status Badge
-                        _buildStatusBadge(),
+                        // Status Badge with gradient
+                        _buildStatusBadge(isDark),
                         const SizedBox(height: 24),
 
-                        // Leave Duration Card - Updated with date selection
-                        _buildLeaveCard(viewModel),
+                        // Leave Duration Card with glassmorphism effect
+                        _buildLeaveCard(viewModel, isDark),
                         const SizedBox(height: 20),
 
-                        // Leave Details Form
-                        _buildDetailsCard(viewModel),
-                        const SizedBox(height: 20),
-
-                        // Additional Options
-                        if (viewModel.isEditMode) _buildOptionsCard(viewModel),
+                        // Leave Details Form with themed styling
+                        _buildDetailsCard(viewModel, isDark),
                       ],
                     ),
                   ),
                 ),
 
-                // Bottom Action Bar
-                _buildBottomActionBar(viewModel),
+                // Bottom Action Bar with gradient buttons
+                _buildBottomActionBar(viewModel, isDark),
               ],
             ),
           ),
@@ -108,32 +93,47 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     );
   }
 
-  Widget _buildStatusBadge() {
+  Widget _buildStatusBadge(bool isDark) {
+    final statusColor = _getStatusColor(widget.leave.status);
+
     return Center(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: _getStatusColor(widget.leave.status).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: _getStatusColor(widget.leave.status).withOpacity(0.3),
+          gradient: LinearGradient(
+            colors: [
+              statusColor.withOpacity(0.2),
+              statusColor.withOpacity(0.1),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(color: statusColor.withOpacity(0.4), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: statusColor.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               _getStatusIcon(widget.leave.status),
-              color: _getStatusColor(widget.leave.status),
-              size: 18,
+              color: statusColor,
+              size: 20,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Text(
               widget.leave.status.toUpperCase(),
               style: TextStyle(
-                color: _getStatusColor(widget.leave.status),
+                color: statusColor,
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: 15,
+                letterSpacing: 0.5,
               ),
             ),
           ],
@@ -142,22 +142,28 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     );
   }
 
-  Widget _buildLeaveCard(ProfileViewModel viewModel) {
+  Widget _buildLeaveCard(ProfileViewModel viewModel, bool isDark) {
     final durationInDays = _toDate.difference(_fromDate).inDays + 1;
+    final cardColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
+        border: isDark
+            ? Border.all(color: Colors.white.withOpacity(0.1))
+            : null,
       ),
       child: Column(
         children: [
@@ -168,19 +174,34 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                 child: GestureDetector(
                   onTap: viewModel.isEditMode ? () => _selectFromDate() : null,
                   child: Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: viewModel.isEditMode
-                          ? Theme.of(context).primaryColor.withOpacity(0.05)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
+                      gradient: viewModel.isEditMode
+                          ? LinearGradient(
+                              colors: [
+                                Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.1),
+                                Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.05),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      borderRadius: BorderRadius.circular(12),
                       border: viewModel.isEditMode
                           ? Border.all(
                               color: Theme.of(
                                 context,
-                              ).primaryColor.withOpacity(0.2),
+                              ).colorScheme.primary.withOpacity(0.3),
                             )
-                          : null,
+                          : Border.all(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.1)
+                                  : Colors.grey.withOpacity(0.2),
+                            ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,27 +211,31 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                             Text(
                               'From Date',
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.7),
                                 fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
                               ),
                             ),
                             if (viewModel.isEditMode) ...[
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 6),
                               Icon(
-                                Icons.edit,
-                                size: 12,
-                                color: Theme.of(context).primaryColor,
+                                Icons.edit_outlined,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ],
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         Text(
                           DateFormat('dd MMM yyyy').format(_fromDate),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -218,25 +243,57 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                   ),
                 ),
               ),
-              Container(height: 40, width: 1, color: Colors.grey[300]),
+
+              Container(
+                height: 60,
+                width: 1,
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+
               // To Date
               Expanded(
                 child: GestureDetector(
                   onTap: viewModel.isEditMode ? () => _selectToDate() : null,
                   child: Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: viewModel.isEditMode
-                          ? Theme.of(context).primaryColor.withOpacity(0.05)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
+                      gradient: viewModel.isEditMode
+                          ? LinearGradient(
+                              colors: [
+                                Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.1),
+                                Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.05),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      borderRadius: BorderRadius.circular(12),
                       border: viewModel.isEditMode
                           ? Border.all(
                               color: Theme.of(
                                 context,
-                              ).primaryColor.withOpacity(0.2),
+                              ).colorScheme.primary.withOpacity(0.3),
                             )
-                          : null,
+                          : Border.all(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.1)
+                                  : Colors.grey.withOpacity(0.2),
+                            ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -246,28 +303,32 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                           children: [
                             if (viewModel.isEditMode) ...[
                               Icon(
-                                Icons.edit,
-                                size: 12,
-                                color: Theme.of(context).primaryColor,
+                                Icons.edit_outlined,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 6),
                             ],
                             Text(
                               'To Date',
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.7),
                                 fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         Text(
                           DateFormat('dd MMM yyyy').format(_toDate),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -277,28 +338,41 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+
+          const SizedBox(height: 20),
+
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                  Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.calendar_today,
-                  color: Theme.of(context).primaryColor,
-                  size: 18,
+                  Icons.calendar_today_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Text(
                   '$durationInDays ${durationInDays == 1 ? 'Day' : 'Days'}',
                   style: TextStyle(
-                    color: Theme.of(context).primaryColor,
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 18,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ],
@@ -309,59 +383,122 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     );
   }
 
-  Widget _buildDetailsCard(ProfileViewModel viewModel) {
+  Widget _buildDetailsCard(ProfileViewModel viewModel, bool isDark) {
+    final cardColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
+        border: isDark
+            ? Border.all(color: Colors.white.withOpacity(0.1))
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Leave Details',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                      Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.assignment_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Leave Details',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
           // Leave Type
-          _buildDetailRow('Leave Type', widget.leave.type, Icons.work_outline),
-          const SizedBox(height: 16),
+          _buildDetailRow(
+            'Leave Type',
+            widget.leave.type,
+            Icons.work_outline,
+            isDark,
+          ),
+          const SizedBox(height: 20),
 
           // Reason
           Text(
             'Reason',
             style: TextStyle(
-              color: Colors.grey[600],
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               fontSize: 14,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+
           if (viewModel.isEditMode)
             TextFormField(
               controller: _reasonController,
               maxLines: 3,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               decoration: InputDecoration(
                 hintText: 'Enter reason for leave',
+                hintStyle: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.5),
+                ),
+                filled: true,
+                fillColor: isDark
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.grey.withOpacity(0.05),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.2)
+                        : Colors.grey.withOpacity(0.3),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.2)
+                        : Colors.grey.withOpacity(0.3),
+                  ),
                 ),
               ),
               validator: (value) {
@@ -374,228 +511,269 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           else
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[200]!),
+                color: isDark
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.grey.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.grey.withOpacity(0.2),
+                ),
               ),
               child: Text(
                 widget.leave.reason,
-                style: const TextStyle(fontSize: 14),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  height: 1.4,
+                ),
               ),
             ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // Created/Updated dates
           _buildDetailRow(
             'Applied On',
             DateFormat('dd MMM yyyy, hh:mm a').format(widget.leave.createdAt),
-            Icons.schedule,
+            Icons.schedule_outlined,
+            isDark,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           _buildDetailRow(
             'Last Updated',
             DateFormat('dd MMM yyyy, hh:mm a').format(widget.leave.updatedAt),
-            Icons.update,
+            Icons.update_outlined,
+            isDark,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildOptionsCard(ProfileViewModel viewModel) {
+  Widget _buildDetailRow(
+    String label,
+    String value,
+    IconData icon,
+    bool isDark,
+  ) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: isDark
+            ? Colors.white.withOpacity(0.03)
+            : Colors.grey.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.grey.withOpacity(0.2),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Leave Options',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          // Half Day Option
-          SwitchListTile(
-            title: const Text('Half Day'),
-            subtitle: const Text('Apply for half day leave'),
-            value: _isHalfDay,
-            onChanged: (value) {
-              setState(() {
-                _isHalfDay = value;
-                if (_isHalfDay) _isCompOff = false; // Can't be both
-              });
-            },
-            contentPadding: EdgeInsets.zero,
-          ),
-
-          // Comp Off Option
-          SwitchListTile(
-            title: const Text('Compensatory Off'),
-            subtitle: const Text('Use comp off for this leave'),
-            value: _isCompOff,
-            onChanged: (value) {
-              setState(() {
-                _isCompOff = value;
-                if (_isCompOff) _isHalfDay = false; // Can't be both
-              });
-            },
-            contentPadding: EdgeInsets.zero,
-          ),
-
-          // Comp Dates (if comp off is selected)
-          if (_isCompOff) ...[
-            const SizedBox(height: 16),
-            Text(
-              'Comp Off Dates',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
             ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
+            child: Icon(
+              icon,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ..._compDates.map(
-                  (date) => Chip(
-                    label: Text(DateFormat('dd MMM').format(date)),
-                    onDeleted: () {
-                      setState(() {
-                        _compDates.remove(date);
-                      });
-                    },
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
                   ),
                 ),
-                ActionChip(
-                  label: const Text('+ Add Date'),
-                  onPressed: () => _selectCompDate(),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
-          ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: Colors.grey[600]),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottomActionBar(ProfileViewModel viewModel) {
+  Widget _buildBottomActionBar(ProfileViewModel viewModel, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            color: isDark
+                ? Colors.black.withOpacity(0.4)
+                : Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
           ),
         ],
+        border: isDark
+            ? Border(top: BorderSide(color: Colors.white.withOpacity(0.1)))
+            : null,
       ),
       child: SafeArea(
         child: Row(
           children: [
             if (viewModel.isEditMode) ...[
               Expanded(
-                child: OutlinedButton(
-                  onPressed: viewModel.isLoading
-                      ? null
-                      : () {
-                          setState(() {
-                            _initializeData(); // Reset to original values
-                          });
-                          viewModel.toggleEditMode();
-                        },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.3),
                     ),
                   ),
-                  child: const Text('Cancel'),
+                  child: OutlinedButton(
+                    onPressed: viewModel.isLoading
+                        ? null
+                        : () {
+                            setState(() {
+                              _initializeData();
+                            });
+                            viewModel.toggleEditMode();
+                          },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      side: BorderSide.none,
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
-                child: ElevatedButton(
-                  onPressed: viewModel.isLoading
-                      ? null
-                      : () => _saveChanges(viewModel),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.secondary,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: viewModel.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Save Changes'),
+                  child: ElevatedButton(
+                    onPressed: viewModel.isLoading
+                        ? null
+                        : () => _saveChanges(viewModel),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: viewModel.isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            'Save Changes',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                  ),
                 ),
               ),
             ] else ...[
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: widget.leave.status.toUpperCase() == 'PENDING'
-                      ? () => viewModel.toggleEditMode()
-                      : null,
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Edit Leave'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: widget.leave.status.toUpperCase() == 'PENDING'
+                        ? LinearGradient(
+                            colors: [
+                              Theme.of(context).colorScheme.primary,
+                              Theme.of(context).colorScheme.secondary,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : LinearGradient(
+                            colors: [
+                              Colors.grey.withOpacity(0.3),
+                              Colors.grey.withOpacity(0.2),
+                            ],
+                          ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: widget.leave.status.toUpperCase() == 'PENDING'
+                        ? () => viewModel.toggleEditMode()
+                        : null,
+                    icon: Icon(
+                      Icons.edit_outlined,
+                      color: widget.leave.status.toUpperCase() == 'PENDING'
+                          ? Colors.white
+                          : Colors.grey,
+                    ),
+                    label: Text(
+                      'Edit Leave',
+                      style: TextStyle(
+                        color: widget.leave.status.toUpperCase() == 'PENDING'
+                            ? Colors.white
+                            : Colors.grey,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -615,7 +793,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
       onDateSelected: (date) {
         setState(() {
           _fromDate = date;
-          // Ensure to date is not before from date
           if (_toDate.isBefore(_fromDate)) {
             _toDate = _fromDate;
           }
@@ -628,23 +805,10 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     await _showCustomCalendar(
       title: 'Select To Date',
       initialDate: _toDate,
-      firstDate: _fromDate, // Can't select date before from date
+      firstDate: _fromDate,
       onDateSelected: (date) {
         setState(() {
           _toDate = date;
-        });
-      },
-    );
-  }
-
-  Future<void> _selectDateRange() async {
-    await _showCustomCalendarRange(
-      initialStartDate: _fromDate,
-      initialEndDate: _toDate,
-      onDateRangeSelected: (startDate, endDate) {
-        setState(() {
-          _fromDate = startDate;
-          _toDate = endDate;
         });
       },
     );
@@ -665,61 +829,30 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          child: CustomCalendarComponent(
-            initialDate: initialDate,
-            firstDate:
-                firstDate ?? DateTime.now().subtract(const Duration(days: 365)),
-            lastDate: lastDate ?? DateTime.now().add(const Duration(days: 365)),
-            enableRangeSelection: false,
-            onDateSelected: (selectedDate) {
-              onDateSelected(selectedDate);
-              Navigator.of(context).pop();
-            },
+          backgroundColor: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Theme.of(context).brightness == Brightness.dark
+                  ? Border.all(color: Colors.white.withOpacity(0.1))
+                  : null,
+            ),
+            child: CustomCalendarComponent(
+              initialDate: initialDate,
+              firstDate:
+                  firstDate ??
+                  DateTime.now().subtract(const Duration(days: 365)),
+              lastDate:
+                  lastDate ?? DateTime.now().add(const Duration(days: 365)),
+              enableRangeSelection: false,
+              onDateSelected: (selectedDate) {
+                onDateSelected(selectedDate);
+                Navigator.of(context).pop();
+              },
+            ),
           ),
         );
-      },
-    );
-  }
-
-  Future<void> _showCustomCalendarRange({
-    required DateTime initialStartDate,
-    required DateTime initialEndDate,
-    required Function(DateTime, DateTime) onDateRangeSelected,
-  }) async {
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: CustomCalendarComponent(
-            initialDate: initialStartDate,
-            firstDate: DateTime.now().subtract(const Duration(days: 365)),
-            lastDate: DateTime.now().add(const Duration(days: 365)),
-            enableRangeSelection: true,
-            onDateRangeSelected: (startDate, endDate) {
-              onDateRangeSelected(startDate, endDate);
-              Navigator.of(context).pop();
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _selectCompDate() async {
-    await _showCustomCalendar(
-      title: 'Select Comp Off Date',
-      initialDate: DateTime.now(),
-      lastDate: DateTime.now(), // Can only select past dates for comp off
-      onDateSelected: (date) {
-        if (!_compDates.contains(date)) {
-          setState(() {
-            _compDates.add(date);
-          });
-        }
       },
     );
   }
@@ -740,17 +873,35 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Leave updated successfully'),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Leave updated successfully'),
+            ],
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
-      Navigator.pop(context, true); // Return true to indicate update
+      Navigator.pop(context, true);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(viewModel.errorMessage ?? 'Failed to update leave'),
+          content: Row(
+            children: [
+              const Icon(Icons.error, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(viewModel.errorMessage ?? 'Failed to update leave'),
+              ),
+            ],
+          ),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     }
@@ -759,11 +910,11 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
       case 'APPROVED':
-        return Colors.green;
+        return const Color(0xFF51DC8E); // AppColors.highlightGreen
       case 'PENDING':
-        return Colors.orange;
+        return const Color(0xFFFFA200); // AppColors.highlightOrange
       case 'REJECTED':
-        return Colors.red;
+        return const Color(0xFFFF3E6C); // AppColors.highlightPink
       case 'CANCELLED':
         return Colors.grey;
       default:
@@ -774,15 +925,15 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   IconData _getStatusIcon(String status) {
     switch (status.toUpperCase()) {
       case 'APPROVED':
-        return Icons.check_circle;
+        return Icons.check_circle_outline;
       case 'PENDING':
-        return Icons.pending;
+        return Icons.schedule_outlined;
       case 'REJECTED':
-        return Icons.cancel;
+        return Icons.cancel_outlined;
       case 'CANCELLED':
-        return Icons.block;
+        return Icons.block_outlined;
       default:
-        return Icons.help;
+        return Icons.help_outline;
     }
   }
 }

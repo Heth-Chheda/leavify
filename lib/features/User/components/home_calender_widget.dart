@@ -1,7 +1,7 @@
 // calendar_widget.dart
 import 'package:flutter/material.dart';
+import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
-import 'package:leavify/features/User/components/calendar/month_calendar_view.dart';
 import 'package:leavify/features/User/components/calendar/week_calendar_view.dart';
 
 class HomeCalendarWidget extends StatefulWidget {
@@ -23,24 +23,23 @@ class HomeCalendarWidget extends StatefulWidget {
 }
 
 class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
-  bool _isWeekView = true;
   late DateTime _currentDate;
   late DateTime _selectedDate;
   late PageController _weekPageController;
   final int _initialWeekPage =
       52; // Start from middle to allow backward scrolling
 
-  // Modern color palette for different users
+  // Modern color palette for different users using your highlight colors
   final List<Color> _userColors = [
+    const Color(0xFF4735DD), // highlightBlue
+    const Color(0xFFFF3E6C), // highlightPink
+    const Color(0xFF61BFC2), // highlightTeal
+    const Color(0xFFFFA200), // highlightOrange
+    const Color(0xFF51DC8E), // highlightGreen
     const Color(0xFF10B981), // Emerald
-    const Color(0xFFF59E0B), // Amber
     const Color(0xFFEF4444), // Red
     const Color(0xFF06B6D4), // Cyan
     const Color(0xFFF97316), // Orange
-    const Color(0xFFEC4899), // Pink
-    const Color(0xFF84CC16), // Lime
-    const Color(0xFF64748B), // Slate
-    const Color(0xFF0EA5E9), // Sky
   ];
 
   final Map<String, Color> _userColorMap = {};
@@ -72,41 +71,43 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.highlightOrange,
         borderRadius: BorderRadius.circular(28),
-        border: Border(left: BorderSide(color: Colors.red, width: 5.0)),
+        border: Border(
+          left: BorderSide(color: theme.colorScheme.secondary, width: 10.0),
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A1A1A).withOpacity(0.2),
+            color: isDark
+                ? Colors.black.withOpacity(0.4)
+                : const Color(0xFF1A1A1A).withOpacity(0.2),
             spreadRadius: 0,
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          _buildHeader(),
-          Padding(
-            padding: const EdgeInsets.all(5),
-            child: _buildCalendarContent(),
-          ),
-        ],
-      ),
+      child: Column(children: [_buildHeader(), _buildCalendarContent()]),
     );
   }
 
   // MARK: BUILD HEADER
   Widget _buildHeader() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: AppColors.highlightOrange,
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),
         ),
@@ -122,10 +123,10 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
                   children: [
                     Text(
                       _getHeaderTitle(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F2937),
+                        color: Colors.black,
                         letterSpacing: -1.0,
                         height: 1.1,
                       ),
@@ -133,10 +134,6 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
                   ],
                 ),
               ),
-              if (widget.showToggle) ...[
-                const SizedBox(width: 16),
-                _buildToggleButton(),
-              ],
             ],
           ),
           const SizedBox(height: 16),
@@ -149,135 +146,8 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
                 end: Alignment.centerRight,
                 colors: [
                   Colors.transparent,
-                  const Color(0xFF6366F1).withOpacity(0.3),
+                  theme.colorScheme.primary.withOpacity(0.8),
                   Colors.transparent,
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildToggleButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF64748B).withOpacity(0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onTap: () {
-              if (!_isWeekView) {
-                setState(() {
-                  _isWeekView = true;
-                  _currentDate = DateTime.now();
-                });
-              }
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOutCubic,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: _isWeekView
-                    ? const Color(0xFF6366F1)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: _isWeekView
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF6366F1).withOpacity(0.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.view_week_rounded,
-                    size: 16,
-                    color: _isWeekView ? Colors.white : const Color(0xFF64748B),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Week',
-                    style: TextStyle(
-                      color: _isWeekView
-                          ? Colors.white
-                          : const Color(0xFF64748B),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              if (_isWeekView) {
-                setState(() {
-                  _isWeekView = false;
-                });
-              }
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOutCubic,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: !_isWeekView
-                    ? const Color(0xFF6366F1)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: !_isWeekView
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF6366F1).withOpacity(0.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.calendar_month_rounded,
-                    size: 16,
-                    color: !_isWeekView
-                        ? Colors.white
-                        : const Color(0xFF64748B),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Month',
-                    style: TextStyle(
-                      color: !_isWeekView
-                          ? Colors.white
-                          : const Color(0xFF64748B),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -308,50 +178,32 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
           ),
         );
       },
-      child: _isWeekView
-          ? WeekCalendarView(
-              key: const ValueKey('week'),
-              currentDate: _currentDate,
-              selectedDate: _selectedDate,
-              onDateSelected: _onDateSelected,
-              pageController: _weekPageController,
-              initialPage: _initialWeekPage,
-              onWeekChanged: (date) {
-                setState(() {
-                  _currentDate = date;
-                });
-              },
-              userLeaves: widget.userLeaves,
-              userColorMap: _userColorMap,
-            )
-          : MonthCalendarView(
-              key: const ValueKey('month'),
-              currentDate: _currentDate,
-              selectedDate: _selectedDate,
-              onDateSelected: _onDateSelected,
-              onMonthChanged: (date) {
-                setState(() {
-                  _currentDate = date;
-                });
-              },
-              userLeaves: widget.userLeaves,
-              userColorMap: _userColorMap,
-            ),
+      child: WeekCalendarView(
+        key: const ValueKey('week'),
+        currentDate: _currentDate,
+        selectedDate: _selectedDate,
+        onDateSelected: _onDateSelected,
+        pageController: _weekPageController,
+        initialPage: _initialWeekPage,
+        onWeekChanged: (date) {
+          setState(() {
+            _currentDate = date;
+          });
+        },
+        userLeaves: widget.userLeaves,
+        userColorMap: _userColorMap,
+      ),
     );
   }
 
   String _getHeaderTitle() {
-    if (_isWeekView) {
-      final weekStart = _getWeekStart(_currentDate);
-      final weekEnd = weekStart.add(const Duration(days: 6));
+    final weekStart = _getWeekStart(_currentDate);
+    final weekEnd = weekStart.add(const Duration(days: 6));
 
-      if (weekStart.month == weekEnd.month) {
-        return '${_getMonthName(weekStart.month)} ${weekStart.year}';
-      } else {
-        return '${_getShortMonthName(weekStart.month)} - ${_getShortMonthName(weekEnd.month)} ${weekStart.year}';
-      }
+    if (weekStart.month == weekEnd.month) {
+      return '${_getMonthName(weekStart.month)} ${weekStart.year}';
     } else {
-      return '${_getMonthName(_currentDate.month)} ${_currentDate.year}';
+      return '${_getMonthName(weekStart.month)} - ${_getMonthName(weekEnd.month)} ${weekStart.year}';
     }
   }
 
@@ -381,24 +233,6 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
       'October',
       'November',
       'December',
-    ];
-    return months[month - 1];
-  }
-
-  String _getShortMonthName(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
     ];
     return months[month - 1];
   }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class CustomCalendarComponent extends StatefulWidget {
   final Function(DateTime)? onDateSelected;
   final Function(DateTime, DateTime)? onDateRangeSelected;
+  final VoidCallback? onClose; // Added close callback
   final DateTime? initialDate;
   final DateTime? firstDate;
   final DateTime? lastDate;
@@ -12,6 +13,7 @@ class CustomCalendarComponent extends StatefulWidget {
     super.key,
     this.onDateSelected,
     this.onDateRangeSelected,
+    this.onClose, // Added close callback parameter
     this.initialDate,
     this.firstDate,
     this.lastDate,
@@ -134,6 +136,19 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
             ],
           ),
         ),
+        const SizedBox(width: 8),
+        // Close button
+        GestureDetector(
+          onTap: widget.onClose,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.close, size: 20, color: Colors.grey),
+          ),
+        ),
       ],
     );
   }
@@ -150,6 +165,19 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
+              ),
+            ),
+            const Spacer(),
+            // Close button for range selection
+            GestureDetector(
+              onTap: widget.onClose,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.close, size: 20, color: Colors.grey),
               ),
             ),
           ],
