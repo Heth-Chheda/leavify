@@ -31,4 +31,14 @@ class GetAllResponse {
       status: json['status'] ?? '',
     );
   }
+  Map<String, dynamic> toJson() => {
+    'profileImage': profileImage,
+    'firstName': firstName,
+    'lastName': lastName,
+    'role': role,
+    'startDate': startDate.toIso8601String(),
+    'endDate': endDate.toIso8601String(),
+    'reason': reason,
+    'status': status,
+  };
 }

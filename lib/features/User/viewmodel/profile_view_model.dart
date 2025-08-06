@@ -16,7 +16,7 @@ class ProfileViewModel extends ChangeNotifier {
   bool _isEditMode = false;
   bool _isLoading = false;
 
-  bool _useDummyData = true;
+  final bool _useDummyData = false;
 
   bool get isLoading => _isLoading;
   bool get isEditMode => _isEditMode;
@@ -162,7 +162,7 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
-  // MARK: DUMMY DATA GENERATOR
+  // MARK: - DUMMY DATA GENERATOR
   LeaveData _generateDummyLeaveData(String userId) {
     final now = DateTime.now();
 

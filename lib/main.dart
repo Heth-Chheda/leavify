@@ -15,7 +15,7 @@ import 'firebase_options.dart';
 
 
 void main() async {
-  // MARK: REQUEST NOTIFICATION PERMISSIONS
+  // MARK: - REQUEST NOTIFICATION PERMISSIONS
   Future<void> requestNotificationPermissions() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
     NotificationSettings settings = await messaging.requestPermission(
@@ -30,7 +30,7 @@ void main() async {
     }
   }
 
-  // MARK: INITIALIZE FCM
+  // MARK: - INITIALIZE FCM
   Future<void> initializeFCM() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
@@ -52,9 +52,6 @@ void main() async {
     if (token != null) {
       AppStorage.saveString('USER_FCM_TOKEN', token);
       debugPrint('📲 FCM Token: $token');
-    } else {
-      debugPrint('❌ Failed to get FCM token');
-      return;
     }
 
     // Listen to token refresh

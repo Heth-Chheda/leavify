@@ -6,7 +6,7 @@ import 'package:leavify/features/User/components/profile/leave_detail_screeen.da
 import 'package:leavify/features/User/domain/models/my_leaves.dart';
 import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
 import 'package:leavify/features/User/view/landing_view.dart';
-import 'package:leavify/features/User/view/manager/PendingRequests/pending_request.dart';
+import 'package:leavify/features/User/view/manager/PendingRequests/pending_requests_screen.dart';
 import 'package:leavify/features/User/view/profile/profile_screen.dart';
 import 'package:leavify/services/force_update_checker.dart';
 
@@ -134,10 +134,9 @@ class Routes {
           builder: (context) => Scaffold(
             appBar: _buildThemedAppBar(
               context: context,
-              title: 'Pending Requests',
+              title: 'Leave Requests',
             ),
-            body: const PendingLeavesScreen(),
-            // body: const PendingRequestsScreen(),
+            body: const PendingRequestsScreen(),
           ),
         );
         break;
