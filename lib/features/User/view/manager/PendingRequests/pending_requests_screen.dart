@@ -1,53 +1,13 @@
 // pending_requests_screen.dart
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/User/components/manager/pending_request_card.dart';
-import 'package:leavify/features/User/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
 import 'package:provider/provider.dart';
 
 enum LeaveStatus { pending, approved, rejected, escalated }
-
-// Mock model - replace with your real model
-// TODO: THIS MODEL WILL BE THE RESPONSE MODEL OF THE GETTING ALL THE PENDING
-// TODO: REQUESTS -- NOTE: THIS ALL WILL COME FROM THE VIEW MODEL.
-class LeaveRequest {
-  final String id;
-  final String leaveType;
-  final DateTime startDate;
-  final DateTime endDate;
-  final String reason;
-  final LeaveStatus status;
-  final DateTime appliedDate;
-  final String employeeName;
-  final String employeeId;
-  final String department;
-  final String? employeeAvatar;
-  final List<String>? attachments;
-  final int priority; // 1 = High, 2 = Medium, 3 = Low
-  final int daysSinceApplied;
-
-  LeaveRequest({
-    required this.id,
-    required this.leaveType,
-    required this.startDate,
-    required this.endDate,
-    required this.reason,
-    required this.status,
-    required this.appliedDate,
-    required this.employeeName,
-    required this.employeeId,
-    required this.department,
-    this.employeeAvatar,
-    this.attachments,
-    required this.priority,
-    required this.daysSinceApplied,
-  });
-}
 
 class PendingRequestsScreen extends StatefulWidget {
   const PendingRequestsScreen({super.key});
@@ -57,7 +17,6 @@ class PendingRequestsScreen extends StatefulWidget {
 }
 
 class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
-  final List<LeaveRequest> _pendingRequests = []; // TODO: populate from backend
   String _selectedFilter = 'All';
   String _searchQuery = '';
 
@@ -71,15 +30,12 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   }
 
   List<GetAllResponse> _getFilteredRequests(List<GetAllResponse> requests) {
-    debugPrint('Raw requests as JSON:');
-    for (var r in requests) {
-      debugPrint(jsonEncode(r.toJson()));
-    }
     return requests.where((r) {
       // Search filter
       final query = _searchQuery.toLowerCase();
       final fullName = '${r.firstName} ${r.lastName}'.toLowerCase();
-      final matchesSearch = query.isEmpty ||
+      final matchesSearch =
+          query.isEmpty ||
           fullName.contains(query) ||
           r.role.toLowerCase().contains(query) ||
           r.reason.toLowerCase().contains(query);
@@ -97,11 +53,6 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     }).toList();
   }
 
-  bool _isToday(LeaveRequest request) {
-    // TODO: implement logic based on request dates
-    return false;
-  }
-
   void _onSearchChanged(String value) {
     setState(() => _searchQuery = value);
   }
@@ -111,24 +62,11 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   }
 
   void _navigateToDetail(GetAllResponse request) {
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) => PendingRequestDetailScreen(
-          request: request,
-          onApprove: () => _onRequestApproved(request),
-          onReject: () => _onRequestRejected(request),
-        ),
-      ),
+      '/pending-leave-detail',
+      arguments: {'leaveId': request.leaveId},
     );
-  }
-
-  void _onRequestApproved(GetAllResponse request) {
-    // setState(() => _pendingRequests.remove(request));
-  }
-
-  void _onRequestRejected(GetAllResponse request) {
-    // setState(() => _pendingRequests.remove(request));
   }
 
   Future<void> _onRefresh() async {
@@ -147,17 +85,16 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
         builder: (context, leaveViewModel, child) {
           final allRequests = leaveViewModel.getAllPendingLeaves;
           final filteredRequests = _getFilteredRequests(allRequests);
-          final pendingCount = allRequests.where((r) =>
-          r.status.toLowerCase() == 'pending').length;
+          final pendingCount = allRequests
+              .where((r) => r.status.toLowerCase() == 'pending')
+              .length;
 
           if (leaveViewModel.isLoading && allRequests.isEmpty) {
             return Column(
               children: [
                 _buildHeader(context, pendingCount),
                 const Expanded(
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
               ],
             );
@@ -167,9 +104,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
             return Column(
               children: [
                 _buildHeader(context, pendingCount),
-                Expanded(
-                  child: _buildErrorState(leaveViewModel.errorMessage!),
-                ),
+                Expanded(child: _buildErrorState(leaveViewModel.errorMessage!)),
               ],
             );
           }
@@ -182,19 +117,21 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                 Expanded(
                   child: SafeArea(
                     child: filteredRequests.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredRequests.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final request = filteredRequests[index];
-                      return PendingRequestCard(
-                        request: request,
-                        onTap: () => _navigateToDetail(request),
-                      );
-                    },
-                  ),)
+                        ? _buildEmptyState()
+                        : ListView.separated(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: filteredRequests.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final request = filteredRequests[index];
+                              return PendingRequestCard(
+                                request: request,
+                                onTap: () => _navigateToDetail(request),
+                              );
+                            },
+                          ),
+                  ),
                 ),
               ],
             ),
@@ -269,24 +206,18 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       style: TextStyle(color: colorScheme.onSurface),
       decoration: InputDecoration(
         hintText: 'Search by employee name, leave type, or department...',
-        hintStyle: TextStyle(
-          color: colorScheme.onSurface.withOpacity(0.6),
-        ),
+        hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
         prefixIcon: Icon(
           Icons.search,
           color: colorScheme.onSurface.withOpacity(0.7),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.onSurface.withOpacity(0.2),
-          ),
+          borderSide: BorderSide(color: colorScheme.onSurface.withOpacity(0.2)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.onSurface.withOpacity(0.2),
-          ),
+          borderSide: BorderSide(color: colorScheme.onSurface.withOpacity(0.2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -308,7 +239,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       'Pending',
       'Approved',
       'Rejected',
-      if (role =='hr') 'Escalated'
+      if (role == 'hr') 'Escalated',
     ];
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -338,9 +269,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                 color: isSelected
                     ? colorScheme.primary
                     : colorScheme.onSurface.withOpacity(0.8),
-                fontWeight: isSelected
-                    ? FontWeight.w600
-                    : FontWeight.w400,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           );

@@ -7,6 +7,7 @@ class GetAllResponse {
   final DateTime endDate;
   final String reason;
   final String status;
+  final String leaveId;
 
   GetAllResponse({
     required this.profileImage,
@@ -17,6 +18,7 @@ class GetAllResponse {
     required this.endDate,
     required this.reason,
     required this.status,
+    required this.leaveId,
   });
 
   factory GetAllResponse.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class GetAllResponse {
       endDate: DateTime.parse(json['endDate']),
       reason: json['reason'] ?? '',
       status: json['status'] ?? '',
+      leaveId: json['leaveId'] ?? '',
     );
   }
   Map<String, dynamic> toJson() => {
@@ -40,5 +43,6 @@ class GetAllResponse {
     'endDate': endDate.toIso8601String(),
     'reason': reason,
     'status': status,
+    'leaveId': leaveId,
   };
 }

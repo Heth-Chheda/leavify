@@ -5,6 +5,7 @@ import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/User/components/ApplyLeave/custom_calendar_component.dart';
+import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
 
 import '../data/leave_repository.dart';
 import '../domain/request/apply_leave_request_model.dart';
@@ -53,6 +54,10 @@ class LeaveViewModel extends ChangeNotifier {
 
   // MARK: - FORM TYPE PROPERTY
   LeaveFormType? currentFormType;
+
+  // MARK: - LEAVE BY ID
+  GetLeaveByIdResponse? selectedLeaveById;
+  String? processLeaveError;
 
   // MARK: - INITIALIZATION
   void initializeForm(LeaveFormType formType) {
@@ -393,43 +398,77 @@ class LeaveViewModel extends ChangeNotifier {
     }
   }
 
-  /// PROCESS LEAVES
+  // MARK: - PROCESS LEAVES
   Future<bool> processLeaveRequest({
     required String leaveId,
     required String status,
     required BuildContext context,
+    required String comment,
   }) async {
     try {
       isLoading = true;
-      errorMessage = null;
+      processLeaveError = null;
       notifyListeners();
 
       final userId = await _loadUserId();
+
+      debugPrint(
+        "User ID: $userId, Leave ID: $leaveId, Status: $status, Comment: $comment",
+      );
 
       final response = await _repository.processLeave(
         leaveId: leaveId,
         status: status,
         actionTakenBy: userId ?? '',
+        comment: comment,
       );
 
       if (response.success == true) {
         // Refresh pending leaves if needed
         await fetchPendingLeaves();
-
-        // Navigate back to pending screen
-        Navigator.of(context).pop(); // or popUntil() if needed
-
         return true;
       } else {
-        errorMessage = response.error ?? 'Something went wrong.';
+        debugPrint("Error processing leave: ${response.error}");
+        processLeaveError = response.error ?? 'Something went wrong.';
         return false;
       }
     } catch (e) {
-      errorMessage = e.toString();
+      processLeaveError = e.toString();
       return false;
     } finally {
       isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // MARK: - GET LEAVE BY ID
+  Future<void> getLeaveById({required String leaveId}) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      selectedLeaveById = null;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+
+      final userId = await _loadUserId();
+
+      final result = await _repository.getLeaveById(
+        userId: userId ?? '',
+        leaveId: leaveId,
+      );
+
+      selectedLeaveById = result;
+    } catch (e) {
+      errorMessage = e.toString();
+      debugPrint("getLeaveById error: $errorMessage");
+    } finally {
+      isLoading = false;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
     }
   }
 

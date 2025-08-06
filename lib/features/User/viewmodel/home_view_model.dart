@@ -28,6 +28,7 @@ class HomeViewModel extends ChangeNotifier {
   int get approvedLeaves => _homeData?.currentUser?.approved ?? 0;
   int get rejectedLeaves => _homeData?.currentUser?.rejected ?? 0;
   int get pendingLeaves => _homeData?.currentUser?.pending ?? 0;
+  int get workingDays => _homeData?.currentUser?.workingDays ?? 0;
 
   Future<void> initialize() async {
     await _loadUserSummaryFromApi();

@@ -8,7 +8,6 @@ import 'package:leavify/features/User/components/profile/profile_avatar.dart';
 import 'package:leavify/features/User/components/profile/section_header.dart';
 import 'package:leavify/features/User/domain/models/my_leaves.dart';
 import 'package:leavify/features/User/viewmodel/profile_view_model.dart';
-import 'package:leavify/services/dummy_user.dart';
 import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -22,8 +21,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   User? user;
   bool isLoadingUser = true;
 
-  static const USE_DUMMY_DATA = true;
-
   @override
   void initState() {
     super.initState();
@@ -32,11 +29,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // MARK: LOAD USER DATA
   Future<void> _loadUserData() async {
-    if (USE_DUMMY_DATA) {
-      await DummyUserData.saveDummyUserToStorage();
-      await Future.delayed(const Duration(milliseconds: 1000));
-    }
-
     try {
       final userSummary = await AppStorage.getObject<GetUserSummaryResponse>(
         'user_details',

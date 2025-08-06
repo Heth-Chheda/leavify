@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/components/work_in_progress.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/view/login_view.dart';
+import 'package:leavify/features/User/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/User/components/profile/leave_detail_screeen.dart';
 import 'package:leavify/features/User/domain/models/my_leaves.dart';
 import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
@@ -21,6 +22,7 @@ class Routes {
   static const String leaveDetail = '/leave-detail';
   static const String announcements = '/announcements';
   static const String userSettings = '/settings';
+  static const String pendingLeaveDetail = '/pending-leave-detail';
 
   // Custom AppBar builder that adapts to theme
   static PreferredSizeWidget _buildThemedAppBar({
@@ -76,6 +78,22 @@ class Routes {
       case login:
         page = const LoginPage();
         break;
+
+      case pendingLeaveDetail:
+        final args = settings.arguments as Map<String, dynamic>?;
+        if (args != null && args['leaveId'] is String) {
+          page = Builder(
+            builder: (context) => Scaffold(
+              appBar: _buildThemedAppBar(
+                context: context,
+                title: 'Leave Detail',
+              ),
+              body: PendingRequestDetailScreen(leaveId: args['leaveId']),
+            ),
+          );
+          break;
+        }
+        return _errorRoute('Invalid arguments for pending leave detail');
 
       case home:
         page = const LandingView();

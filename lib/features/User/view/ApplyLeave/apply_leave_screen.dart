@@ -123,7 +123,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
         Expanded(
           child: _buildStatCard(
             'Working Days',
-            '22',
+            '${homeViewModel.workingDays}',
             AppColors.highlightOrange,
             Icons.work_outline,
             isDark,

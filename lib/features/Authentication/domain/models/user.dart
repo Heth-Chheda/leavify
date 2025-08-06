@@ -18,6 +18,7 @@ class User {
   final String organization;
   final String empId;
   final String joiningDate;
+  final int? workingDays;
 
   User({
     required this.id,
@@ -37,6 +38,7 @@ class User {
     required this.organization,
     required this.empId,
     required this.joiningDate,
+    this.workingDays,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
@@ -57,6 +59,7 @@ class User {
     organization: json['organization'] ?? '',
     empId: json['empId'] ?? '',
     joiningDate: json['joiningDate'] ?? '',
+    workingDays: json['workingDays'] ?? 0,
   );
 
   Map<String, dynamic> toJson() => {
@@ -77,6 +80,7 @@ class User {
     'organization': organization,
     'empId': empId,
     'joiningDate': joiningDate,
+    'workingDays': workingDays,
   };
 
   factory User.fromJsonString(String jsonString) {

@@ -19,6 +19,9 @@ class ApiEndpoints {
   static final String sendReminderForLeave = '$baseUrl/request/sendReminder';
   static final String cancelLeave = '$baseUrl/request/cancel';
 
+  // leave by id
+  static final String getLeaveById = '$baseUrl/request/getleavesbyid';
+
   // Leaves // Manager
   static final String processLeave = '$baseUrl/request/process';
   static final String getPendingLeaves = '$baseUrl/request/getall';
