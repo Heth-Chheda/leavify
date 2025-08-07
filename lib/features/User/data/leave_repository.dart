@@ -13,7 +13,6 @@ class LeaveRepository {
   final _api = PerformRequest();
   final post = RequestType.post;
 
-  // MARK: APPLY FOR LEAVE
   Future<ApplyLeaveResponseModel> applyLeave(
     ApplyLeaveRequestModel request,
   ) async {
@@ -24,13 +23,35 @@ class LeaveRepository {
     );
 
     final data = jsonDecode(response.body);
-    if (response.statusCode == 200) {
-      return ApplyLeaveResponseModel.fromJson(data);
-    } else {
-      return ApplyLeaveResponseModel(
-        success: false,
-        error: data['error'] ?? 'Unknown error occurred',
-      );
+
+    switch (response.statusCode) {
+      case 200:
+        return ApplyLeaveResponseModel.fromJson(data);
+
+      case 400:
+        throw Exception(data['message'] ?? data['error'] ?? 'Bad request');
+
+      case 401:
+        throw Exception(
+          data['message'] ?? data['error'] ?? 'Unauthorized access',
+        );
+
+      case 409:
+        throw Exception(
+          data['message'] ??
+              data['error'] ??
+              'Conflict: Duplicate leave or invalid state',
+        );
+
+      case 500:
+        throw Exception(
+          data['message'] ?? data['error'] ?? 'Internal server error',
+        );
+
+      default:
+        final errorMessage =
+            data['message'] ?? data['error'] ?? 'Unexpected error occurred';
+        throw Exception('$errorMessage (Status code: ${response.statusCode})');
     }
   }
 

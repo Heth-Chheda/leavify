@@ -11,6 +11,12 @@ class ApiEndpoints {
   // User
   static final String getUserSummary = '$baseUrl/employee/summary';
   static final String uploadProfileImage = '$baseUrl/employee/upload-profile';
+  static final String getWorkingDays = '$baseUrl/employee/workingdays';
+
+  // Announcements
+  static final String getAnnouncements = '$baseUrl/notifications/get';
+  // only for specific users
+  static final String sendAnnouncement = '$baseUrl/notifications/get';
 
   // Leaves
   static final String applyLeave = '$baseUrl/request/apply';

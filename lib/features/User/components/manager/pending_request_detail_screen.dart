@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:leavify/features/User/domain/models/leave_document.dart';
 import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
 import 'package:provider/provider.dart';
@@ -579,7 +580,7 @@ class _CompOffDatesCard extends StatelessWidget {
 
 // MARK: - Documents Card
 class _DocumentsCard extends StatelessWidget {
-  final List<String> documents;
+  final List<LeaveDocument> documents;
 
   const _DocumentsCard({required this.documents});
 
@@ -587,41 +588,40 @@ class _DocumentsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _InfoCard(
       title: 'Attached Documents',
-      children: [
-        ...documents.map((doc) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.withOpacity(0.2)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.attachment, size: 20, color: Colors.blue.shade700),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    doc,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.blue.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
+      children: documents.map((doc) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.blue.withOpacity(0.2)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.attachment, size: 20, color: Colors.blue.shade700),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '${doc.docPath.split('/').last} (${doc.docType})',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.blue.shade700,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.download, color: Colors.blue.shade700),
-                  onPressed: () {
-                    // Handle document download
-                  },
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ],
+              ),
+              IconButton(
+                icon: Icon(Icons.download, color: Colors.blue.shade700),
+                onPressed: () {
+                  // TODO: Handle document download using doc.docPath
+                  print('Download: ${doc.docPath}');
+                },
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

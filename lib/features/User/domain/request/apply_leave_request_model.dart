@@ -7,7 +7,7 @@ class ApplyLeaveRequestModel {
   final bool isCompOff;
   final bool isHalfDay;
   final List<String> compDates;
-  final List<String> documents;
+  final List<LeaveDocument> documents;
 
   ApplyLeaveRequestModel({
     required this.userId,
@@ -30,6 +30,15 @@ class ApplyLeaveRequestModel {
     "isCompOff": isCompOff,
     "isHalfDay": isHalfDay,
     "compDates": compDates,
-    "documents": documents,
+    "documents": documents.map((doc) => doc.toJson()).toList(),
   };
+}
+
+class LeaveDocument {
+  final String docType;
+  final String docBytes;
+
+  LeaveDocument({required this.docType, required this.docBytes});
+
+  Map<String, dynamic> toJson() => {'docType': docType, 'docBytes': docBytes};
 }

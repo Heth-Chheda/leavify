@@ -571,6 +571,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     );
   }
 
+  // MARK: - RADIO OPTION
   Widget _buildRadioOption({
     required String title,
     String? subtitle,
@@ -684,6 +685,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     );
   }
 
+  // MARK: - REASON SECTION
   Widget _buildReasonSection(LeaveViewModel leaveViewModel, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -787,6 +789,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     );
   }
 
+  // MARK: - DOCUMENT SECTION
   Widget _buildDocumentsSection(LeaveViewModel leaveViewModel, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -974,6 +977,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     );
   }
 
+  // MARK: - SUBMIT BUTTON
   Widget _buildSubmitButton(LeaveViewModel leaveViewModel, bool isDark) {
     return Container(
       width: double.infinity,

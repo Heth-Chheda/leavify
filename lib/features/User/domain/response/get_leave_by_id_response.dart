@@ -1,3 +1,5 @@
+import 'package:leavify/features/User/domain/models/leave_document.dart';
+
 class GetLeaveByIdResponse {
   final String userId;
   final String leaveId;
@@ -33,7 +35,7 @@ class LeaveDetails {
   final DateTime fromDate;
   final DateTime toDate;
   final String reason;
-  final List<String> documents;
+  final List<LeaveDocument> documents;
   final bool isCompOff;
   final List<String> compDates;
   final bool isHalfDay;
@@ -69,7 +71,11 @@ class LeaveDetails {
       fromDate: DateTime.parse(json['fromDate']),
       toDate: DateTime.parse(json['toDate']),
       reason: json['reason'],
-      documents: List<String>.from(json['documents'] ?? []),
+      documents:
+          (json['documents'] as List<dynamic>?)
+              ?.map((doc) => LeaveDocument.fromJson(doc))
+              .toList() ??
+          [],
       isCompOff: json['isCompOff'],
       compDates: List<String>.from(json['compDates'] ?? []),
       isHalfDay: json['isHalfDay'],

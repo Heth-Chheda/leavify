@@ -6,6 +6,7 @@ import 'package:leavify/core/network/perform_request.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Authentication/domain/response/login_response.dart';
+import 'package:leavify/features/User/domain/response/get_announcements_response.dart';
 
 import '../domain/request/login_request.dart';
 
@@ -18,7 +19,7 @@ class AuthenticationRepository {
   final get = RequestType.get;
   final post = RequestType.post;
 
-  // MARK: LOGIN
+  // MARK: - LOGIN
   Future<LoginResponse> login(LoginRequest request) async {
     try {
       final response = await _performRequest.performRequest(
@@ -118,7 +119,7 @@ class AuthenticationRepository {
     }
   }
 
-  // MARK: GET USER SUMMARY
+  // MARK: - GET USER SUMMARY
   Future<GetUserSummaryResponse> getUserSummary(String userId) async {
     try {
       final getUserSummaryResponse = await _performRequest.performRequest(
@@ -187,6 +188,69 @@ class AuthenticationRepository {
           throw Exception(
             '$errorMessage (${getUserSummaryResponse.statusCode})',
           );
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // MARK: - GET ANNOUNCEMENTS
+  Future<List<GetAnnouncementsResponse>> getAnnouncements() async {
+    try {
+      final response = await _performRequest.performRequest(
+        url: ApiEndpoints.getAnnouncements,
+        method: get,
+      );
+
+      switch (response.statusCode) {
+        case 200:
+          try {
+            final List<dynamic> jsonList = jsonDecode(response.body);
+            return jsonList
+                .map((json) => GetAnnouncementsResponse.fromJson(json))
+                .toList();
+          } catch (e) {
+            throw Exception('Invalid response format from server');
+          }
+
+        case 400:
+          String errorMessage;
+          try {
+            final Map<String, dynamic> errorData = jsonDecode(response.body);
+            errorMessage =
+                errorData['message'] ?? errorData['error'] ?? 'Bad request';
+          } catch (e) {
+            errorMessage = response.body.isNotEmpty
+                ? response.body
+                : 'Something went wrong. Please try again.';
+          }
+          throw Exception(errorMessage);
+
+        case 500:
+          String errorMessage;
+          try {
+            final Map<String, dynamic> errorData = jsonDecode(response.body);
+            errorMessage =
+                errorData['message'] ?? errorData['error'] ?? 'Server error';
+          } catch (e) {
+            errorMessage = response.body.isNotEmpty
+                ? response.body
+                : 'Internal server error. Please try again later.';
+          }
+          throw Exception(errorMessage);
+
+        default:
+          String errorMessage;
+          try {
+            final Map<String, dynamic> errorData = jsonDecode(response.body);
+            errorMessage =
+                errorData['message'] ?? errorData['error'] ?? 'Unknown error';
+          } catch (e) {
+            errorMessage = response.body.isNotEmpty
+                ? response.body
+                : 'Unknown error occurred';
+          }
+          throw Exception('$errorMessage (${response.statusCode})');
       }
     } catch (e) {
       rethrow;

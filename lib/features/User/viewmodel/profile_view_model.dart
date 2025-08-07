@@ -28,7 +28,7 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // MARK: LOAD USER LEAVES (WITH DUMMY DATA SUPPORT)
+  // MARK: LOAD USER LEAVES
   Future<void> loadUserLeaves(String userId) async {
     _setState(ProfileViewState.loading);
 
@@ -111,9 +111,9 @@ class ProfileViewModel extends ChangeNotifier {
 
       final success = await _repository.editUserLeave(updateData);
 
-      // if (success) {
-      //   _isEditMode = false;
-      // }
+      if (success == true) {
+        _isEditMode = false;
+      }
 
       _isEditMode = false;
       _isLoading = false;

@@ -4,7 +4,6 @@ import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/view/login_view.dart';
 import 'package:leavify/features/User/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/User/components/profile/leave_detail_screeen.dart';
-import 'package:leavify/features/User/domain/models/my_leaves.dart';
 import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
 import 'package:leavify/features/User/view/landing_view.dart';
 import 'package:leavify/features/User/view/manager/PendingRequests/pending_requests_screen.dart';
@@ -120,7 +119,7 @@ class Routes {
       case leaveDetail:
         final args = settings.arguments as Map<String, dynamic>?;
         if (args != null &&
-            args['leave'] is MyLeaves &&
+            args['leaveId'] is String &&
             args['userId'] is String) {
           page = Builder(
             builder: (context) => Scaffold(
@@ -129,7 +128,7 @@ class Routes {
                 title: 'Leave Details',
               ),
               body: LeaveDetailScreen(
-                leave: args['leave'] as MyLeaves,
+                leaveId: args['leaveId'] as String,
                 userId: args['userId'] as String,
               ),
             ),

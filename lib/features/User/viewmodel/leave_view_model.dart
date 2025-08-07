@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -247,14 +251,91 @@ class LeaveViewModel extends ChangeNotifier {
     }
   }
 
-  Future<List<String>> _uploadDocuments() async {
-    // Mock implementation - replace with actual upload logic
-    List<String> uploadedUrls = [];
-    for (PlatformFile file in selectedDocuments) {
-      String uploadedUrl = 'uploaded_${file.name}';
-      uploadedUrls.add(uploadedUrl);
+  // MARK: - CONVERT DOCUMENTS TO BASE64
+  Future<List<String>> _convertDocumentsToBase64() async {
+    List<String> base64Documents = [];
+
+    try {
+      for (int i = 0; i < selectedDocuments.length; i++) {
+        PlatformFile file = selectedDocuments[i];
+        debugPrint(
+          "Processing document ${i + 1}/${selectedDocuments.length}: ${file.name}",
+        );
+
+        Uint8List? fileBytes = file.bytes;
+
+        if (fileBytes != null) {
+          debugPrint("File bytes length: ${fileBytes.length}");
+
+          // Convert bytes to base64
+          String base64String = base64Encode(fileBytes);
+          debugPrint("Base64 string length: ${base64String.length}");
+
+          // Create a structured base64 string with metadata
+          String documentData = jsonEncode({
+            'fileName': file.name,
+            'fileSize': file.size,
+            'fileExtension': file.extension ?? '',
+            'mimeType': _getMimeType(file.extension ?? ''),
+            'base64Data': base64String,
+          });
+
+          base64Documents.add(documentData);
+          debugPrint("Successfully processed: ${file.name}");
+        } else {
+          debugPrint('ERROR: File bytes are null for ${file.name}');
+          throw Exception('File bytes are null for ${file.name}');
+        }
+      }
+
+      debugPrint("Total documents converted: ${base64Documents.length}");
+      return base64Documents;
+    } catch (e) {
+      debugPrint('ERROR converting documents to base64: $e');
+      throw Exception('Failed to process documents: $e');
     }
-    return uploadedUrls;
+  }
+
+  // MARK: - GET MIME TYPE HELPER
+  String _getMimeType(String extension) {
+    switch (extension.toLowerCase()) {
+      case 'pdf':
+        return 'application/pdf';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      default:
+        return 'application/octet-stream';
+    }
+  }
+
+  // MARK: - ALTERNATIVE: SIMPLE BASE64 CONVERSION (if you prefer simple base64 strings)
+  Future<List<String>> _convertDocumentsToSimpleBase64() async {
+    List<String> base64Documents = [];
+
+    try {
+      for (PlatformFile file in selectedDocuments) {
+        Uint8List? fileBytes = file.bytes;
+
+        if (fileBytes != null) {
+          String base64String = base64Encode(fileBytes);
+          base64Documents.add(base64String);
+        } else {
+          debugPrint('Warning: File bytes are null for ${file.name}');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error converting documents to base64: $e');
+      throw Exception('Failed to process documents: $e');
+    }
+
+    return base64Documents;
   }
 
   // MARK: - FORM VALIDATION METHODS
@@ -272,7 +353,7 @@ class LeaveViewModel extends ChangeNotifier {
     return true;
   }
 
-  // MARK: - FORM SUBMISSION METHODS
+  // MARK: - SUBMIT LEAVE FORM METHOD
   Future<void> submitLeaveForm(
     BuildContext context,
     Function(String, Color) showSnackBar,
@@ -284,11 +365,6 @@ class LeaveViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Upload documents if any
-      if (selectedDocuments.isNotEmpty) {
-        uploadedDocumentUrls = await _uploadDocuments();
-      }
-
       // Load user ID from SharedPreferences
       final userId = await _loadUserId();
       if (userId == null || userId.isEmpty) {
@@ -298,8 +374,13 @@ class LeaveViewModel extends ChangeNotifier {
         return;
       }
 
-      // Create and submit request
+      // Create request (this will convert documents to base64 internally)
+      debugPrint(
+        "Creating leave request with ${selectedDocuments.length} documents...",
+      );
       final request = await _createLeaveRequest(userId);
+
+      // Submit the request
       final success = await submitLeaveRequest(request);
 
       isLoading = false;
@@ -318,17 +399,15 @@ class LeaveViewModel extends ChangeNotifier {
     } catch (e) {
       isLoading = false;
       notifyListeners();
+      debugPrint("Error in submitLeaveForm: $e");
       showSnackBar('Error submitting request: $e', Colors.red);
     }
   }
 
   // MARK: - SUBMIT LEAVE REQUEST
   Future<bool> submitLeaveRequest(ApplyLeaveRequestModel request) async {
-    debugPrint("Apply Leave Request: ${request.toJson()}");
     final response = await _repository.applyLeave(request);
-    debugPrint("Apply Leave Response: ${response.toString()}");
-
-    if (response.success != null) {
+    if (response.success == true) {
       successLeaveId = response.leaveId;
       errorMessage = null;
       return true;
@@ -340,23 +419,38 @@ class LeaveViewModel extends ChangeNotifier {
     }
   }
 
-  // MARK: CREATE LEAVE REQUEST
+  // MARK: - CREATE LEAVE REQUEST METHOD
   Future<ApplyLeaveRequestModel> _createLeaveRequest(String userId) async {
     final adjustedRange = getAdjustedDateRange();
     List<String> compOffDateStrings = selectedCompOffDates.map((date) {
-      // Create a DateTime with specific time (similar to your date range adjustment)
       final adjustedDate = DateTime(
         date.year,
         date.month,
         date.day,
-        00, // Set to 20:55:44 to match your format
         00,
         00,
-        00, // milliseconds
+        00,
+        00,
       );
       return adjustedDate.toUtc().toIso8601String();
     }).toList();
-    return ApplyLeaveRequestModel(
+
+    // Convert documents to LeaveDocument objects with base64
+    List<LeaveDocument> documents = [];
+    if (selectedDocuments.isNotEmpty) {
+      debugPrint(
+        "Converting ${selectedDocuments.length} documents to LeaveDocuments...",
+      );
+      try {
+        documents = await _convertDocumentsToLeaveDocuments();
+        debugPrint("Successfully converted ${documents.length} documents");
+      } catch (e) {
+        debugPrint("Error converting documents: $e");
+        rethrow; // Re-throw to be handled by the calling method
+      }
+    }
+
+    final request = ApplyLeaveRequestModel(
       userId: userId,
       type: _getLeaveType(),
       fromDate: adjustedRange['from']!.toUtc().toIso8601String(),
@@ -365,8 +459,98 @@ class LeaveViewModel extends ChangeNotifier {
       isCompOff: hasCompOffPlans,
       isHalfDay: isLeaveHalfDay,
       compDates: compOffDateStrings,
-      documents: uploadedDocumentUrls,
+      documents: documents, // Now using LeaveDocument objects
     );
+    debugPrint("Created Leave Request: ${request.toJson()}");
+    return request;
+  }
+
+  // MARK: - CONVERT DOCUMENTS TO BASE64 (Fixed Version)
+  Future<List<LeaveDocument>> _convertDocumentsToLeaveDocuments() async {
+    List<LeaveDocument> leaveDocuments = [];
+
+    try {
+      for (int i = 0; i < selectedDocuments.length; i++) {
+        PlatformFile file = selectedDocuments[i];
+        debugPrint(
+          "Processing document ${i + 1}/${selectedDocuments.length}: ${file.name}",
+        );
+
+        Uint8List? fileBytes;
+
+        // Try to get bytes from different sources
+        if (file.bytes != null) {
+          // Web platform or when bytes are available
+          fileBytes = file.bytes!;
+          debugPrint("Got file bytes directly from file.bytes");
+        } else if (file.path != null) {
+          // Mobile platforms - read from file path
+          File fileFromPath = File(file.path!);
+          if (await fileFromPath.exists()) {
+            fileBytes = await fileFromPath.readAsBytes();
+            debugPrint("Read file bytes from path: ${file.path}");
+          } else {
+            debugPrint("ERROR: File does not exist at path: ${file.path}");
+            throw Exception('File not found at path: ${file.path}');
+          }
+        } else {
+          debugPrint(
+            "ERROR: Both file.bytes and file.path are null for ${file.name}",
+          );
+          throw Exception('Unable to access file data for ${file.name}');
+        }
+
+        if (fileBytes != null) {
+          debugPrint("File bytes length: ${fileBytes.length}");
+
+          // Convert bytes to base64
+          String base64String = base64Encode(fileBytes);
+          debugPrint("Base64 string length: ${base64String.length}");
+
+          // Get file extension and determine docType
+          String extension = file.extension?.toLowerCase() ?? '';
+          String docType = _getDocumentType(extension);
+
+          // Create LeaveDocument object
+          LeaveDocument leaveDocument = LeaveDocument(
+            docType: docType,
+            docBytes: base64String,
+          );
+
+          leaveDocuments.add(leaveDocument);
+          debugPrint("Successfully processed: ${file.name} as $docType");
+        } else {
+          debugPrint(
+            'ERROR: File bytes are still null after processing ${file.name}',
+          );
+          throw Exception('Failed to read file bytes for ${file.name}');
+        }
+      }
+
+      debugPrint("Total documents converted: ${leaveDocuments.length}");
+      return leaveDocuments;
+    } catch (e) {
+      debugPrint('ERROR converting documents to LeaveDocuments: $e');
+      throw Exception('Failed to process documents: $e');
+    }
+  }
+
+  // MARK: - GET DOCUMENT TYPE HELPER
+  String _getDocumentType(String extension) {
+    switch (extension.toLowerCase()) {
+      case 'pdf':
+        return 'PDF';
+      case 'doc':
+      case 'docx':
+        return 'DOC';
+      case 'jpg':
+      case 'jpeg':
+        return 'JPG';
+      case 'png':
+        return 'PNG';
+      default:
+        return 'OTHER';
+    }
   }
 
   // MARK: - UTILITY METHODS
@@ -424,7 +608,6 @@ class LeaveViewModel extends ChangeNotifier {
       );
 
       if (response.success == true) {
-        // Refresh pending leaves if needed
         await fetchPendingLeaves();
         return true;
       } else {
