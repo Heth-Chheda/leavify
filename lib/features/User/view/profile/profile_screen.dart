@@ -6,9 +6,7 @@ import 'package:leavify/features/Authentication/domain/response/get_user_summary
 import 'package:leavify/features/User/components/profile/info_card.dart';
 import 'package:leavify/features/User/components/profile/profile_avatar.dart';
 import 'package:leavify/features/User/components/profile/section_header.dart';
-import 'package:leavify/features/User/domain/models/my_leaves.dart';
 import 'package:leavify/features/User/viewmodel/profile_view_model.dart';
-import 'package:leavify/services/dummy_user.dart';
 import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -22,8 +20,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   User? user;
   bool isLoadingUser = true;
 
-  static const USE_DUMMY_DATA = true;
-
   @override
   void initState() {
     super.initState();
@@ -32,11 +28,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // MARK: LOAD USER DATA
   Future<void> _loadUserData() async {
-    if (USE_DUMMY_DATA) {
-      await DummyUserData.saveDummyUserToStorage();
-      await Future.delayed(const Duration(milliseconds: 1000));
-    }
-
     try {
       final userSummary = await AppStorage.getObject<GetUserSummaryResponse>(
         'user_details',
@@ -358,102 +349,94 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
 
-              ...leaveData.allLeaves
-                  .take(3)
-                  .map(
-                    (leave) => GestureDetector(
-                      onTap: () => _navigateToLeaveDetail(leave),
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color:
-                                theme.colorScheme.outline?.withOpacity(0.2) ??
-                                Colors.grey.withOpacity(0.2),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '${DateFormat('dd MMM').format(leave.fromDate)} - ${DateFormat('dd MMM yyyy').format(leave.toDate)}',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: theme.colorScheme.onSurface,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _getStatusColor(
-                                      leave.status,
-                                    ).withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    leave.status,
-                                    style: TextStyle(
-                                      color: _getStatusColor(leave.status),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              leave.reason,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(
-                                  0.7,
-                                ),
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (leave.isHalfDay || leave.isCompOff) ...[
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  if (leave.isHalfDay)
-                                    _buildLeaveTag(
-                                      'Half Day',
-                                      Colors.blue,
-                                      theme,
-                                    ),
-                                  if (leave.isHalfDay && leave.isCompOff)
-                                    const SizedBox(width: 8),
-                                  if (leave.isCompOff)
-                                    _buildLeaveTag(
-                                      'Comp Off',
-                                      Colors.purple,
-                                      theme,
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
+              ...leaveData.allLeaves.map(
+                (leave) => GestureDetector(
+                  onTap: () => _navigateToLeaveDetail(leave.id),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color:
+                            theme.colorScheme.outline?.withOpacity(0.2) ??
+                            Colors.grey.withOpacity(0.2),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${DateFormat('dd MMM').format(leave.fromDate)} - ${DateFormat('dd MMM yyyy').format(leave.toDate)}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(
+                                  leave.status,
+                                ).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                leave.status,
+                                style: TextStyle(
+                                  color: _getStatusColor(leave.status),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          leave.reason,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (leave.isHalfDay || leave.isCompOff) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              if (leave.isHalfDay)
+                                _buildLeaveTag('Half Day', Colors.blue, theme),
+                              if (leave.isHalfDay && leave.isCompOff)
+                                const SizedBox(width: 8),
+                              if (leave.isCompOff)
+                                _buildLeaveTag(
+                                  'Comp Off',
+                                  Colors.purple,
+                                  theme,
+                                ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ),
+                ),
+              ),
             ],
           ],
         );
@@ -528,13 +511,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // MARK: NAVIGATE TO LEAVE DETAIL
-  Future<void> _navigateToLeaveDetail(MyLeaves leave) async {
+  Future<void> _navigateToLeaveDetail(String leaveId) async {
     if (user == null) return;
 
     final result = await Navigator.pushNamed(
       context,
       '/leave-detail',
-      arguments: {'leave': leave, 'userId': user!.id},
+      arguments: {'leaveId': leaveId, 'userId': user!.id},
     );
 
     if (result == true && mounted) {

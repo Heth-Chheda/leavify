@@ -2,16 +2,17 @@ import 'dart:convert';
 
 import 'package:leavify/core/api/api_endpoints.dart';
 import 'package:leavify/core/network/perform_request.dart';
+import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/User/domain/models/my_leaves.dart';
 import 'package:leavify/features/User/domain/request/apply_leave_request_model.dart';
 import 'package:leavify/features/User/domain/response/apply_leave_response_model.dart';
+import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
 import 'package:leavify/models/general_response.dart';
 
 class LeaveRepository {
   final _api = PerformRequest();
   final post = RequestType.post;
 
-  // MARK: APPLY FOR LEAVE
   Future<ApplyLeaveResponseModel> applyLeave(
     ApplyLeaveRequestModel request,
   ) async {
@@ -22,13 +23,35 @@ class LeaveRepository {
     );
 
     final data = jsonDecode(response.body);
-    if (response.statusCode == 200) {
-      return ApplyLeaveResponseModel.fromJson(data);
-    } else {
-      return ApplyLeaveResponseModel(
-        success: false,
-        error: data['error'] ?? 'Unknown error occurred',
-      );
+
+    switch (response.statusCode) {
+      case 200:
+        return ApplyLeaveResponseModel.fromJson(data);
+
+      case 400:
+        throw Exception(data['message'] ?? data['error'] ?? 'Bad request');
+
+      case 401:
+        throw Exception(
+          data['message'] ?? data['error'] ?? 'Unauthorized access',
+        );
+
+      case 409:
+        throw Exception(
+          data['message'] ??
+              data['error'] ??
+              'Conflict: Duplicate leave or invalid state',
+        );
+
+      case 500:
+        throw Exception(
+          data['message'] ?? data['error'] ?? 'Internal server error',
+        );
+
+      default:
+        final errorMessage =
+            data['message'] ?? data['error'] ?? 'Unexpected error occurred';
+        throw Exception('$errorMessage (Status code: ${response.statusCode})');
     }
   }
 
@@ -36,8 +59,9 @@ class LeaveRepository {
   Future<LeaveData> getUserLeaves(String userId) async {
     try {
       final getUserLeavesResponse = await _api.performRequest(
-        url: '${ApiEndpoints.getMyLeaves}/$userId',
-        method: RequestType.get,
+        url: ApiEndpoints.getMyLeaves,
+        method: RequestType.post,
+        body: {'userId': userId},
       );
       if (getUserLeavesResponse.statusCode == 200) {
         final jsonData = json.decode(getUserLeavesResponse.body);
@@ -155,10 +179,9 @@ class LeaveRepository {
   // MARK: PROCESS LEAVES
   Future<GeneralResponse> processLeave({
     required String leaveId,
-    required String userId,
     required String status,
-    required String
-    actionTakenBy, // user_id of the manager or hr or super admin
+    required String actionTakenBy,
+    required String comment,
   }) async {
     try {
       final processLeaveResponse = await _api.performRequest(
@@ -166,9 +189,9 @@ class LeaveRepository {
         method: RequestType.post,
         body: {
           'leaveId': leaveId,
-          'userId': userId,
           'status': status,
           'actionTakenBy': actionTakenBy,
+          'comment': comment,
         },
       );
       final jsonData = json.decode(processLeaveResponse.body);
@@ -190,6 +213,78 @@ class LeaveRepository {
           throw Exception(
             'Unexpected error: ${processLeaveResponse.statusCode}',
           );
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // MARK: GET PENDING LEAVES
+  Future<List<GetAllResponse>> getPendingLeaves({
+    required String userId,
+  }) async {
+    try {
+      final response = await _api.performRequest(
+        url: ApiEndpoints.getPendingLeaves,
+        method: RequestType.post,
+        body: {'userId': userId},
+      );
+
+      switch (response.statusCode) {
+        case 200:
+          final data = jsonDecode(response.body);
+          final result = data['result'] as List<dynamic>;
+
+          final pendingLeaves = result
+              .map((leaveJson) => GetAllResponse.fromJson(leaveJson))
+              .toList();
+
+          return pendingLeaves;
+
+        case 400:
+          throw Exception(
+            "Bad Request: The server could not understand the request.",
+          );
+        case 401:
+          throw Exception("Unauthorized: Please login again.");
+        case 500:
+          throw Exception("Server Error: Please try again later.");
+
+        default:
+          throw Exception("Unexpected Error: ${response.statusCode}");
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // MARK: - GET LEAVE DETAIL BY ID
+  Future<GetLeaveByIdResponse> getLeaveById({
+    required String userId,
+    required String leaveId,
+  }) async {
+    try {
+      final response = await _api.performRequest(
+        url: ApiEndpoints.getLeaveById,
+        method: RequestType.post,
+        body: {'userId': userId, 'leaveId': leaveId},
+      );
+
+      switch (response.statusCode) {
+        case 200:
+          final data = jsonDecode(response.body);
+          return GetLeaveByIdResponse.fromJson(data);
+
+        case 400:
+          throw Exception(
+            "Bad Request: The server could not understand the request.",
+          );
+        case 401:
+          throw Exception("Unauthorized: Please login again.");
+        case 500:
+          throw Exception("Server Error: Please try again later.");
+        default:
+          throw Exception("Unexpected Error: ${response.statusCode}");
       }
     } catch (e) {
       rethrow;

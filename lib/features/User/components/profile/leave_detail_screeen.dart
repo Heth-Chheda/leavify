@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/features/User/components/ApplyLeave/custom_calendar_component.dart';
-import 'package:leavify/features/User/domain/models/my_leaves.dart';
+import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
+import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
 import 'package:leavify/features/User/viewmodel/profile_view_model.dart';
 import 'package:provider/provider.dart';
 
 class LeaveDetailScreen extends StatefulWidget {
-  final MyLeaves leave;
+  final String leaveId;
   final String userId;
 
   const LeaveDetailScreen({
     super.key,
-    required this.leave,
+    required this.leaveId,
     required this.userId,
   });
 
@@ -28,20 +29,48 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   late bool _isHalfDay;
   late bool _isCompOff;
   late List<DateTime> _compDates;
+  GetLeaveByIdResponse? _leave;
 
   @override
   void initState() {
     super.initState();
-    _initializeData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeData();
+    });
   }
 
-  void _initializeData() {
-    _reasonController.text = widget.leave.reason;
-    _fromDate = widget.leave.fromDate;
-    _toDate = widget.leave.toDate;
-    _isHalfDay = widget.leave.isHalfDay;
-    _isCompOff = widget.leave.isCompOff;
-    _compDates = List.from(widget.leave.compDates);
+  void onRemindPressed() {
+    // Implement remind logic here
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Reminder sent')));
+  }
+
+  void onEscalatePressed() {
+    // Implement escalate logic here
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Escalation sent')));
+  }
+
+  void _initializeData() async {
+    final leaveVM = Provider.of<LeaveViewModel>(context, listen: false);
+
+    await leaveVM.getLeaveById(leaveId: widget.leaveId);
+
+    final leave = leaveVM.selectedLeaveById;
+    if (leave != null) {
+      setState(() {
+        _leave = leave;
+        _reasonController.text = leave.leaveDetails.reason;
+        _fromDate = leave.leaveDetails.fromDate;
+        _toDate = leave.leaveDetails.toDate;
+        _isHalfDay = leave.leaveDetails.isHalfDay;
+        _isCompOff = leave.leaveDetails.isCompOff;
+        _compDates = leave.leaveDetails.compDates.map(DateTime.parse).toList();
+      });
+    }
   }
 
   @override
@@ -56,6 +85,11 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
     return Consumer<ProfileViewModel>(
       builder: (context, viewModel, child) {
+        if (_leave == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.background,
           body: Form(
@@ -69,7 +103,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Status Badge with gradient
-                        _buildStatusBadge(isDark),
+                        _buildStatusSection(isDark),
                         const SizedBox(height: 24),
 
                         // Leave Duration Card with glassmorphism effect
@@ -93,52 +127,100 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     );
   }
 
-  Widget _buildStatusBadge(bool isDark) {
-    final statusColor = _getStatusColor(widget.leave.status);
+  Widget _buildStatusSection(bool isDark) {
+    final statusColor = _getStatusColor(_leave!.leaveDetails.status);
 
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              statusColor.withOpacity(0.2),
-              statusColor.withOpacity(0.1),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: statusColor.withOpacity(0.4), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: statusColor.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Status badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                statusColor.withOpacity(0.2),
+                statusColor.withOpacity(0.1),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              _getStatusIcon(widget.leave.status),
-              color: statusColor,
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Text(
-              widget.leave.status.toUpperCase(),
-              style: TextStyle(
-                color: statusColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                letterSpacing: 0.5,
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(color: statusColor.withOpacity(0.4), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: statusColor.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _getStatusIcon(_leave!.leaveDetails.status),
+                color: statusColor,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                _leave!.leaveDetails.status.toUpperCase(),
+                style: TextStyle(
+                  color: statusColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Remind and Escalate Buttons
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildActionButton(
+              'Remind',
+              Icons.notifications_active,
+              Colors.orange,
+              onRemindPressed,
+            ),
+            const SizedBox(width: 16),
+            _buildActionButton(
+              'Escalate',
+              Icons.warning_amber,
+              Colors.red,
+              onEscalatePressed,
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onPressed,
+  ) {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color.withOpacity(0.15),
+        foregroundColor: color,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: color.withOpacity(0.4)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       ),
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 
@@ -443,7 +525,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           // Leave Type
           _buildDetailRow(
             'Leave Type',
-            widget.leave.type,
+            _leave!.leaveDetails.type,
             Icons.work_outline,
             isDark,
           ),
@@ -524,7 +606,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                 ),
               ),
               child: Text(
-                widget.leave.reason,
+                _leave!.leaveDetails.reason,
                 style: TextStyle(
                   fontSize: 14,
                   color: Theme.of(context).colorScheme.onSurface,
@@ -538,14 +620,18 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           // Created/Updated dates
           _buildDetailRow(
             'Applied On',
-            DateFormat('dd MMM yyyy, hh:mm a').format(widget.leave.createdAt),
+            DateFormat(
+              'dd MMM yyyy, hh:mm a',
+            ).format(_leave!.leaveDetails.createdAt),
             Icons.schedule_outlined,
             isDark,
           ),
           const SizedBox(height: 12),
           _buildDetailRow(
             'Last Updated',
-            DateFormat('dd MMM yyyy, hh:mm a').format(widget.leave.updatedAt),
+            DateFormat(
+              'dd MMM yyyy, hh:mm a',
+            ).format(_leave!.leaveDetails.updatedAt),
             Icons.update_outlined,
             isDark,
           ),
@@ -730,7 +816,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: widget.leave.status.toUpperCase() == 'PENDING'
+                    gradient:
+                        _leave!.leaveDetails.status.toUpperCase() == 'PENDING'
                         ? LinearGradient(
                             colors: [
                               Theme.of(context).colorScheme.primary,
@@ -748,19 +835,23 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ElevatedButton.icon(
-                    onPressed: widget.leave.status.toUpperCase() == 'PENDING'
+                    onPressed:
+                        _leave!.leaveDetails.status.toUpperCase() == 'PENDING'
                         ? () => viewModel.toggleEditMode()
                         : null,
                     icon: Icon(
                       Icons.edit_outlined,
-                      color: widget.leave.status.toUpperCase() == 'PENDING'
+                      color:
+                          _leave!.leaveDetails.status.toUpperCase() == 'PENDING'
                           ? Colors.white
                           : Colors.grey,
                     ),
                     label: Text(
                       'Edit Leave',
                       style: TextStyle(
-                        color: widget.leave.status.toUpperCase() == 'PENDING'
+                        color:
+                            _leave!.leaveDetails.status.toUpperCase() ==
+                                'PENDING'
                             ? Colors.white
                             : Colors.grey,
                         fontWeight: FontWeight.bold,
@@ -861,7 +952,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final success = await viewModel.updateLeave(
-      leaveId: widget.leave.id,
+      leaveId: _leave!.leaveId,
       userId: widget.userId,
       fromDate: _fromDate,
       toDate: _toDate,

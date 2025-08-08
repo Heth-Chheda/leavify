@@ -28,7 +28,8 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isManagerOrHR = widget.role != 'employee';
+    final String role = widget.role.toLowerCase();
+    final bool isManagerOrHR = role != 'employee';
 
     // Navigation items based on role
     final List<_NavItemData> navItems = [];

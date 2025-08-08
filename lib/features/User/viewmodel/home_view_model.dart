@@ -3,6 +3,7 @@ import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
+import 'package:leavify/features/User/domain/response/get_announcements_response.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final AuthenticationRepository _authenticationRepository =
@@ -16,7 +17,8 @@ class HomeViewModel extends ChangeNotifier {
   GetUserSummaryResponse? get homeData => _homeData;
   bool get isLoading => _isLoading;
   String? get error => _error;
-
+  List<GetAnnouncementsResponse> _announcements = [];
+  List<GetAnnouncementsResponse> get announcements => _announcements;
   // User-specific getters
   String get userName => _homeData?.currentUser?.firstName ?? 'User';
   String get userFullName =>
@@ -28,9 +30,11 @@ class HomeViewModel extends ChangeNotifier {
   int get approvedLeaves => _homeData?.currentUser?.approved ?? 0;
   int get rejectedLeaves => _homeData?.currentUser?.rejected ?? 0;
   int get pendingLeaves => _homeData?.currentUser?.pending ?? 0;
+  int get workingDays => _homeData?.currentUser?.workingDays ?? 0;
 
   Future<void> initialize() async {
     await _loadUserSummaryFromApi();
+    await _fetchAnnouncements();
   }
 
   Future<void> _loadUserSummaryFromApi() async {
@@ -53,8 +57,24 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _fetchAnnouncements() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _announcements = await _authenticationRepository.getAnnouncements();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> refresh() async {
     await _loadUserSummaryFromApi();
+    await _fetchAnnouncements();
   }
 
   List<Leave> get myUpcomingLeaves => _homeData?.myUpcomingLeaves ?? [];

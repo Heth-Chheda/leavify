@@ -16,8 +16,6 @@ class ProfileViewModel extends ChangeNotifier {
   bool _isEditMode = false;
   bool _isLoading = false;
 
-  bool _useDummyData = true;
-
   bool get isLoading => _isLoading;
   bool get isEditMode => _isEditMode;
   ProfileViewState get state => _state;
@@ -30,22 +28,13 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // MARK: LOAD USER LEAVES (WITH DUMMY DATA SUPPORT)
+  // MARK: LOAD USER LEAVES
   Future<void> loadUserLeaves(String userId) async {
     _setState(ProfileViewState.loading);
 
     try {
-      if (_useDummyData) {
-        // Simulate network delay
-        await Future.delayed(const Duration(milliseconds: 1500));
-
-        _leaveData = _generateDummyLeaveData(userId);
-        _setState(ProfileViewState.success);
-      } else {
-        // Use real API
-        _leaveData = await _repository.getUserLeaves(userId);
-        _setState(ProfileViewState.success);
-      }
+      _leaveData = await _repository.getUserLeaves(userId);
+      _setState(ProfileViewState.success);
     } catch (e) {
       _errorMessage = e.toString();
       _setState(ProfileViewState.error);
@@ -122,9 +111,9 @@ class ProfileViewModel extends ChangeNotifier {
 
       final success = await _repository.editUserLeave(updateData);
 
-      // if (success) {
-      //   _isEditMode = false;
-      // }
+      if (success == true) {
+        _isEditMode = false;
+      }
 
       _isEditMode = false;
       _isLoading = false;
@@ -160,116 +149,6 @@ class ProfileViewModel extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-  }
-
-  // MARK: DUMMY DATA GENERATOR
-  LeaveData _generateDummyLeaveData(String userId) {
-    final now = DateTime.now();
-
-    // Generate dummy leave applications
-    final dummyLeaves = [
-      MyLeaves(
-        id: 'leave_001',
-        type: 'Annual Leave',
-        fromDate: now.subtract(const Duration(days: 30)),
-        toDate: now.subtract(const Duration(days: 28)),
-        reason:
-            'Family vacation to Goa. Planning to spend quality time with family and relax.',
-        status: 'APPROVED',
-        isHalfDay: false,
-        isCompOff: false,
-        compDates: [],
-        createdAt: now.subtract(const Duration(days: 35)),
-        updatedAt: now.subtract(const Duration(days: 32)),
-      ),
-      MyLeaves(
-        id: 'leave_002',
-        type: 'Sick Leave',
-        fromDate: now.subtract(const Duration(days: 15)),
-        toDate: now.subtract(const Duration(days: 15)),
-        reason: 'Fever and cold symptoms. Doctor advised rest.',
-        status: 'APPROVED',
-        isHalfDay: true,
-        isCompOff: false,
-        compDates: [],
-        createdAt: now.subtract(const Duration(days: 16)),
-        updatedAt: now.subtract(const Duration(days: 14)),
-      ),
-      MyLeaves(
-        id: 'leave_003',
-        type: 'Comp Off',
-        fromDate: now.add(const Duration(days: 5)),
-        toDate: now.add(const Duration(days: 5)),
-        reason:
-            'Compensatory off for working on weekend during project delivery.',
-        status: 'PENDING',
-        isHalfDay: false,
-        isCompOff: true,
-        compDates: [now.subtract(const Duration(days: 10))],
-        createdAt: now.subtract(const Duration(days: 2)),
-        updatedAt: now.subtract(const Duration(days: 2)),
-      ),
-      MyLeaves(
-        id: 'leave_004',
-        type: 'Personal Leave',
-        fromDate: now.add(const Duration(days: 20)),
-        toDate: now.add(const Duration(days: 22)),
-        reason: 'Attending cousin\'s wedding in Chennai.',
-        status: 'PENDING',
-        isHalfDay: false,
-        isCompOff: false,
-        compDates: [],
-        createdAt: now.subtract(const Duration(days: 1)),
-        updatedAt: now.subtract(const Duration(days: 1)),
-      ),
-      MyLeaves(
-        id: 'leave_005',
-        type: 'Medical Leave',
-        fromDate: now.subtract(const Duration(days: 60)),
-        toDate: now.subtract(const Duration(days: 58)),
-        reason: 'Regular health checkup and medical consultation.',
-        status: 'REJECTED',
-        isHalfDay: false,
-        isCompOff: false,
-        compDates: [],
-        createdAt: now.subtract(const Duration(days: 65)),
-        updatedAt: now.subtract(const Duration(days: 61)),
-      ),
-      MyLeaves(
-        id: 'leave_006',
-        type: 'Emergency Leave',
-        fromDate: now.subtract(const Duration(days: 5)),
-        toDate: now.subtract(const Duration(days: 5)),
-        reason: 'Emergency at home, needed to take care of elderly parent.',
-        status: 'APPROVED',
-        isHalfDay: true,
-        isCompOff: false,
-        compDates: [],
-        createdAt: now.subtract(const Duration(days: 6)),
-        updatedAt: now.subtract(const Duration(days: 4)),
-      ),
-    ];
-
-    // Calculate leave counts based on dummy data
-    final approvedLeaves = dummyLeaves
-        .where((leave) => leave.status == 'APPROVED')
-        .length;
-    final pendingLeaves = dummyLeaves
-        .where((leave) => leave.status == 'PENDING')
-        .length;
-    final rejectedLeaves = dummyLeaves
-        .where((leave) => leave.status == 'REJECTED')
-        .length;
-
-    return LeaveData(
-      userId: userId,
-      balanceLeaves: 18, // Remaining leave balance
-      approvedLeaves: approvedLeaves,
-      pendingLeaves: pendingLeaves,
-      rejectedLeaves: rejectedLeaves,
-      cancelledLeaves: 0,
-      allLeaves: dummyLeaves,
-    );
   }
 
   void clearError() {

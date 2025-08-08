@@ -58,9 +58,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // MARK: - BOTTOM TAB SELECTION
   void _onTabSelected(int index) {
     final role = _viewModel.userRole.toLowerCase();
-    final bool isManagerOrHR = role == 'manager' || role == 'hr';
+    final bool isManagerOrHR = role != 'employee';
 
     if (isManagerOrHR) {
       // Manager/HR navigation: Home, Analytics, Add, History, Pending
@@ -110,6 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int _currentIndex = 0;
 
+  // MARK: - MAIN CONTENT
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -218,7 +220,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // MARK: ANNOUNCEMENTS SECTION
   Widget _buildAnnouncementSection() {
     final theme = Theme.of(context);
-    final bool hasAnnouncements = _dummyAnnouncements.isNotEmpty;
+    final announcements = _viewModel.announcements;
+    final bool hasAnnouncements = _viewModel.announcements.isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
@@ -241,12 +244,12 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildAnnouncementHeaderSection(),
           if (hasAnnouncements) ...[
             CarouselSlider.builder(
-              itemCount: _dummyAnnouncements.length,
+              itemCount: announcements.length,
               itemBuilder: (context, index, realIndex) {
-                final item = _dummyAnnouncements[index];
+                final item = announcements[index];
                 return AnnouncementCard(
-                  title: item['title']!,
-                  message: item['message']!,
+                  title: item.senderName,
+                  message: item.body,
                   colorIndex: index % 5,
                 );
               },

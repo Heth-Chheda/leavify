@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/utils/components/work_in_progress.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/view/login_view.dart';
+import 'package:leavify/features/User/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/User/components/profile/leave_detail_screeen.dart';
-import 'package:leavify/features/User/domain/models/my_leaves.dart';
 import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
-import 'package:leavify/features/User/view/PendingRequests/pending_requests_screen.dart';
 import 'package:leavify/features/User/view/landing_view.dart';
+import 'package:leavify/features/User/view/manager/PendingRequests/pending_requests_screen.dart';
 import 'package:leavify/features/User/view/profile/profile_screen.dart';
 import 'package:leavify/services/force_update_checker.dart';
 
@@ -20,6 +21,7 @@ class Routes {
   static const String leaveDetail = '/leave-detail';
   static const String announcements = '/announcements';
   static const String userSettings = '/settings';
+  static const String pendingLeaveDetail = '/pending-leave-detail';
 
   // Custom AppBar builder that adapts to theme
   static PreferredSizeWidget _buildThemedAppBar({
@@ -76,6 +78,22 @@ class Routes {
         page = const LoginPage();
         break;
 
+      case pendingLeaveDetail:
+        final args = settings.arguments as Map<String, dynamic>?;
+        if (args != null && args['leaveId'] is String) {
+          page = Builder(
+            builder: (context) => Scaffold(
+              appBar: _buildThemedAppBar(
+                context: context,
+                title: 'Leave Detail',
+              ),
+              body: PendingRequestDetailScreen(leaveId: args['leaveId']),
+            ),
+          );
+          break;
+        }
+        return _errorRoute('Invalid arguments for pending leave detail');
+
       case home:
         page = const LandingView();
         break;
@@ -101,7 +119,7 @@ class Routes {
       case leaveDetail:
         final args = settings.arguments as Map<String, dynamic>?;
         if (args != null &&
-            args['leave'] is MyLeaves &&
+            args['leaveId'] is String &&
             args['userId'] is String) {
           page = Builder(
             builder: (context) => Scaffold(
@@ -110,7 +128,7 @@ class Routes {
                 title: 'Leave Details',
               ),
               body: LeaveDetailScreen(
-                leave: args['leave'] as MyLeaves,
+                leaveId: args['leaveId'] as String,
                 userId: args['userId'] as String,
               ),
             ),
@@ -123,7 +141,7 @@ class Routes {
         page = Builder(
           builder: (context) => Scaffold(
             appBar: _buildThemedAppBar(context: context, title: 'Analytics'),
-            body: const Placeholder(),
+            body: const WorkInProgressScreen(),
           ),
         );
         break;
@@ -133,7 +151,7 @@ class Routes {
           builder: (context) => Scaffold(
             appBar: _buildThemedAppBar(
               context: context,
-              title: 'Pending Requests',
+              title: 'Leave Requests',
             ),
             body: const PendingRequestsScreen(),
           ),

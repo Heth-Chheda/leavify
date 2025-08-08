@@ -11,6 +11,12 @@ class ApiEndpoints {
   // User
   static final String getUserSummary = '$baseUrl/employee/summary';
   static final String uploadProfileImage = '$baseUrl/employee/upload-profile';
+  static final String getWorkingDays = '$baseUrl/employee/workingdays';
+
+  // Announcements
+  static final String getAnnouncements = '$baseUrl/notifications/get';
+  // only for specific users
+  static final String sendAnnouncement = '$baseUrl/notifications/get';
 
   // Leaves
   static final String applyLeave = '$baseUrl/request/apply';
@@ -19,6 +25,10 @@ class ApiEndpoints {
   static final String sendReminderForLeave = '$baseUrl/request/sendReminder';
   static final String cancelLeave = '$baseUrl/request/cancel';
 
+  // leave by id
+  static final String getLeaveById = '$baseUrl/request/getleavesbyid';
+
   // Leaves // Manager
   static final String processLeave = '$baseUrl/request/process';
+  static final String getPendingLeaves = '$baseUrl/request/getall';
 }

@@ -7,6 +7,8 @@ class AnnouncementCard extends StatelessWidget {
   final String? date;
   final bool isNew;
   final int? colorIndex;
+  final String? profileImage;
+  final String? timeAgo;
 
   const AnnouncementCard({
     super.key,
@@ -15,6 +17,8 @@ class AnnouncementCard extends StatelessWidget {
     this.date,
     this.isNew = false,
     this.colorIndex,
+    this.profileImage,
+    this.timeAgo,
   });
 
   @override
