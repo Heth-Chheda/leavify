@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/api/api_endpoints.dart';
+import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/components/shimmer_widget.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
@@ -21,17 +23,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: false,
       toolbarHeight: 80,
       flexibleSpace: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Row(
           children: [
             // Profile Section
             Expanded(
               child: viewModel.isLoading
                   ? _buildShimmerContent(theme)
-                  : _buildContent(viewModel.userName, theme),
+                  : _buildContent(viewModel.userName, theme, context),
             ),
             // Action Icons
-            _buildActionIcons(context, viewModel.userRole, theme),
+            _buildActionIcons(context, theme, viewModel.canSendAnnouncement),
           ],
         ),
       ),
@@ -80,7 +82,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildContent(String userName, ThemeData theme) {
+  Widget _buildContent(String userName, ThemeData theme, BuildContext context) {
+    final viewModel = context.watch<HomeViewModel>();
     final displayName = userName.isNotEmpty ? userName : 'Loading ...';
     final isDarkMode = theme.brightness == Brightness.dark;
 
@@ -88,8 +91,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       children: [
         // Profile Avatar
         Container(
-          width: 60,
-          height: 60,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(38),
             border: Border.all(color: AppColors.highlightBlue, width: 2.0),
@@ -117,7 +120,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(38),
             child: Image.network(
-              'https://picsum.photos/200',
+              (viewModel.profileImageUrl.isNotEmpty)
+                  ? '${ApiEndpoints.baseUrl}/${viewModel.profileImageUrl}'
+                  : 'https://picsum.photos/200',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -146,26 +151,26 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
         // Greeting and Name in Column
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
                 _getGreeting(),
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onBackground.withOpacity(0.8),
-                  letterSpacing: -0.1,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: theme.colorScheme.onBackground,
+                  letterSpacing: -0.5,
                 ),
               ),
               Text(
                 displayName,
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
                   color: theme.colorScheme.onBackground,
-                  letterSpacing: -0.2,
+                  letterSpacing: -0.5,
                 ),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
@@ -177,13 +182,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildActionIcons(BuildContext context, String role, ThemeData theme) {
-    final isManagerOrHr = role.toLowerCase() != 'employee';
-
+  Widget _buildActionIcons(
+    BuildContext context,
+    ThemeData theme,
+    bool canSendAnnouncement,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (isManagerOrHr)
+        if (canSendAnnouncement)
           _buildIcon(
             icon: Icons.campaign_rounded,
             onTap: () {
@@ -191,17 +198,101 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             },
             theme: theme,
           ),
-
-        if (isManagerOrHr) const SizedBox(width: 12),
-        // Notifications Icon
+        // Settings Icon
         _buildIcon(
-          icon: Icons.settings,
+          icon: Icons.logout,
           onTap: () {
-            Navigator.pushNamed(context, '/notifications');
+            _showLogoutConfirmationDialog(context, theme);
           },
           theme: theme,
         ),
       ],
+    );
+  }
+
+  void _showLogoutConfirmationDialog(BuildContext context, ThemeData theme) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: theme.colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.logout, color: theme.colorScheme.error, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                'Logout',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withOpacity(0.8),
+              fontSize: 16,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _performLogout(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Yes, Logout',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _performLogout(BuildContext context) {
+    // Clear the HomeViewModel data before logout
+    final homeViewModel = context.read<HomeViewModel>();
+    homeViewModel.clearData();
+
+    // Clear storage
+    AppStorage.remove("USER_ID");
+    AppStorage.remove("JWT_TOKEN");
+    AppStorage.remove("USER_IS_ALREADY_LOGGED_IN");
+    AppStorage.remove("user_details");
+
+    // Navigate to login
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      "/login",
+      (route) => false, // This removes all previous routes
     );
   }
 
@@ -219,18 +310,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         color: isDarkMode
             ? theme.colorScheme.surface.withOpacity(0.1)
             : Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: theme.colorScheme.onBackground.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.shadowColor.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -250,11 +329,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   static String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
-      return 'Morning,';
+      return 'Good Morning, ';
     } else if (hour < 17) {
-      return 'Afternoon,';
+      return 'Good Afternoon, ';
     } else {
-      return 'Evening,';
+      return 'Good Evening, ';
     }
   }
 }

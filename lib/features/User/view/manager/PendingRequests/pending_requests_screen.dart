@@ -44,7 +44,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       final matchesFilter = switch (_selectedFilter.toLowerCase()) {
         'pending' => r.status.toLowerCase() == 'pending',
         'approved' => r.status.toLowerCase() == 'approved',
-        'rejected' => r.status.toLowerCase() == 'rejected',
+        'rejected' || 'denied' =>
+          r.status.toLowerCase() == 'rejected' ||
+              r.status.toLowerCase() == 'denied',
         'escalated' => r.status.toLowerCase() == 'escalated',
         _ => true, // "All"
       };
@@ -152,8 +154,6 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       padding: const EdgeInsets.all(12),
       child: Column(
         children: [
-          _buildUrgentBadge(pendingCount),
-          const SizedBox(height: 16),
           _buildSearchBar(context),
           const SizedBox(height: 12),
           _buildFilterChips(context, homeViewModel.userRole),

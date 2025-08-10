@@ -40,18 +40,64 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     });
   }
 
-  void onRemindPressed() {
-    // Implement remind logic here
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Reminder sent')));
+  void onRemindPressed() async {
+    final leaveVM = context.read<LeaveViewModel>();
+
+    await leaveVM.sendReminderForLeave(leaveId: widget.leaveId);
+
+    if (!mounted) return;
+    if (leaveVM.errorMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(leaveVM.errorMessage!)));
+    } else if (leaveVM.reminderResponse?.success == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(leaveVM.reminderResponse?.message ?? 'Reminder sent'),
+        ),
+      );
+    }
   }
 
-  void onEscalatePressed() {
-    // Implement escalate logic here
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Escalation sent')));
+  void onEscalatePressed() async {
+    final leaveVM = context.read<LeaveViewModel>();
+
+    await leaveVM.escalateLeave(leaveId: widget.leaveId);
+    if (!mounted) return;
+    if (leaveVM.errorMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(leaveVM.errorMessage!)));
+    } else if (leaveVM.escalateLeaveResponse?.success == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            leaveVM.escalateLeaveResponse?.message ?? 'Escalation sent',
+          ),
+        ),
+      );
+    }
+  }
+
+  void onCancelPressed() async {
+    final leaveVM = context.read<LeaveViewModel>();
+
+    await leaveVM.cancelLeave(leaveId: widget.leaveId);
+    if (!mounted) return;
+    if (leaveVM.errorMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(leaveVM.errorMessage!)));
+    } else if (leaveVM.cancelLeaveResponse?.success == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            leaveVM.cancelLeaveResponse?.message ?? 'Escalation sent',
+          ),
+        ),
+      );
+      Navigator.pop(context, true);
+    }
   }
 
   void _initializeData() async {
@@ -133,51 +179,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Status badge
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                statusColor.withOpacity(0.2),
-                statusColor.withOpacity(0.1),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(25),
-            border: Border.all(color: statusColor.withOpacity(0.4), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: statusColor.withOpacity(0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                _getStatusIcon(_leave!.leaveDetails.status),
-                color: statusColor,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                _leave!.leaveDetails.status.toUpperCase(),
-                style: TextStyle(
-                  color: statusColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-
         // Remind and Escalate Buttons
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -194,6 +195,13 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
               Icons.warning_amber,
               Colors.red,
               onEscalatePressed,
+            ),
+            const SizedBox(width: 16),
+            _buildActionButton(
+              'Cancel',
+              Icons.cancel,
+              Colors.grey,
+              onCancelPressed,
             ),
           ],
         ),
@@ -216,10 +224,10 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(color: color.withOpacity(0.4)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       ),
       onPressed: onPressed,
-      icon: Icon(icon, size: 18),
+      icon: Icon(icon, size: 16),
       label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }

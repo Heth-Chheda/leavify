@@ -1,4 +1,3 @@
-
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -72,7 +71,7 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  // MARK: BACKGROUND (Always blue gradient)
+  // MARK: BACKGROUND
   Widget _buildBackground() {
     return Stack(
       children: [
@@ -80,7 +79,7 @@ class _LoginPageState extends State<LoginPage>
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF0A0A1F), Color(0xFF203A74)],
+              colors: [Color(0xFF0A0A1F), Color(0xFF203A74), Colors.black],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -96,44 +95,24 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildHeader() {
     return Row(
       children: [
-        // Enhanced logo with glass morphism effect
         Container(
           margin: const EdgeInsets.only(left: 10),
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.highlightBlue,
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.only(left: 15),
-          child: const Text(
-            'rite',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFFFF0000),
-              letterSpacing: -0.2,
-              height: 1.2,
+          width: 60, // increased size
+          height: 60, // increased size
+          child: ClipOval(
+            child: Image.asset(
+              'lib/assets/rite.jpeg',
+              fit: BoxFit.cover, // makes sure image covers the circle nicely
+              width: 80,
+              height: 80,
             ),
-          ),
-        ),
-        const Text(
-          'Technologies',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: -0.2,
-            height: 1.2,
           ),
         ),
       ],
     );
   }
 
-  // MARK: MAIN CARD (Theme-aware)
+  // MARK: MAIN CARD
   Widget _buildMainCard(bool isDark) {
     final notchDepth = 55.0;
     final cardColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
@@ -158,31 +137,32 @@ class _LoginPageState extends State<LoginPage>
                   topRight: Radius.circular(32),
                 ),
                 // Add subtle shadow for light mode
-                boxShadow: isDark ? null : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
+                boxShadow: isDark
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(height: 100),
-                    _buildEmailForm(isDark),
-                    _buildForgotPassword(isDark),
-                    const SizedBox(height: 20),
-                    _buildLoginButton(),
                     const SizedBox(height: 50),
+                    _buildEmailForm(isDark),
+                    const SizedBox(height: 150),
+                    _buildLoginButton(),
+                    // const SizedBox(height: 50),
                   ],
                 ),
               ),
             ),
           ),
-          // Floating fingerprint icon
+          // Floating lock icon
           Positioned(
             top: -notchDepth,
             left: 0,
@@ -203,7 +183,7 @@ class _LoginPageState extends State<LoginPage>
                 ),
                 child: const Icon(
                   Icons.lock_person,
-                  color: AppColors.highlightGreen,
+                  color: AppColors.highGreen,
                   size: 40,
                 ),
               ),
@@ -219,7 +199,7 @@ class _LoginPageState extends State<LoginPage>
     return Column(
       children: [
         _buildUsernameField(
-          label: 'Email Address',
+          label: 'Email',
           hintText: 'Enter your email',
           prefixIcon: Icons.email_rounded,
           keyboardType: TextInputType.emailAddress,
@@ -242,197 +222,109 @@ class _LoginPageState extends State<LoginPage>
     required bool isDark,
   }) {
     final textColor = isDark ? AppColors.darkText : AppColors.lightText;
-    final fieldColor = isDark ? AppColors.darkSurface : Colors.white;
     final borderColor = isDark
         ? Colors.white.withOpacity(0.2)
         : Colors.grey.withOpacity(0.3);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.highlightBlue,
-            letterSpacing: 0.3,
-          ),
+    return TextFormField(
+      controller: _viewModel.usernameController,
+      keyboardType: keyboardType,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: textColor,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+          color: AppColors.highlightBlue,
+          fontWeight: FontWeight.w600,
         ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: fieldColor,
-            border: Border.all(color: borderColor, width: 2),
-            boxShadow: isDark ? null : [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextFormField(
-            controller: _viewModel.usernameController,
-            keyboardType: keyboardType,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-            decoration: InputDecoration(
-              hintText: hintText,
-              fillColor: Colors.transparent,
-              hintStyle: TextStyle(
-                color: textColor.withOpacity(0.5),
-                fontWeight: FontWeight.w500,
-                fontSize: 15,
-              ),
-              prefixIcon: Container(
-                margin: const EdgeInsets.all(12),
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: gradientColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(prefixIcon, color: Colors.white, size: 18),
-              ),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 18,
-              ),
-            ),
-          ),
+        hintText: hintText,
+        hintStyle: TextStyle(
+          color: textColor.withOpacity(0.5),
+          fontWeight: FontWeight.w500,
+          fontSize: 14,
         ),
-      ],
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(60),
+          borderSide: BorderSide(color: borderColor, width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(60),
+          borderSide: BorderSide(color: borderColor, width: 2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(60),
+          borderSide: BorderSide(color: AppColors.highlightBlue, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 14,
+        ),
+      ),
     );
   }
 
   // MARK: PASSWORD FIELD
   Widget _buildPasswordField(bool isDark) {
     final textColor = isDark ? AppColors.darkText : AppColors.lightText;
-    final fieldColor = isDark ? AppColors.darkSurface : Colors.white;
     final borderColor = isDark
         ? Colors.white.withOpacity(0.2)
         : Colors.grey.withOpacity(0.3);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Password',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.highlightBlue,
-            letterSpacing: 0.3,
-          ),
+    return TextFormField(
+      controller: _viewModel.passwordController,
+      onFieldSubmitted: (_) => _handleLogin(),
+      obscureText: !_isPasswordVisible,
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: textColor,
+      ),
+      decoration: InputDecoration(
+        labelText: 'Password',
+        labelStyle: TextStyle(
+          color: AppColors.highlightBlue,
+          fontWeight: FontWeight.w600,
         ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: fieldColor,
-            border: Border.all(color: borderColor, width: 2),
-            boxShadow: isDark ? null : [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 4,
-                offset: const Offset(2, 2),
-              ),
-            ],
-          ),
-          child: TextFormField(
-            controller: _viewModel.passwordController,
-            onFieldSubmitted: (_) => _handleLogin(),
-            obscureText: !_isPasswordVisible,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-            decoration: InputDecoration(
-              hintText: 'Enter your password',
-              fillColor: Colors.transparent,
-              hintStyle: TextStyle(
-                color: textColor.withOpacity(0.5),
-                fontWeight: FontWeight.w500,
-                fontSize: 15,
-              ),
-              prefixIcon: Container(
-                margin: const EdgeInsets.all(12),
-                width: 20,
-                height: 20,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.highlightPink, AppColors.highlightOrange],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-                child: const Icon(
-                  Icons.lock_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _isPasswordVisible
-                      ? Icons.visibility_off_rounded
-                      : Icons.visibility_rounded,
-                  color: textColor.withOpacity(0.6),
-                  size: 22,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _isPasswordVisible = !_isPasswordVisible;
-                  });
-                },
-              ),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 18,
-              ),
-            ),
-          ),
+        hintText: 'Enter your password',
+        hintStyle: TextStyle(
+          color: textColor.withOpacity(0.5),
+          fontWeight: FontWeight.w500,
+          fontSize: 15,
         ),
-      ],
-    );
-  }
-
-  // MARK: FORGOT PASSWORD
-  Widget _buildForgotPassword(bool isDark) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: TextButton(
-        onPressed: () {
-          // Handle forgot password
-        },
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.highlightBlue,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        ),
-        child: const Text(
-          'Forgot Password?',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-            letterSpacing: 0.3,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _isPasswordVisible
+                ? Icons.visibility_off_rounded
+                : Icons.visibility_rounded,
+            color: textColor.withOpacity(0.6),
+            size: 22,
           ),
+          onPressed: () {
+            setState(() {
+              _isPasswordVisible = !_isPasswordVisible;
+            });
+          },
+        ),
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(60),
+          borderSide: BorderSide(color: borderColor, width: 2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(60),
+          borderSide: BorderSide(color: borderColor, width: 2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(60),
+          borderSide: BorderSide(color: AppColors.highlightBlue, width: 1),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 14,
         ),
       ),
     );
@@ -442,58 +334,46 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildLoginButton() {
     return Consumer<LoginViewModel>(
       builder: (context, viewModel, child) {
-        return Container(
-          width: double.infinity,
-          height: 65,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.highlightBlue, AppColors.highlightTeal],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
+        return SafeArea(
+          bottom: true,
+          top: false,
+          child: Container(
+            width: double.infinity,
+            height: 65,
+            decoration: const BoxDecoration(
+              color: AppColors.highBlue,
+              borderRadius: BorderRadius.all(Radius.circular(25)),
             ),
-            borderRadius: BorderRadius.all(Radius.circular(25)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.highlightBlue,
-                blurRadius: 12,
-                offset: Offset(0, 4),
-                spreadRadius: -2,
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(25),
-              onTap: viewModel.isLoading ? null : () => _handleLogin(),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(25),
+                onTap: viewModel.isLoading ? null : () => _handleLogin(),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
                   ),
-                ),
-                child: const Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Sign In',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.0,
+                  child: const Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Log in',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.0,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ],
+                        SizedBox(width: 8),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

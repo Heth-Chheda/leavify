@@ -135,14 +135,19 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _userRepository.uploadProfileImage(profileImagePath: imagePath);
+      final result = await _userRepository.uploadProfileImage(
+        profileImagePath: imagePath,
+      );
+
       _isLoading = false;
-
-      // Optionally reload user data if needed here
-      // await loadUserLeaves(userId);
-
       notifyListeners();
-      return true;
+
+      if (result.success == true) {
+        return true;
+      } else {
+        // API responded but not successful
+        throw Exception(result.message ?? "Failed to update profile image");
+      }
     } catch (e) {
       _errorMessage = e.toString();
       _isLoading = false;

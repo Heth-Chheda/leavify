@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 class AppColors {
   // Highlight colors (from image)
   static const Color highlightBlue = Color(0xFF4735DD);
+  static const Color highBlue = Color(0xFF1111E1);
   static const Color highlightPink = Color(0xFFFF3E6C);
   static const Color highlightTeal = Color(0xFF61BFC2);
   static const Color highlightOrange = Color(0xFFFFA200);
   static const Color highlightGreen = Color(0xFF51DC8E);
+  static const Color highGreen = Color(0xFF25B043);
 
   // Dark Theme
   static const Color darkBackground = Color(0xFF0A0A1F); // Deep navy

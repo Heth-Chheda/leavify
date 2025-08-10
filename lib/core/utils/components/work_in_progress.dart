@@ -206,7 +206,7 @@ class _WorkInProgressScreenState extends State<WorkInProgressScreen>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'We\'ll be back shortly',
+                  'Good things take time',
                   style: TextStyle(
                     fontSize: 16,
                     color: primaryColor.withOpacity(0.7),

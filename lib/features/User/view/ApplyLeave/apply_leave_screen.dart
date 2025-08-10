@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
@@ -16,7 +17,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -56,6 +56,230 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     super.dispose();
   }
 
+  // MARK: - CHECK IF FORM HAS DATA
+  bool _hasFormData(LeaveViewModel leaveViewModel) {
+    return leaveViewModel.selectedStartDate != null ||
+        leaveViewModel.reasonController.text.trim().isNotEmpty ||
+        leaveViewModel.selectedDocuments.isNotEmpty ||
+        leaveViewModel.hasCompOffPlans ||
+        leaveViewModel.selectedCompOffDates.isNotEmpty;
+  }
+
+  // MARK: - SHOW CONFIRMATION DIALOG
+  Future<bool> _showConfirmationDialog() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDark
+                        ? [Colors.grey.shade900, Colors.grey.shade800]
+                        : [Colors.white, Colors.grey.shade50],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.2)
+                        : Colors.grey.shade300,
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDark
+                          ? Colors.black54
+                          : Colors.black.withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Warning Icon
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.highlightOrange.withOpacity(0.2),
+                            AppColors.highlightOrange.withOpacity(0.1),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: Icon(
+                        Icons.warning_amber_rounded,
+                        size: 48,
+                        color: AppColors.highlightOrange,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Title
+                    Text(
+                      'Discard Changes?',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Description
+                    Text(
+                      'You have unsaved changes in your leave application. If you go back now, all your progress will be lost.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.8)
+                            : Colors.grey.shade600,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // Action Buttons
+                    Row(
+                      children: [
+                        // Cancel Button (Stay)
+                        Expanded(
+                          child: Container(
+                            height: 48,
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isDark
+                                      ? Colors.black.withOpacity(0.4)
+                                      : Colors.grey.withOpacity(0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                              gradient: LinearGradient(
+                                colors: isDark
+                                    ? [
+                                        Colors.white.withOpacity(0.15),
+                                        Colors.white.withOpacity(0.1),
+                                      ]
+                                    : [
+                                        Colors.grey.shade100,
+                                        Colors.grey.shade200,
+                                      ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.2)
+                                    : Colors.grey.shade300,
+                              ),
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                'Stay',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+
+                        // Discard Button
+                        Expanded(
+                          child: Container(
+                            height: 48,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Colors.red, Colors.redAccent],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.red.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Discard',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ) ??
+        false;
+  }
+
+  // MARK: - HANDLE BACK NAVIGATION
+  Future<bool> _onWillPop() async {
+    final leaveViewModel = Provider.of<LeaveViewModel>(context, listen: false);
+
+    // If form has data, show confirmation dialog
+    if (_hasFormData(leaveViewModel)) {
+      return await _showConfirmationDialog();
+    }
+
+    // If no data, allow back navigation
+    return true;
+  }
+
   // MARK: - SNACK BAR HELPER
   void _showSnackBar(String message, Color backgroundColor) {
     if (!mounted) return;
@@ -73,31 +297,55 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: SafeArea(
-            child: Consumer<LeaveViewModel>(
-              builder: (context, leaveViewModel, child) {
-                return SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Stats cards
-                        _buildStatsCards(isDark),
-                        const SizedBox(height: 24),
-                        // Leave form
-                        _buildLeaveForm(isDark, leaveViewModel),
-                      ],
-                    ),
-                  ),
-                );
-              },
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) async {
+        if (didPop) return;
+
+        final shouldPop = await _onWillPop();
+        if (shouldPop && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: SafeArea(
+              child: Consumer<LeaveViewModel>(
+                builder: (context, leaveViewModel, child) {
+                  return Stack(
+                    children: [
+                      // Main scrollable content
+                      SingleChildScrollView(
+                        padding: const EdgeInsets.all(20).copyWith(bottom: 100),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildStatsCards(isDark),
+                            const SizedBox(height: 30),
+                            _buildDateSelectionSection(leaveViewModel, isDark),
+                            const SizedBox(height: 24),
+                            _buildReasonSection(leaveViewModel, isDark),
+                            const SizedBox(height: 24),
+                            _buildDocumentsSection(leaveViewModel, isDark),
+                            const SizedBox(height: 100), // space for button
+                          ],
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: SafeArea(
+                          minimum: const EdgeInsets.all(20),
+                          child: _buildSubmitButton(leaveViewModel, isDark),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -111,12 +359,21 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     return Row(
       children: [
         Expanded(
-          child: _buildStatCard(
-            'Balance',
-            '${homeViewModel.leaveBalance}',
-            AppColors.highlightGreen,
-            Icons.calendar_today,
-            isDark,
+          child: Column(
+            children: [
+              _buildStatCard(
+                'Balance',
+                '${homeViewModel.leaveBalance}',
+                AppColors.highlightGreen,
+                Icons.calendar_today,
+                FaIcon(
+                  FontAwesomeIcons.solidCalendarCheck,
+                  color: AppColors.highlightGreen,
+                  size: 22,
+                ),
+                isDark,
+              ),
+            ],
           ),
         ),
         const SizedBox(width: 16),
@@ -126,6 +383,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
             '${homeViewModel.workingDays}',
             AppColors.highlightOrange,
             Icons.work_outline,
+            FaIcon(
+              FontAwesomeIcons.briefcase,
+              color: AppColors.highlightOrange,
+              size: 22,
+            ),
             isDark,
           ),
         ),
@@ -138,18 +400,13 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     String value,
     Color accentColor,
     IconData icon,
+    Widget favIcon,
     bool isDark,
   ) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [accentColor.withOpacity(0.2), accentColor.withOpacity(0.1)]
-              : [accentColor.withOpacity(0.1), accentColor.withOpacity(0.05)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: accentColor.withOpacity(0.8),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
         boxShadow: [
@@ -161,59 +418,47 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? Colors.white70 : Colors.grey[600],
-              fontWeight: FontWeight.w800,
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
             ),
+            child: favIcon,
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87,
+          const SizedBox(height: 10),
+          Container(
+            margin: EdgeInsets.only(top: 7),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$title : ',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark
+                        ? Colors.white70
+                        : Colors.black.withOpacity(0.6),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: isDark
+                        ? Colors.white
+                        : Colors.black.withOpacity(0.6),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildLeaveForm(bool isDark, LeaveViewModel leaveViewModel) {
-    return Stack(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 80), // leave space for button
-          child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildDateSelectionSection(leaveViewModel, isDark),
-                  const SizedBox(height: 24),
-                  _buildReasonSection(leaveViewModel, isDark),
-                  const SizedBox(height: 24),
-                  _buildDocumentsSection(leaveViewModel, isDark),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 20,
-          left: 20,
-          right: 20,
-          child: _buildSubmitButton(leaveViewModel, isDark),
-        ),
-      ],
     );
   }
 
@@ -257,26 +502,21 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
               gradient: LinearGradient(
                 colors: isDark
                     ? [
-                        Colors.white.withOpacity(0.08),
-                        Colors.white.withOpacity(0.04),
+                        Colors.white.withOpacity(0.15),
+                        Colors.white.withOpacity(0.15),
                       ]
                     : [Colors.grey.shade50, Colors.grey.shade100],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withOpacity(0.2)
-                    : Colors.grey.shade300,
-              ),
               boxShadow: [
                 BoxShadow(
                   color: isDark
                       ? Colors.black26
-                      : Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                      : Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -324,367 +564,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     );
   }
 
-  Widget _buildLeaveDurationSection(
-    LeaveViewModel leaveViewModel,
-    bool isDark,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildRadioOption(
-                title: 'Full Day',
-                value: leaveViewModel.isLeaveFullDay,
-                onChanged: (value) => leaveViewModel.setLeaveFullDay(true),
-                isDark: isDark,
-                icon: Icons.wb_sunny,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildRadioOption(
-                title: 'Half Day',
-                value: leaveViewModel.isLeaveHalfDay,
-                onChanged: (value) => leaveViewModel.setLeaveHalfDay(true),
-                isDark: isDark,
-                icon: Icons.schedule,
-              ),
-            ),
-          ],
-        ),
-
-        if (leaveViewModel.isLeaveHalfDay) ...[
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildRadioOption(
-                  title: 'WFO',
-                  value: leaveViewModel.isHalfDayWorkFromOffice,
-                  onChanged: (value) =>
-                      leaveViewModel.setHalfDayWorkFromOffice(true),
-                  isDark: isDark,
-                  icon: Icons.business,
-                  isSmall: true,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildRadioOption(
-                  title: 'WFH',
-                  value: leaveViewModel.isHalfDayWorkFromHome,
-                  onChanged: (value) =>
-                      leaveViewModel.setHalfDayWorkFromHome(true),
-                  isDark: isDark,
-                  icon: Icons.home,
-                  isSmall: true,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildCompOffSection(LeaveViewModel leaveViewModel, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle(
-          'Compensation',
-          isDark,
-          icon: Icons.swap_horiz,
-          iconColor: AppColors.highlightOrange,
-        ),
-        const SizedBox(height: 12),
-
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isDark
-                  ? [
-                      Colors.white.withOpacity(0.05),
-                      Colors.white.withOpacity(0.02),
-                    ]
-                  : [Colors.grey.shade50, Colors.white],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.grey.shade200,
-            ),
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Transform.scale(
-                    scale: 1.2,
-                    child: Checkbox(
-                      value: leaveViewModel.hasCompOffPlans,
-                      onChanged: (value) =>
-                          leaveViewModel.setCompOffPlans(value ?? false),
-                      activeColor: AppColors.highlightOrange,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Any Comp off Plans?',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-
-              if (leaveViewModel.hasCompOffPlans) ...[
-                const SizedBox(height: 16),
-                _buildCompOffDetails(leaveViewModel, isDark),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCompOffDetails(LeaveViewModel leaveViewModel, bool isDark) {
-    return Column(
-      children: [
-        // Comp off date selection
-        GestureDetector(
-          onTap: () => leaveViewModel.selectCompOffDate(context),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withOpacity(0.2)
-                    : Colors.grey.shade300,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.event_note, color: AppColors.highlightOrange),
-                const SizedBox(width: 12),
-                Text(
-                  'Select Comp Off Dates',
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const Spacer(),
-                Icon(Icons.add, color: AppColors.highlightOrange),
-              ],
-            ),
-          ),
-        ),
-
-        // Selected comp off dates
-        if (leaveViewModel.selectedCompOffDates.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          ...List.generate(leaveViewModel.selectedCompOffDates.length, (index) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.highlightOrange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.highlightOrange.withOpacity(0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    size: 16,
-                    color: AppColors.highlightOrange,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    leaveViewModel.formatDate(
-                      leaveViewModel.selectedCompOffDates[index],
-                    ),
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () => leaveViewModel.removeCompOffDate(index),
-                    child: Icon(Icons.close, size: 18, color: Colors.red[400]),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-
-        const SizedBox(height: 16),
-
-        // Comp off work location
-        Row(
-          children: [
-            Expanded(
-              child: _buildRadioOption(
-                title: 'WFO',
-                subtitle: 'Office',
-                value: leaveViewModel.isCompOffWorkFromOffice,
-                onChanged: (value) =>
-                    leaveViewModel.setCompOffWorkFromOffice(true),
-                isDark: isDark,
-                icon: Icons.business,
-                isSmall: true,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildRadioOption(
-                title: 'WFH',
-                value: leaveViewModel.isCompOffWorkFromHome,
-                onChanged: (value) =>
-                    leaveViewModel.setCompOffWorkFromHome(true),
-                isDark: isDark,
-                icon: Icons.home,
-                isSmall: true,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // MARK: - RADIO OPTION
-  Widget _buildRadioOption({
-    required String title,
-    String? subtitle,
-    required bool value,
-    required ValueChanged<bool?> onChanged,
-    required bool isDark,
-    IconData? icon,
-    bool isSmall = false,
-  }) {
-    return GestureDetector(
-      onTap: () => onChanged(true),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.all(isSmall ? 12 : 16),
-        decoration: BoxDecoration(
-          gradient: value
-              ? const LinearGradient(
-                  colors: [AppColors.highlightBlue, AppColors.highlightPink],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : LinearGradient(
-                  colors: isDark
-                      ? [
-                          Colors.white.withOpacity(0.05),
-                          Colors.white.withOpacity(0.02),
-                        ]
-                      : [Colors.grey.shade50, Colors.white],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: value
-                ? Colors.transparent
-                : (isDark
-                      ? Colors.white.withOpacity(0.2)
-                      : Colors.grey.shade300),
-            width: 1,
-          ),
-          boxShadow: value
-              ? [
-                  BoxShadow(
-                    color: AppColors.highlightBlue.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: isDark
-                        ? Colors.black26
-                        : Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-        ),
-        child: Column(
-          children: [
-            if (icon != null && !isSmall) ...[
-              Icon(
-                icon,
-                color: value
-                    ? Colors.white
-                    : (isDark ? Colors.white70 : Colors.grey[600]),
-                size: 24,
-              ),
-              const SizedBox(height: 8),
-            ],
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (icon != null && isSmall) ...[
-                  Icon(
-                    icon,
-                    color: value
-                        ? Colors.white
-                        : (isDark ? Colors.white70 : Colors.grey[600]),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 6),
-                ],
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: isSmall ? 14 : 16,
-                    fontWeight: value ? FontWeight.w600 : FontWeight.w500,
-                    color: value
-                        ? Colors.white
-                        : (isDark ? Colors.white : Colors.black87),
-                  ),
-                ),
-              ],
-            ),
-            if (subtitle != null && !isSmall) ...[
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: value
-                      ? Colors.white70
-                      : (isDark ? Colors.white54 : Colors.grey[600]),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
   // MARK: - REASON SECTION
   Widget _buildReasonSection(LeaveViewModel leaveViewModel, bool isDark) {
     return Column(
@@ -696,15 +575,24 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
           iconColor: AppColors.highlightTeal,
         ),
         const SizedBox(height: 12),
-
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [
+                      Colors.white.withOpacity(0.15),
+                      Colors.white.withOpacity(0.15),
+                    ]
+                  : [Colors.grey.shade50, Colors.grey.shade100],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black26 : Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: isDark ? Colors.black26 : Colors.black.withOpacity(0.2),
+                blurRadius: 4,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -715,6 +603,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
               color: isDark ? Colors.white : Colors.black87,
               fontSize: 16,
             ),
+            focusNode: FocusNode(),
             decoration: InputDecoration(
               hintText: 'Tell us why you need this leave...',
               hintStyle: TextStyle(
@@ -724,10 +613,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
               fillColor: isDark
                   ? Colors.white.withOpacity(0.05)
                   : Colors.grey[50],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
@@ -745,7 +630,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
               ),
               errorBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.red),
+                borderSide: const BorderSide(color: Colors.red, width: 2),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.red, width: 2),
               ),
               contentPadding: const EdgeInsets.all(16),
             ),
@@ -795,7 +684,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle(
-          'Supporting Documents',
+          'Documents',
           isDark,
           iconColor: AppColors.highlightGreen,
         ),
@@ -809,34 +698,28 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
               gradient: LinearGradient(
                 colors: isDark
                     ? [
-                        Colors.white.withOpacity(0.05),
-                        Colors.white.withOpacity(0.02),
+                        Colors.white.withOpacity(0.15),
+                        Colors.white.withOpacity(0.15),
                       ]
-                    : [Colors.grey.shade50, Colors.white],
+                    : [Colors.grey.shade50, Colors.grey.shade100],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withOpacity(0.2)
-                    : Colors.grey.shade300,
-                style: BorderStyle.solid,
-              ),
               boxShadow: [
                 BoxShadow(
                   color: isDark
                       ? Colors.black26
-                      : Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                      : Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
             child: Column(
               children: [
                 Text(
-                  'Tap to upload documents',
+                  'Upload documents',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -1045,10 +928,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.send, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
                   const Text(
-                    'Submit Application',
+                    'Apply',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

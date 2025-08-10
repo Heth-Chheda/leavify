@@ -5,9 +5,11 @@ import 'package:leavify/features/Authentication/view/login_view.dart';
 import 'package:leavify/features/User/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/User/components/profile/leave_detail_screeen.dart';
 import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
+import 'package:leavify/features/User/view/announcements/add_announcement_view.dart';
 import 'package:leavify/features/User/view/landing_view.dart';
 import 'package:leavify/features/User/view/manager/PendingRequests/pending_requests_screen.dart';
 import 'package:leavify/features/User/view/profile/profile_screen.dart';
+import 'package:leavify/features/User/view/profile/user_settings_view.dart';
 import 'package:leavify/services/force_update_checker.dart';
 
 class Routes {
@@ -17,7 +19,6 @@ class Routes {
   static const String profile = '/profile';
   static const String analytics = '/analytics';
   static const String pending = '/pending';
-  static const String notifications = '/notifications';
   static const String leaveDetail = '/leave-detail';
   static const String announcements = '/announcements';
   static const String userSettings = '/settings';
@@ -65,15 +66,6 @@ class Routes {
     Widget page;
 
     switch (settings.name) {
-      case userSettings:
-        page = Builder(
-          builder: (context) => Scaffold(
-            appBar: _buildThemedAppBar(context: context, title: 'Settings'),
-            body: const Placeholder(),
-          ),
-        );
-        break;
-
       case login:
         page = const LoginPage();
         break;
@@ -158,14 +150,11 @@ class Routes {
         );
         break;
 
-      case notifications:
+      case userSettings:
         page = Builder(
           builder: (context) => Scaffold(
-            appBar: _buildThemedAppBar(
-              context: context,
-              title: 'Notifications',
-            ),
-            body: const Placeholder(),
+            appBar: _buildThemedAppBar(context: context, title: 'Settings'),
+            body: const UserSettingsView(),
           ),
         );
         break;
@@ -177,7 +166,7 @@ class Routes {
               context: context,
               title: 'Announcements',
             ),
-            body: const Placeholder(),
+            body: const AnnouncementScreen(),
           ),
         );
         break;

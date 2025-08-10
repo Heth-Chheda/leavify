@@ -51,15 +51,14 @@ class _ShimmerWidgetState extends State<ShimmerWidget>
           decoration: BoxDecoration(
             borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
             gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
+              begin: Alignment(-1.0 + _animation.value, 0),
+              end: Alignment(1.0 + _animation.value, 0),
               colors: [
-                Colors.grey.shade300,
-                Colors.grey.shade100,
-                Colors.grey.shade300,
+                Colors.grey.withOpacity(0.1),
+                Colors.white.withOpacity(0.2),
+                Colors.grey.withOpacity(0.1),
               ],
-              stops: [0.0, 0.5, 1.0],
-              transform: GradientRotation(_animation.value * 3.14159),
+              stops: [0.1, 0.5, 0.9],
             ),
           ),
         );
@@ -99,7 +98,7 @@ class ShimmerHomeScreen extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: Colors.grey.shade200,
+            color: Colors.transparent,
           ),
           child: const ShimmerWidget(
             width: double.infinity,
@@ -118,7 +117,7 @@ class ShimmerHomeScreen extends StatelessWidget {
                 height: 8,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.grey.shade300,
+                  color: Colors.grey.withOpacity(0.3),
                 ),
               );
             }),
@@ -139,8 +138,8 @@ class ShimmerHomeScreen extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: Colors.grey.shade50,
-            border: Border.all(color: Colors.grey.shade200),
+            color: Colors.grey.withOpacity(0.1),
+            border: Border.all(color: Colors.grey.withOpacity(0.2)),
           ),
           child: const ShimmerWidget(
             width: double.infinity,
@@ -168,9 +167,9 @@ class ShimmerHomeScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withOpacity(0.01),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.withOpacity(0.5)),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.05),
@@ -187,7 +186,7 @@ class ShimmerHomeScreen extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: Colors.grey.shade200,
+              color: Colors.grey.withOpacity(0.2),
             ),
             child: const ShimmerWidget(
               width: 36,

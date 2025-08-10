@@ -10,6 +10,8 @@ import 'package:leavify/features/Authentication/domain/response/get_all_response
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/User/components/ApplyLeave/custom_calendar_component.dart';
 import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
+import 'package:leavify/features/User/domain/response/send_reminder_response.dart';
+import 'package:leavify/models/general_response.dart';
 
 import '../data/leave_repository.dart';
 import '../domain/request/apply_leave_request_model.dart';
@@ -62,6 +64,14 @@ class LeaveViewModel extends ChangeNotifier {
   // MARK: - LEAVE BY ID
   GetLeaveByIdResponse? selectedLeaveById;
   String? processLeaveError;
+
+  // MARK: - SEND REMINDER
+  SendReminderResponse? reminderResponse;
+
+  // MARK: - ESCALATE LEVE
+  GeneralResponse? escalateLeaveResponse;
+
+  GeneralResponse? cancelLeaveResponse;
 
   // MARK: - INITIALIZATION
   void initializeForm(LeaveFormType formType) {
@@ -365,6 +375,12 @@ class LeaveViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (reasonController.text.length < 10) {
+        isLoading = false;
+        notifyListeners();
+        showSnackBar('Reason must be at least 10 characters long', Colors.red);
+        return;
+      }
       // Load user ID from SharedPreferences
       final userId = await _loadUserId();
       if (userId == null || userId.isEmpty) {
@@ -374,10 +390,6 @@ class LeaveViewModel extends ChangeNotifier {
         return;
       }
 
-      // Create request (this will convert documents to base64 internally)
-      debugPrint(
-        "Creating leave request with ${selectedDocuments.length} documents...",
-      );
       final request = await _createLeaveRequest(userId);
 
       // Submit the request
@@ -655,6 +667,78 @@ class LeaveViewModel extends ChangeNotifier {
     }
   }
 
+  // MARK: SEND REMINDER FOR LEAVE
+  Future<void> sendReminderForLeave({required String leaveId}) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      reminderResponse = null;
+      notifyListeners();
+
+      final userId = await _loadUserId();
+
+      final response = await _repository.sendReminderForLeave(
+        userId: userId ?? '',
+        leaveId: leaveId,
+      );
+
+      reminderResponse = response;
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // MARK: - ESCALATE LEAVE
+  Future<void> escalateLeave({required String leaveId}) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      escalateLeaveResponse = null;
+      notifyListeners();
+
+      final userId = await _loadUserId();
+
+      final response = await _repository.escalateLeave(
+        userId: userId ?? '',
+        leaveId: leaveId,
+      );
+
+      escalateLeaveResponse = response;
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // MARK: - CANCEL LEAVE
+  Future<void> cancelLeave({required String leaveId}) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      cancelLeaveResponse = null;
+      notifyListeners();
+
+      final userId = await _loadUserId();
+
+      final response = await _repository.cancelLeave(
+        userId: userId ?? '',
+        leaveId: leaveId,
+      );
+
+      cancelLeaveResponse = response;
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   String _getLeaveType() {
     switch (currentFormType) {
       case LeaveFormType.leave:
@@ -683,7 +767,7 @@ class LeaveViewModel extends ChangeNotifier {
 
   String formatDateRange() {
     if (selectedStartDate == null) {
-      return 'Select date range';
+      return 'Select dates';
     }
 
     if (selectedEndDate == null) {

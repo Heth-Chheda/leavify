@@ -13,8 +13,7 @@ class MyApp extends StatelessWidget {
       initialRoute: Routes.login,
       onGenerateRoute: Routes.generateRoute,
       theme: AppTheme2.lightTheme,
-      darkTheme: AppTheme2.darkTheme,
-      themeMode: ThemeMode.system,
+      // themeMode: ThemeMode.system,
     );
   }
 }
