@@ -238,9 +238,12 @@ class _HomeScreenState extends State<HomeScreen> {
               itemBuilder: (context, index, realIndex) {
                 final item = announcements[index];
                 return AnnouncementCard(
-                  title: item.senderName,
+                  title: item.title,
                   message: item.body,
                   colorIndex: index % 5,
+                  timeAgo: item.timeAgo,
+                  profileImage: item.profileImage,
+                  senderName: item.senderName,
                 );
               },
               options: CarouselOptions(

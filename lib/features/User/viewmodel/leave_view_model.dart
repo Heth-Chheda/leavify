@@ -50,6 +50,8 @@ class LeaveViewModel extends ChangeNotifier {
   List<String> uploadedDocumentUrls = [];
 
   // MARK: - REQUEST STATE PROPERTIES
+  bool isRejectLoading = false;
+  bool isApproveLoading = false;
   bool isLoading = false;
   String? errorMessage;
   String? successLeaveId;
@@ -120,8 +122,6 @@ class LeaveViewModel extends ChangeNotifier {
           child: CustomCalendarComponent(
             enableRangeSelection: true,
             initialDate: selectedStartDate ?? now,
-            firstDate: now,
-            lastDate: DateTime(now.year + 1),
             onClose: () => Navigator.of(context).pop(),
             onDateRangeSelected: (startDate, endDate) {
               selectedStartDate = startDate;
@@ -494,35 +494,24 @@ class LeaveViewModel extends ChangeNotifier {
         if (file.bytes != null) {
           // Web platform or when bytes are available
           fileBytes = file.bytes!;
-          debugPrint("Got file bytes directly from file.bytes");
         } else if (file.path != null) {
           // Mobile platforms - read from file path
           File fileFromPath = File(file.path!);
           if (await fileFromPath.exists()) {
             fileBytes = await fileFromPath.readAsBytes();
-            debugPrint("Read file bytes from path: ${file.path}");
           } else {
-            debugPrint("ERROR: File does not exist at path: ${file.path}");
             throw Exception('File not found at path: ${file.path}');
           }
         } else {
-          debugPrint(
-            "ERROR: Both file.bytes and file.path are null for ${file.name}",
-          );
           throw Exception('Unable to access file data for ${file.name}');
         }
 
         if (fileBytes != null) {
-          debugPrint("File bytes length: ${fileBytes.length}");
-
           // Convert bytes to base64
           String base64String = base64Encode(fileBytes);
-          debugPrint("Base64 string length: ${base64String.length}");
-
           // Get file extension and determine docType
           String extension = file.extension?.toLowerCase() ?? '';
           String docType = _getDocumentType(extension);
-
           // Create LeaveDocument object
           LeaveDocument leaveDocument = LeaveDocument(
             docType: docType,
@@ -530,19 +519,12 @@ class LeaveViewModel extends ChangeNotifier {
           );
 
           leaveDocuments.add(leaveDocument);
-          debugPrint("Successfully processed: ${file.name} as $docType");
         } else {
-          debugPrint(
-            'ERROR: File bytes are still null after processing ${file.name}',
-          );
           throw Exception('Failed to read file bytes for ${file.name}');
         }
       }
-
-      debugPrint("Total documents converted: ${leaveDocuments.length}");
       return leaveDocuments;
     } catch (e) {
-      debugPrint('ERROR converting documents to LeaveDocuments: $e');
       throw Exception('Failed to process documents: $e');
     }
   }
@@ -603,6 +585,12 @@ class LeaveViewModel extends ChangeNotifier {
   }) async {
     try {
       isLoading = true;
+      if (status.toLowerCase() == 'rejected') {
+        isRejectLoading = true;
+      }
+      else {
+        isApproveLoading = true;
+      }
       processLeaveError = null;
       notifyListeners();
 
@@ -632,6 +620,8 @@ class LeaveViewModel extends ChangeNotifier {
       return false;
     } finally {
       isLoading = false;
+      isApproveLoading = false;
+      isRejectLoading = false;
       notifyListeners();
     }
   }
@@ -782,7 +772,8 @@ class LeaveViewModel extends ChangeNotifier {
   }
 
   Map<String, DateTime> getAdjustedDateRange() {
-    final fromDateTime = DateTime(
+    // Create dates in UTC to avoid timezone conversion issues
+    final fromDateTime = DateTime.utc(
       selectedStartDate!.year,
       selectedStartDate!.month,
       selectedStartDate!.day,
@@ -792,7 +783,7 @@ class LeaveViewModel extends ChangeNotifier {
     );
 
     final endDate = selectedEndDate ?? selectedStartDate!;
-    final toDateTime = DateTime(
+    final toDateTime = DateTime.utc(
       endDate.year,
       endDate.month,
       endDate.day,

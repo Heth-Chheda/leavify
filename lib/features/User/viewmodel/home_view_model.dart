@@ -103,7 +103,7 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _fetchAnnouncements() async {
+  Future<void>  _fetchAnnouncements() async {
     _isLoading = true;
     _error = null;
     notifyListeners();

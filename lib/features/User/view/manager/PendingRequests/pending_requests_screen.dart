@@ -30,24 +30,38 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   }
 
   List<GetAllResponse> _getFilteredRequests(List<GetAllResponse> requests) {
+    final homeViewModel = context.read<HomeViewModel>();
+    final isHR = homeViewModel.userRole.toLowerCase() == 'hr';
+
     return requests.where((r) {
+      // For HR → Escalated means escalated flag true
+      // For others → Escalated means status == 'escalated'
+      final isEscalated = isHR
+          ? r.escalated == true
+          : r.status.toLowerCase() == 'escalated';
+
+      // If current filter is NOT "Escalated" and leave is escalated → exclude
+      if (_selectedFilter.toLowerCase() != 'escalated' && isEscalated) {
+        return false;
+      }
+
       // Search filter
       final query = _searchQuery.toLowerCase();
       final fullName = '${r.firstName} ${r.lastName}'.toLowerCase();
       final matchesSearch =
           query.isEmpty ||
-          fullName.contains(query) ||
-          r.role.toLowerCase().contains(query) ||
-          r.reason.toLowerCase().contains(query);
+              fullName.contains(query) ||
+              r.role.toLowerCase().contains(query) ||
+              r.reason.toLowerCase().contains(query);
 
       // Status filter
       final matchesFilter = switch (_selectedFilter.toLowerCase()) {
         'pending' => r.status.toLowerCase() == 'pending',
         'approved' => r.status.toLowerCase() == 'approved',
         'rejected' || 'denied' =>
-          r.status.toLowerCase() == 'rejected' ||
-              r.status.toLowerCase() == 'denied',
-        'escalated' => r.status.toLowerCase() == 'escalated',
+        r.status.toLowerCase() == 'rejected' ||
+            r.status.toLowerCase() == 'denied',
+        'escalated' => isEscalated,
         _ => true, // "All"
       };
 
@@ -151,45 +165,12 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
 
     return Container(
       color: colorScheme.surface,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Column(
         children: [
           _buildSearchBar(context),
           const SizedBox(height: 12),
           _buildFilterChips(context, homeViewModel.userRole),
-        ],
-      ),
-    );
-  }
-
-  // MARK: - URGENT BADGE
-  Widget _buildUrgentBadge(int urgentCount) {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.highlightOrange,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.schedule,
-            size: 24,
-            color: isDarkMode ? Colors.white : AppColors.darkBackground,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '$urgentCount Pending',
-            style: TextStyle(
-              color: isDarkMode ? Colors.white : Colors.black,
-              fontWeight: FontWeight.w600,
-              fontSize: 20,
-            ),
-          ),
         ],
       ),
     );

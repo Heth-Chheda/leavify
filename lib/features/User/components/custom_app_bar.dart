@@ -4,6 +4,7 @@ import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/components/shimmer_widget.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:leavify/features/User/viewmodel/announcements_view_model.dart';
 import 'package:provider/provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -101,13 +102,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               end: Alignment.bottomRight,
               colors: isDarkMode
                   ? [
-                      theme.colorScheme.surface.withOpacity(0.95),
-                      theme.colorScheme.surface.withOpacity(0.85),
-                    ]
+                theme.colorScheme.surface.withOpacity(0.95),
+                theme.colorScheme.surface.withOpacity(0.85),
+              ]
                   : [
-                      Colors.white.withOpacity(0.95),
-                      Colors.white.withOpacity(0.85),
-                    ],
+                Colors.white.withOpacity(0.95),
+                Colors.white.withOpacity(0.85),
+              ],
             ),
             boxShadow: [
               BoxShadow(
@@ -133,13 +134,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       end: Alignment.bottomRight,
                       colors: isDarkMode
                           ? [
-                              theme.colorScheme.surface.withOpacity(0.95),
-                              theme.colorScheme.surface.withOpacity(0.85),
-                            ]
+                        theme.colorScheme.surface.withOpacity(0.95),
+                        theme.colorScheme.surface.withOpacity(0.85),
+                      ]
                           : [
-                              Colors.white.withOpacity(0.95),
-                              Colors.white.withOpacity(0.85),
-                            ],
+                        Colors.white.withOpacity(0.95),
+                        Colors.white.withOpacity(0.85),
+                      ],
                     ),
                   ),
                 );
@@ -183,10 +184,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildActionIcons(
-    BuildContext context,
-    ThemeData theme,
-    bool canSendAnnouncement,
-  ) {
+      BuildContext context,
+      ThemeData theme,
+      bool canSendAnnouncement,
+      ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -194,7 +195,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           _buildIcon(
             icon: Icons.campaign_rounded,
             onTap: () {
-              Navigator.pushNamed(context, '/announcements');
+              _showAnnouncementBottomSheet(context, theme);
             },
             theme: theme,
           ),
@@ -207,6 +208,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           theme: theme,
         ),
       ],
+    );
+  }
+
+  void _showAnnouncementBottomSheet(BuildContext context, ThemeData theme) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return _AnnouncementBottomSheetContent(theme: theme);
+      },
     );
   }
 
@@ -292,7 +304,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     Navigator.pushNamedAndRemoveUntil(
       context,
       "/login",
-      (route) => false, // This removes all previous routes
+          (route) => false, // This removes all previous routes
     );
   }
 
@@ -335,5 +347,195 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     } else {
       return 'Good Evening, ';
     }
+  }
+}
+
+class _AnnouncementBottomSheetContent extends StatefulWidget {
+  final ThemeData theme;
+
+  const _AnnouncementBottomSheetContent({required this.theme});
+
+  @override
+  State<_AnnouncementBottomSheetContent> createState() => _AnnouncementBottomSheetContentState();
+}
+
+class _AnnouncementBottomSheetContentState extends State<_AnnouncementBottomSheetContent> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _bodyController = TextEditingController();
+
+  void _sendAnnouncement() async {
+    final title = _titleController.text.trim();
+    final body = _bodyController.text.trim();
+
+    if (title.isEmpty || body.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter both title and body")),
+      );
+      return;
+    }
+
+    final viewModel = context.read<AnnouncementViewModel>();
+    final homeViewModel = context.read<HomeViewModel>();
+
+    final success = await viewModel.addAnnouncement(title, body);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            viewModel.latestAnnouncement?.message ?? "Announcement sent",
+          ),
+        ),
+      );
+      _titleController.clear();
+      _bodyController.clear();
+      Navigator.pop(context); // Close bottom sheet instead of navigating to home
+      homeViewModel.refresh();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            viewModel.errorMessage ?? "Failed to send announcement",
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = context.watch<AnnouncementViewModel>();
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.8,
+      decoration: BoxDecoration(
+        color: widget.theme.colorScheme.surface,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Handle bar
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: widget.theme.colorScheme.onSurface.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.campaign_rounded,
+                  color: widget.theme.colorScheme.primary,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Create Announcement',
+                  style: TextStyle(
+                    color: widget.theme.colorScheme.onSurface,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(
+                    Icons.close,
+                    color: widget.theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          // Content
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      labelText: "Title",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      labelStyle: TextStyle(
+                        color: widget.theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    style: TextStyle(
+                      color: widget.theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _bodyController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: "Body",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      labelStyle: TextStyle(
+                        color: widget.theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                      alignLabelWithHint: true,
+                    ),
+                    style: TextStyle(
+                      color: widget.theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      icon: viewModel.isLoading
+                          ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                          : const Icon(Icons.send),
+                      label: const Text("Send Announcement"),
+                      onPressed: viewModel.isLoading ? null : _sendAnnouncement,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: widget.theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _bodyController.dispose();
+    super.dispose();
   }
 }

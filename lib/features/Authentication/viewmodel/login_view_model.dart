@@ -5,9 +5,9 @@ import 'package:leavify/features/Authentication/domain/request/login_request.dar
 
 class LoginViewModel extends ChangeNotifier {
   final usernameController = TextEditingController(
-    text: 'Amit.Gupta@ritetechnologies.net',
+    text: '',
   );
-  final passwordController = TextEditingController(text: '1234');
+  final passwordController = TextEditingController(text: '');
 
   final AuthenticationRepository _authenticationRepository =
       AuthenticationRepository();

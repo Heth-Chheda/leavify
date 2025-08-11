@@ -20,7 +20,6 @@ class Routes {
   static const String analytics = '/analytics';
   static const String pending = '/pending';
   static const String leaveDetail = '/leave-detail';
-  static const String announcements = '/announcements';
   static const String userSettings = '/settings';
   static const String pendingLeaveDetail = '/pending-leave-detail';
 
@@ -155,18 +154,6 @@ class Routes {
           builder: (context) => Scaffold(
             appBar: _buildThemedAppBar(context: context, title: 'Settings'),
             body: const UserSettingsView(),
-          ),
-        );
-        break;
-
-      case announcements:
-        page = Builder(
-          builder: (context) => Scaffold(
-            appBar: _buildThemedAppBar(
-              context: context,
-              title: 'Announcements',
-            ),
-            body: const AnnouncementScreen(),
           ),
         );
         break;

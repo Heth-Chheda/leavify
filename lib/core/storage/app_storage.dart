@@ -20,6 +20,11 @@ class AppStorage {
     await _prefs.setBool(key, value);
   }
 
+  static Future<bool?> getBoolean(String key) async {
+    await _ensureInitialized();
+    return _prefs.getBool(key);
+  }
+
   static Future<String?> getString(String key) async {
     await _ensureInitialized();
     return _prefs.getString(key);

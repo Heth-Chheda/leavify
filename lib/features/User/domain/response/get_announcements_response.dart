@@ -1,6 +1,7 @@
 class GetAnnouncementsResponse {
   final String profileImage;
   final String senderName;
+  final String title;
   final String body;
   final String timeAgo;
 
@@ -9,6 +10,7 @@ class GetAnnouncementsResponse {
     required this.senderName,
     required this.body,
     required this.timeAgo,
+    required this.title
   });
 
   factory GetAnnouncementsResponse.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class GetAnnouncementsResponse {
       senderName: json['senderName'] ?? '',
       body: json['body'] ?? '',
       timeAgo: json['timeAgo'] ?? '',
+      title: json['title'] ?? '',
     );
   }
 
@@ -26,6 +29,7 @@ class GetAnnouncementsResponse {
       'senderName': senderName,
       'body': body,
       'timeAgo': timeAgo,
+      'title' : title,
     };
   }
 }

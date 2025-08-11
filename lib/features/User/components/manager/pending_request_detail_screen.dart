@@ -142,14 +142,14 @@ class _PendingRequestDetailScreenState
                 Expanded(
                   child: _RejectButton(
                     onPressed: leaveViewModel.isLoading ? null : _handleReject,
-                    isLoading: leaveViewModel.isLoading,
+                    isLoading: leaveViewModel.isRejectLoading,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: _ApproveButton(
                     onPressed: leaveViewModel.isLoading ? null : _handleApprove,
-                    isLoading: leaveViewModel.isLoading,
+                    isLoading: leaveViewModel.isApproveLoading,
                   ),
                 ),
               ],
@@ -1265,9 +1265,43 @@ class _EscalationCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (escalationDet.reason?.isNotEmpty == true) ...[
+              // Status
+              if (escalationDet.escalationStatus?.isNotEmpty == true) ...[
                 Text(
-                  'Reason:',
+                  'Status: ${escalationDet.escalationStatus}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.purple.shade700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+
+              // Escalated Date
+              if (escalationDet.escalatedDate != null) ...[
+                Text(
+                  'Escalated At: ${DateFormat('dd MMM yyyy, hh:mm a').format(escalationDet.escalatedDate!.toLocal())}',
+                  style: TextStyle(fontSize: 12, color: Colors.purple.shade600),
+                ),
+                const SizedBox(height: 4),
+              ],
+
+              // Resolved Date (skip if it's the placeholder date)
+              if (escalationDet.resolvedDate != null &&
+                  escalationDet.resolvedDate!.year != 1) ...[
+                Text(
+                  'Resolved At: ${DateFormat('dd MMM yyyy, hh:mm a').format(escalationDet.resolvedDate!.toLocal())}',
+                  style: TextStyle(fontSize: 12, color: Colors.purple.shade600),
+                ),
+                const SizedBox(height: 4),
+              ],
+
+              // Comments
+              if (escalationDet.comments?.isNotEmpty == true) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Comments:',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1276,21 +1310,10 @@ class _EscalationCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  escalationDet.reason!,
+                  escalationDet.comments!,
                   style: const TextStyle(fontSize: 14),
                 ),
-                const SizedBox(height: 8),
               ],
-              if (escalationDet.escalatedBy?.isNotEmpty == true)
-                Text(
-                  'Escalated By: ${escalationDet.escalatedBy}',
-                  style: TextStyle(fontSize: 12, color: Colors.purple.shade600),
-                ),
-              if (escalationDet.escalatedAt != null)
-                Text(
-                  'Escalated At: ${DateFormat('dd MMM yyyy, hh:mm a').format(escalationDet.escalatedAt!)}',
-                  style: TextStyle(fontSize: 12, color: Colors.purple.shade600),
-                ),
             ],
           ),
         ),
@@ -1298,6 +1321,7 @@ class _EscalationCard extends StatelessWidget {
     );
   }
 }
+
 
 // MARK: - Comments Card
 class _CommentsCard extends StatelessWidget {

@@ -63,8 +63,8 @@ void main() async {
   }
 
   WidgetsFlutterBinding.ensureInitialized();
-  await AppEnvironment.load();
   await AppStorage.init();
+  await AppEnvironment.load();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initializeFCM();
   runApp(

@@ -119,22 +119,32 @@ class ReqStatusTracking {
 }
 
 class EscalationDet {
-  final String? reason;
-  final String? escalatedBy;
-  final DateTime? escalatedAt;
+  final String? escalationStatus;
+  final DateTime? escalatedDate;
+  final DateTime? resolvedDate;
+  final String? comments;
 
-  EscalationDet({this.reason, this.escalatedBy, this.escalatedAt});
+  EscalationDet({
+    this.escalationStatus,
+    this.escalatedDate,
+    this.resolvedDate,
+    this.comments,
+  });
 
   factory EscalationDet.fromJson(Map<String, dynamic> json) {
     return EscalationDet(
-      reason: json['reason'],
-      escalatedBy: json['escalatedBy'],
-      escalatedAt: json['escalatedAt'] != null
-          ? DateTime.tryParse(json['escalatedAt'])
+      escalationStatus: json['escalationStatus'] as String?,
+      escalatedDate: json['escalatedDate'] != null
+          ? DateTime.tryParse(json['escalatedDate'])
           : null,
+      resolvedDate: json['resolvedDate'] != null
+          ? DateTime.tryParse(json['resolvedDate'])
+          : null,
+      comments: json['comments'] as String?,
     );
   }
 }
+
 
 class ReminderDetails {
   final DateTime reminderSentAt;
