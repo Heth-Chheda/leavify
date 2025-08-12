@@ -1,7 +1,7 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:leavify/core/api/api_endpoints.dart';
-import 'package:leavify/core/utils/components/shimmer_widget.dart';
+import 'package:leavify/core/utils/components/shimmer/shimmer_home_screen.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/User/components/announcement_card.dart';
 import 'package:leavify/features/User/components/custom_app_bar.dart';

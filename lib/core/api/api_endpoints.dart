@@ -33,6 +33,8 @@ class ApiEndpoints {
   // escalate
   static final String escalateLeave = '$baseUrl/request/escalate';
   static final String getEscalatedLeaves = '$baseUrl/request/getescalated';
+  static final String processEscalatedLeaves =
+      '$baseUrl/request/processescalated';
 
   // Leaves // Manager
   static final String processLeave = '$baseUrl/request/process';

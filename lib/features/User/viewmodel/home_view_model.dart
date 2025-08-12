@@ -74,7 +74,7 @@ class HomeViewModel extends ChangeNotifier {
     _announcements = [];
     _leaveBalance = 0;
     _workingDays = 0;
-    _isLoading = true;
+    _isLoading = false;
     _error = null;
 
     notifyListeners();
@@ -103,7 +103,7 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void>  _fetchAnnouncements() async {
+  Future<void> _fetchAnnouncements() async {
     _isLoading = true;
     _error = null;
     notifyListeners();

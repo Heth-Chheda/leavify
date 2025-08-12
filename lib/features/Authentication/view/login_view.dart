@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:leavify/core/utils/components/custom_loading_screen.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/viewmodel/login_view_model.dart';
 import 'package:provider/provider.dart';
@@ -61,7 +60,6 @@ class _LoginPageState extends State<LoginPage>
                     ),
                   ),
                   _buildMainCard(isDark),
-                  if (viewModel.isLoading) const CustomLoadingScreen(),
                 ],
               ),
             );

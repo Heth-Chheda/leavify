@@ -354,4 +354,29 @@ class LeaveRepository {
       rethrow;
     }
   }
+
+  // MARK: - PROCESS ESCALATED LEAVES
+  Future<GeneralResponse> processEscalatedLeaves({
+    required String userId,
+    required String leaveId,
+    required String comment,
+  }) async {
+    try {
+      final getUserLeavesResponse = await _api.performRequest(
+        url: ApiEndpoints.processEscalatedLeaves,
+        method: RequestType.post,
+        body: {'userId': userId, 'leaveId': leaveId, 'comment': comment},
+      );
+      if (getUserLeavesResponse.statusCode == 200) {
+        final jsonData = json.decode(getUserLeavesResponse.body);
+        return GeneralResponse.fromJson(jsonData);
+      } else {
+        throw Exception(
+          'Failed to load leaves: ${getUserLeavesResponse.statusCode}',
+        );
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/core/utils/components/app_snackbar.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/User/components/ApplyLeave/custom_calendar_component.dart';
@@ -72,6 +73,7 @@ class LeaveViewModel extends ChangeNotifier {
 
   // MARK: - ESCALATE LEVE
   GeneralResponse? escalateLeaveResponse;
+  bool isProcessEscalatedLeaveLoading = false;
 
   GeneralResponse? cancelLeaveResponse;
 
@@ -587,8 +589,7 @@ class LeaveViewModel extends ChangeNotifier {
       isLoading = true;
       if (status.toLowerCase() == 'rejected') {
         isRejectLoading = true;
-      }
-      else {
+      } else {
         isApproveLoading = true;
       }
       processLeaveError = null;
@@ -725,6 +726,38 @@ class LeaveViewModel extends ChangeNotifier {
       errorMessage = e.toString();
     } finally {
       isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // MARK: - PROCESS ESCALATED LEAVES
+  Future<bool> processEscalatedLeaveRequest({
+    required String leaveId,
+    required String comment,
+  }) async {
+    isProcessEscalatedLeaveLoading = true;
+    notifyListeners();
+    final userId = await _loadUserId();
+
+    try {
+      final response = await _repository.processEscalatedLeaves(
+        userId: userId ?? '',
+        leaveId: leaveId,
+        comment: comment,
+      );
+
+      if (response.success == true) {
+        AppToast.showSuccess("Leave Resolved successfully");
+        return true;
+      } else {
+        AppToast.showError("Error resolving leave");
+        return false;
+      }
+    } catch (e) {
+      AppToast.showError('Error : $e');
+      return false;
+    } finally {
+      isProcessEscalatedLeaveLoading = false;
       notifyListeners();
     }
   }

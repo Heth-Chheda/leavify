@@ -8,8 +8,10 @@ import 'package:intl/intl.dart';
 import 'package:leavify/core/api/api_endpoints.dart';
 import 'package:leavify/features/User/domain/models/leave_document.dart';
 import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
+import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
 import 'package:provider/provider.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class PendingRequestDetailScreen extends StatefulWidget {
   final String leaveId;
@@ -94,20 +96,15 @@ class _PendingRequestDetailScreenState
               leaveData.leaveDetails.compDates.isNotEmpty)
             const SizedBox(height: 16),
           if (leaveData.leaveDetails.documents.isNotEmpty)
-            _DocumentsCard(documents: leaveData.leaveDetails.documents),
+            DocumentsCard(documents: leaveData.leaveDetails.documents),
           if (leaveData.leaveDetails.documents.isNotEmpty)
             const SizedBox(height: 16),
           if (leaveData.leaveDetails.reqStatusTracking.isNotEmpty)
-            _StatusTrackingCard(
+            StatusTrackingCard(
               statusTracking: leaveData.leaveDetails.reqStatusTracking,
             ),
           if (leaveData.leaveDetails.reqStatusTracking.isNotEmpty)
             const SizedBox(height: 16),
-          if (leaveData.leaveDetails.isEscalated &&
-              leaveData.leaveDetails.escalationDet != null)
-            _EscalationCard(
-              escalationDet: leaveData.leaveDetails.escalationDet!,
-            ),
           if (leaveData.leaveDetails.isEscalated &&
               leaveData.leaveDetails.escalationDet != null)
             const SizedBox(height: 16),
@@ -124,6 +121,71 @@ class _PendingRequestDetailScreenState
 
     return Consumer<LeaveViewModel>(
       builder: (context, leaveViewModel, child) {
+        final homeViewModel = context.read<HomeViewModel>();
+        final leave = leaveViewModel.selectedLeaveById;
+        final latestStatus = leave?.currentUserAction?.latestStatus
+            ?.toLowerCase();
+        final userRole = homeViewModel.userRole.toLowerCase();
+
+        Widget buttons;
+
+        // If HR → only Resolve button
+        if (userRole == 'hr') {
+          buttons = Expanded(
+            child: _ResolveButton(
+              onPressed: leaveViewModel.isLoading
+                  ? null
+                  : _handleProcessEscalated,
+              isLoading: leaveViewModel.isProcessEscalatedLeaveLoading,
+            ),
+          );
+        } else {
+          // Existing logic for managers
+          switch (latestStatus) {
+            case 'approved':
+              buttons = Expanded(
+                child: _RejectButton(
+                  onPressed: leaveViewModel.isLoading ? null : _handleReject,
+                  isLoading: leaveViewModel.isRejectLoading,
+                ),
+              );
+              break;
+
+            case 'rejected':
+              buttons = Expanded(
+                child: _ApproveButton(
+                  onPressed: leaveViewModel.isLoading ? null : _handleApprove,
+                  isLoading: leaveViewModel.isApproveLoading,
+                ),
+              );
+              break;
+
+            default:
+              buttons = Row(
+                children: [
+                  Expanded(
+                    child: _RejectButton(
+                      onPressed: leaveViewModel.isLoading
+                          ? null
+                          : _handleReject,
+                      isLoading: leaveViewModel.isRejectLoading,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _ApproveButton(
+                      onPressed: leaveViewModel.isLoading
+                          ? null
+                          : _handleApprove,
+                      isLoading: leaveViewModel.isApproveLoading,
+                    ),
+                  ),
+                ],
+              );
+              break;
+          }
+        }
+
         return SafeArea(
           child: Container(
             padding: const EdgeInsets.all(20),
@@ -137,23 +199,7 @@ class _PendingRequestDetailScreenState
                 ),
               ],
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _RejectButton(
-                    onPressed: leaveViewModel.isLoading ? null : _handleReject,
-                    isLoading: leaveViewModel.isRejectLoading,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _ApproveButton(
-                    onPressed: leaveViewModel.isLoading ? null : _handleApprove,
-                    isLoading: leaveViewModel.isApproveLoading,
-                  ),
-                ),
-              ],
-            ),
+            child: buttons,
           ),
         );
       },
@@ -183,6 +229,44 @@ class _PendingRequestDetailScreenState
         SnackBar(
           content: Text(
             leaveViewModel.processLeaveError ?? 'Failed to approve request',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleProcessEscalated() async {
+    if (_commentsController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please provide a reason for rejection'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final leaveViewModel = context.read<LeaveViewModel>();
+
+    final success = await leaveViewModel.processEscalatedLeaveRequest(
+      leaveId: widget.leaveId,
+      comment: _commentsController.text,
+    );
+
+    if (success && mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Request rejected successfully'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            leaveViewModel.processLeaveError ?? 'Failed to reject request',
           ),
           backgroundColor: Colors.red,
         ),
@@ -528,10 +612,10 @@ class _CompOffDatesCard extends StatelessWidget {
 }
 
 // MARK: - Documents Card
-class _DocumentsCard extends StatelessWidget {
+class DocumentsCard extends StatelessWidget {
   final List<LeaveDocument> documents;
 
-  const _DocumentsCard({required this.documents});
+  const DocumentsCard({super.key, required this.documents});
 
   @override
   Widget build(BuildContext context) {
@@ -819,12 +903,6 @@ class _DocumentViewerDialogState extends State<DocumentViewerDialog> {
               ],
             ),
           ),
-          // Download button
-          IconButton(
-            onPressed: _downloadDocument,
-            icon: Icon(Icons.download, color: colorScheme.primary),
-            tooltip: 'Download',
-          ),
           // Close button
           IconButton(
             onPressed: () => Navigator.pop(context),
@@ -987,50 +1065,16 @@ class _DocumentViewerDialogState extends State<DocumentViewerDialog> {
   }
 
   Widget _buildPdfViewer() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.picture_as_pdf,
-              size: 80,
-              color: Colors.red.withOpacity(0.8),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'PDF Document',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'PDF viewing requires additional setup.\nDownload the file to view it in your preferred PDF reader.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _downloadDocument,
-              icon: const Icon(Icons.download),
-              label: const Text('Download PDF'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return SfPdfViewer.network(
+      _documentUrl!,
+      canShowScrollStatus: true,
+      canShowPaginationDialog: true,
+      onDocumentLoadFailed: (details) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = details.description;
+        });
+      },
     );
   }
 
@@ -1119,10 +1163,10 @@ class _DocumentViewerDialogState extends State<DocumentViewerDialog> {
 }
 
 // MARK: - Status Tracking Card
-class _StatusTrackingCard extends StatelessWidget {
+class StatusTrackingCard extends StatelessWidget {
   final List<ReqStatusTracking> statusTracking;
 
-  const _StatusTrackingCard({required this.statusTracking});
+  const StatusTrackingCard({super.key, required this.statusTracking});
 
   @override
   Widget build(BuildContext context) {
@@ -1322,7 +1366,6 @@ class _EscalationCard extends StatelessWidget {
   }
 }
 
-
 // MARK: - Comments Card
 class _CommentsCard extends StatelessWidget {
   final TextEditingController commentsController;
@@ -1501,6 +1544,34 @@ class _RejectButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.red,
         side: const BorderSide(color: Colors.red, width: 2),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
+
+class _ResolveButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final bool isLoading;
+
+  const _ResolveButton({this.onPressed, required this.isLoading});
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: isLoading
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.close_rounded),
+      label: Text(isLoading ? 'Processing...' : 'Resolve'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.blueAccent,
+        side: const BorderSide(color: Colors.blueAccent, width: 2),
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),

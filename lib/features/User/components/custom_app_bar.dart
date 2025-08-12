@@ -3,8 +3,8 @@ import 'package:leavify/core/api/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/components/shimmer_widget.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
-import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 import 'package:leavify/features/User/viewmodel/announcements_view_model.dart';
+import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 import 'package:provider/provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -33,8 +33,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ? _buildShimmerContent(theme)
                   : _buildContent(viewModel.userName, theme, context),
             ),
-            // Action Icons
-            _buildActionIcons(context, theme, viewModel.canSendAnnouncement),
+            // Action Icons - Show shimmer when loading, actual icons when loaded
+            viewModel.isLoading
+                ? _buildShimmerActionIcons(theme)
+                : _buildActionIcons(
+                    context,
+                    theme,
+                    viewModel.canSendAnnouncement,
+                  ),
           ],
         ),
       ),
@@ -42,37 +48,40 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildShimmerContent(ThemeData theme) {
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Row(
       children: [
-        // Profile Image Shimmer
+        // Profile Image Shimmer - Fixed to match actual size (40x40)
         Container(
-          width: 68,
-          height: 68,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            color: theme.colorScheme.onBackground.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(38),
+            border: Border.all(
+              color: theme.colorScheme.onBackground.withOpacity(0.1),
+              width: 2.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.shadowColor.withOpacity(0.1),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          child: ShimmerWidget(
-            width: 68,
-            height: 68,
-            borderRadius: BorderRadius.circular(22),
-          ),
+          child: ShimmerWidget.circular(width: 36, height: 36),
         ),
-        const SizedBox(width: 20),
-        // Text Shimmer
+        const SizedBox(width: 12),
+
+        // Text Shimmer - Single line to match actual layout
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ShimmerWidget(
-                width: 120,
-                height: 14,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              const SizedBox(height: 8),
-              ShimmerWidget(
-                width: 160,
+              ShimmerWidget.rectangular(
+                width: 180,
                 height: 20,
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -80,6 +89,36 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildShimmerActionIcons(ThemeData theme) {
+    final isDarkMode = theme.brightness == Brightness.dark;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Campaign Icon Shimmer (conditional based on role)
+        _buildShimmerIcon(theme, isDarkMode),
+
+        // Logout Icon Shimmer
+        _buildShimmerIcon(theme, isDarkMode),
+      ],
+    );
+  }
+
+  Widget _buildShimmerIcon(ThemeData theme, bool isDarkMode) {
+    return Container(
+      width: 48,
+      height: 48,
+      margin: const EdgeInsets.only(left: 4),
+      decoration: BoxDecoration(
+        color: isDarkMode
+            ? theme.colorScheme.surface.withOpacity(0.1)
+            : Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Center(child: ShimmerWidget.circular(width: 24, height: 24)),
     );
   }
 
@@ -102,13 +141,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               end: Alignment.bottomRight,
               colors: isDarkMode
                   ? [
-                theme.colorScheme.surface.withOpacity(0.95),
-                theme.colorScheme.surface.withOpacity(0.85),
-              ]
+                      theme.colorScheme.surface.withOpacity(0.95),
+                      theme.colorScheme.surface.withOpacity(0.85),
+                    ]
                   : [
-                Colors.white.withOpacity(0.95),
-                Colors.white.withOpacity(0.85),
-              ],
+                      Colors.white.withOpacity(0.95),
+                      Colors.white.withOpacity(0.85),
+                    ],
             ),
             boxShadow: [
               BoxShadow(
@@ -134,14 +173,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       end: Alignment.bottomRight,
                       colors: isDarkMode
                           ? [
-                        theme.colorScheme.surface.withOpacity(0.95),
-                        theme.colorScheme.surface.withOpacity(0.85),
-                      ]
+                              theme.colorScheme.surface.withOpacity(0.95),
+                              theme.colorScheme.surface.withOpacity(0.85),
+                            ]
                           : [
-                        Colors.white.withOpacity(0.95),
-                        Colors.white.withOpacity(0.85),
-                      ],
+                              Colors.white.withOpacity(0.95),
+                              Colors.white.withOpacity(0.85),
+                            ],
                     ),
+                  ),
+                  child: Icon(
+                    Icons.person,
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    size: 20,
                   ),
                 );
               },
@@ -150,7 +194,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         const SizedBox(width: 12),
 
-        // Greeting and Name in Column
+        // Greeting and Name in Row
         Expanded(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -165,16 +209,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   letterSpacing: -0.5,
                 ),
               ),
-              Text(
-                displayName,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.onBackground,
-                  letterSpacing: -0.5,
+              Flexible(
+                child: Text(
+                  displayName,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.onBackground,
+                    letterSpacing: -0.5,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
               ),
             ],
           ),
@@ -184,10 +230,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildActionIcons(
-      BuildContext context,
-      ThemeData theme,
-      bool canSendAnnouncement,
-      ) {
+    BuildContext context,
+    ThemeData theme,
+    bool canSendAnnouncement,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -199,7 +245,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             },
             theme: theme,
           ),
-        // Settings Icon
+        // Logout Icon
         _buildIcon(
           icon: Icons.logout,
           onTap: () {
@@ -289,23 +335,35 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  void _performLogout(BuildContext context) {
-    // Clear the HomeViewModel data before logout
-    final homeViewModel = context.read<HomeViewModel>();
-    homeViewModel.clearData();
+  void _performLogout(BuildContext context) async {
+    try {
+      // First, clear the data immediately to prevent further provider access
+      if (context.mounted) {
+        final homeViewModel = context.read<HomeViewModel>();
+        homeViewModel.clearData();
+      }
 
-    // Clear storage
-    AppStorage.remove("USER_ID");
-    AppStorage.remove("JWT_TOKEN");
-    AppStorage.remove("USER_IS_ALREADY_LOGGED_IN");
-    AppStorage.remove("user_details");
+      // Clear SharedPreferences
+      await AppStorage.clearAllExcept("USER_FCM_TOKEN");
 
-    // Navigate to login
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      "/login",
-          (route) => false, // This removes all previous routes
-    );
+      // Navigate immediately after clearing data
+      if (context.mounted) {
+        Navigator.pushNamed(context, '/login');
+      }
+    } catch (e) {
+      // If provider access fails during logout, proceed anyway
+      debugPrint('Error during logout: $e');
+
+      // Still try to clear storage and navigate
+      try {
+        await AppStorage.clearAllExcept("USER_FCM_TOKEN");
+        if (context.mounted) {
+          Navigator.pushNamed(context, '/login');
+        }
+      } catch (e2) {
+        debugPrint('Critical logout error: $e2');
+      }
+    }
   }
 
   Widget _buildIcon({
@@ -318,10 +376,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return Container(
       width: 48,
       height: 48,
+      margin: const EdgeInsets.only(left: 4),
       decoration: BoxDecoration(
         color: isDarkMode
             ? theme.colorScheme.surface.withOpacity(0.1)
             : Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Material(
         color: Colors.transparent,
@@ -356,10 +416,12 @@ class _AnnouncementBottomSheetContent extends StatefulWidget {
   const _AnnouncementBottomSheetContent({required this.theme});
 
   @override
-  State<_AnnouncementBottomSheetContent> createState() => _AnnouncementBottomSheetContentState();
+  State<_AnnouncementBottomSheetContent> createState() =>
+      _AnnouncementBottomSheetContentState();
 }
 
-class _AnnouncementBottomSheetContentState extends State<_AnnouncementBottomSheetContent> {
+class _AnnouncementBottomSheetContentState
+    extends State<_AnnouncementBottomSheetContent> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _bodyController = TextEditingController();
 
@@ -389,7 +451,7 @@ class _AnnouncementBottomSheetContentState extends State<_AnnouncementBottomShee
       );
       _titleController.clear();
       _bodyController.clear();
-      Navigator.pop(context); // Close bottom sheet instead of navigating to home
+      Navigator.pop(context);
       homeViewModel.refresh();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -472,12 +534,12 @@ class _AnnouncementBottomSheetContentState extends State<_AnnouncementBottomShee
                         borderRadius: BorderRadius.circular(12),
                       ),
                       labelStyle: TextStyle(
-                        color: widget.theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: widget.theme.colorScheme.onSurface.withOpacity(
+                          0.7,
+                        ),
                       ),
                     ),
-                    style: TextStyle(
-                      color: widget.theme.colorScheme.onSurface,
-                    ),
+                    style: TextStyle(color: widget.theme.colorScheme.onSurface),
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -489,13 +551,13 @@ class _AnnouncementBottomSheetContentState extends State<_AnnouncementBottomShee
                         borderRadius: BorderRadius.circular(12),
                       ),
                       labelStyle: TextStyle(
-                        color: widget.theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: widget.theme.colorScheme.onSurface.withOpacity(
+                          0.7,
+                        ),
                       ),
                       alignLabelWithHint: true,
                     ),
-                    style: TextStyle(
-                      color: widget.theme.colorScheme.onSurface,
-                    ),
+                    style: TextStyle(color: widget.theme.colorScheme.onSurface),
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
@@ -504,13 +566,13 @@ class _AnnouncementBottomSheetContentState extends State<_AnnouncementBottomShee
                     child: ElevatedButton.icon(
                       icon: viewModel.isLoading
                           ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
                           : const Icon(Icons.send),
                       label: const Text("Send Announcement"),
                       onPressed: viewModel.isLoading ? null : _sendAnnouncement,

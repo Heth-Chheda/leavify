@@ -1,6 +1,5 @@
 // pending_requests_screen.dart
 import 'package:flutter/material.dart';
-import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/User/components/manager/pending_request_card.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
@@ -33,7 +32,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     final homeViewModel = context.read<HomeViewModel>();
     final isHR = homeViewModel.userRole.toLowerCase() == 'hr';
 
-    return requests.where((r) {
+    final filtered = requests.where((r) {
       // For HR → Escalated means escalated flag true
       // For others → Escalated means status == 'escalated'
       final isEscalated = isHR
@@ -50,23 +49,48 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       final fullName = '${r.firstName} ${r.lastName}'.toLowerCase();
       final matchesSearch =
           query.isEmpty ||
-              fullName.contains(query) ||
-              r.role.toLowerCase().contains(query) ||
-              r.reason.toLowerCase().contains(query);
+          fullName.contains(query) ||
+          r.role.toLowerCase().contains(query) ||
+          r.reason.toLowerCase().contains(query);
 
       // Status filter
       final matchesFilter = switch (_selectedFilter.toLowerCase()) {
         'pending' => r.status.toLowerCase() == 'pending',
         'approved' => r.status.toLowerCase() == 'approved',
         'rejected' || 'denied' =>
-        r.status.toLowerCase() == 'rejected' ||
-            r.status.toLowerCase() == 'denied',
+          r.status.toLowerCase() == 'rejected' ||
+              r.status.toLowerCase() == 'denied',
         'escalated' => isEscalated,
         _ => true, // "All"
       };
 
       return matchesSearch && matchesFilter;
     }).toList();
+
+    // Define status priority for sorting
+    final statusPriority = {
+      'escalated': 0,
+      'pending': 1,
+      'approved': 2,
+      'rejected': 3,
+      'denied': 3, // treat denied same as rejected
+    };
+
+    // Sort the filtered list by status priority
+    filtered.sort((a, b) {
+      final aStatus = isHR && a.escalated == true
+          ? 'escalated'
+          : a.status.toLowerCase();
+      final bStatus = isHR && b.escalated == true
+          ? 'escalated'
+          : b.status.toLowerCase();
+
+      final aPriority = statusPriority[aStatus] ?? 999;
+      final bPriority = statusPriority[bStatus] ?? 999;
+      return aPriority.compareTo(bPriority);
+    });
+
+    return filtered;
   }
 
   void _onSearchChanged(String value) {
@@ -88,6 +112,13 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   Future<void> _onRefresh() async {
     await context.read<LeaveViewModel>().fetchPendingLeaves();
   }
+
+  final statusPriority = {
+    'escalated': 0,
+    'pending': 1,
+    'approved': 2,
+    'rejected': 3,
+  };
 
   // MARK: - BUILD SECTION
   @override

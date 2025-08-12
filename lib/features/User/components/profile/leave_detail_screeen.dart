@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/features/User/components/ApplyLeave/custom_calendar_component.dart';
+import 'package:leavify/features/User/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
 import 'package:leavify/features/User/viewmodel/profile_view_model.dart';
@@ -158,6 +159,52 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
                         // Leave Details Form with themed styling
                         _buildDetailsCard(viewModel, isDark),
+                        const SizedBox(height: 20),
+
+                        if (_leave != null &&
+                            _leave!.leaveDetails.reqStatusTracking.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).cardColor.withOpacity(isDark ? 0.8 : 1.0),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: StatusTrackingCard(
+                              statusTracking:
+                                  _leave!.leaveDetails.reqStatusTracking,
+                            ),
+                          ),
+
+                        if (_leave != null &&
+                            _leave!.leaveDetails.documents.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).cardColor.withOpacity(isDark ? 0.8 : 1.0),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: DocumentsCard(
+                              documents: _leave!.leaveDetails.documents,
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -824,44 +871,23 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient:
-                        _leave!.leaveDetails.status.toUpperCase() == 'PENDING'
-                        ? LinearGradient(
-                            colors: [
-                              Theme.of(context).colorScheme.primary,
-                              Theme.of(context).colorScheme.secondary,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
-                        : LinearGradient(
-                            colors: [
-                              Colors.grey.withOpacity(0.3),
-                              Colors.grey.withOpacity(0.2),
-                            ],
-                          ),
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.secondary,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ElevatedButton.icon(
-                    onPressed:
-                        _leave!.leaveDetails.status.toUpperCase() == 'PENDING'
-                        ? () => viewModel.toggleEditMode()
-                        : null,
-                    icon: Icon(
-                      Icons.edit_outlined,
-                      color:
-                          _leave!.leaveDetails.status.toUpperCase() == 'PENDING'
-                          ? Colors.white
-                          : Colors.grey,
-                    ),
+                    onPressed: () => viewModel.toggleEditMode(),
+                    icon: Icon(Icons.edit_outlined, color: Colors.white),
                     label: Text(
                       'Edit Leave',
                       style: TextStyle(
-                        color:
-                            _leave!.leaveDetails.status.toUpperCase() ==
-                                'PENDING'
-                            ? Colors.white
-                            : Colors.grey,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -1018,21 +1044,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         return Colors.grey;
       default:
         return Colors.grey;
-    }
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status.toUpperCase()) {
-      case 'APPROVED':
-        return Icons.check_circle_outline;
-      case 'PENDING':
-        return Icons.schedule_outlined;
-      case 'REJECTED':
-        return Icons.cancel_outlined;
-      case 'CANCELLED':
-        return Icons.block_outlined;
-      default:
-        return Icons.help_outline;
     }
   }
 }

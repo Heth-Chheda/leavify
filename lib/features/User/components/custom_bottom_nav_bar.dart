@@ -53,12 +53,18 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         isManagerOrHR,
       ),
       onTap: (index) {
-        int originalIndex = _convertToOriginalIndex(
-          index,
-          addButtonOriginalIndex,
-          isManagerOrHR,
-        );
-        widget.onTabSelected(originalIndex);
+        try {
+          // Check if the HomeScreen is still mounted and provider is available
+          int originalIndex = _convertToOriginalIndex(
+            index,
+            addButtonOriginalIndex,
+            isManagerOrHR,
+          );
+          widget.onTabSelected(originalIndex);
+        } catch (e) {
+          // Provider might be unavailable (e.g., during/after logout)
+          debugPrint('Navigation error: $e');
+        }
       },
       // Styling
       activeColor: AppColors.highlightBlue,

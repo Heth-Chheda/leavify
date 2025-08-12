@@ -65,4 +65,29 @@ class AppStorage {
       _prefs = await SharedPreferences.getInstance();
     }
   }
+
+  static Future<void> clearAllExcept(String keyToKeep) async {
+    await _ensureInitialized();
+
+    // Save the value of the key to keep
+    final valueToKeep = _prefs.get(keyToKeep);
+
+    // Clear all preferences
+    await _prefs.clear();
+
+    // Restore the kept key value (if it existed before)
+    if (valueToKeep != null) {
+      if (valueToKeep is String) {
+        await _prefs.setString(keyToKeep, valueToKeep);
+      } else if (valueToKeep is bool) {
+        await _prefs.setBool(keyToKeep, valueToKeep);
+      } else if (valueToKeep is int) {
+        await _prefs.setInt(keyToKeep, valueToKeep);
+      } else if (valueToKeep is double) {
+        await _prefs.setDouble(keyToKeep, valueToKeep);
+      } else if (valueToKeep is List<String>) {
+        await _prefs.setStringList(keyToKeep, valueToKeep);
+      }
+    }
+  }
 }

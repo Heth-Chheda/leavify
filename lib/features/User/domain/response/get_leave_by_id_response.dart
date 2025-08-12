@@ -7,6 +7,7 @@ class GetLeaveByIdResponse {
   final bool willComplete20Days;
   final int balanceLeaves;
   final LeaveDetails leaveDetails;
+  final CurrentUserAction? currentUserAction;
 
   GetLeaveByIdResponse({
     required this.userId,
@@ -15,6 +16,7 @@ class GetLeaveByIdResponse {
     required this.willComplete20Days,
     required this.balanceLeaves,
     required this.leaveDetails,
+    this.currentUserAction,
   });
 
   factory GetLeaveByIdResponse.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,41 @@ class GetLeaveByIdResponse {
       willComplete20Days: json['willComplete20Days'],
       balanceLeaves: json['balanceLeaves'],
       leaveDetails: LeaveDetails.fromJson(json['leaveDetails']),
+      currentUserAction: json['currentUserAction'] != null
+          ? CurrentUserAction.fromJson(json['currentUserAction'])
+          : null,
+    );
+  }
+}
+
+class CurrentUserAction {
+  final String managerId;
+  final String managerName;
+  final String profileImageUrl;
+  final String latestStatus;
+  final String lastActionAt;
+  final bool isPending;
+  final bool isCurrentUser;
+
+  CurrentUserAction({
+    required this.managerId,
+    required this.managerName,
+    required this.profileImageUrl,
+    required this.latestStatus,
+    required this.lastActionAt,
+    required this.isPending,
+    required this.isCurrentUser,
+  });
+
+  factory CurrentUserAction.fromJson(Map<String, dynamic> json) {
+    return CurrentUserAction(
+      managerId: json['managerId'] ?? '',
+      managerName: json['managerName'] ?? '',
+      profileImageUrl: json['profileImageUrl'] ?? '',
+      latestStatus: json['latestStatus'] ?? '',
+      lastActionAt: json['lastActionAt'] ?? '',
+      isPending: json['isPending'] ?? false,
+      isCurrentUser: json['isCurrentUser'] ?? false,
     );
   }
 }
@@ -144,7 +181,6 @@ class EscalationDet {
     );
   }
 }
-
 
 class ReminderDetails {
   final DateTime reminderSentAt;
