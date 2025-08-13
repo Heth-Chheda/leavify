@@ -33,6 +33,7 @@ class HomeViewModel extends ChangeNotifier {
   String get profileImageUrl => _homeData?.currentUser?.profileImageUrl ?? '';
   bool get canSendAnnouncement =>
       _homeData?.currentUser?.canSendAnnouncement ?? false;
+  String get designation => _homeData?.currentUser?.designation ?? '';
 
   // working days
   int _leaveBalance = 0;

@@ -21,6 +21,7 @@ class User {
   final int? workingDays;
   final String? profileImageUrl;
   final bool canSendAnnouncement;
+  final String? designation;
 
   User({
     required this.id,
@@ -43,6 +44,7 @@ class User {
     this.workingDays,
     this.profileImageUrl,
     required this.canSendAnnouncement,
+    this.designation
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
@@ -66,6 +68,7 @@ class User {
     workingDays: json['workingDays'] ?? 0,
     profileImageUrl: json['profileImageUrl'] ?? '',
     canSendAnnouncement: json['canSendAnnouncement'] ?? false,
+    designation: json['designation'] ?? 'Unknown'
   );
 
   Map<String, dynamic> toJson() => {
@@ -89,6 +92,7 @@ class User {
     'workingDays': workingDays,
     'profileImageUrl': profileImageUrl,
     'canSendAnnouncement': canSendAnnouncement,
+    'designation' : designation
   };
 
   factory User.fromJsonString(String jsonString) {

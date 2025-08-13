@@ -184,7 +184,7 @@ Widget _employeeInfo({required GetAllResponse request}) {
           ),
           const SizedBox(height: 3),
           Text(
-            request.role,
+            request.designation ?? 'Loading...',
             style: TextStyle(
               fontSize: 13,
               color: isDark ? Colors.grey[400] : Colors.grey[600],

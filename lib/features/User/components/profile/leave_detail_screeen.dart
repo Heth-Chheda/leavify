@@ -545,47 +545,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.assignment_outlined,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Leave Details',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Leave Type
-          _buildDetailRow(
-            'Leave Type',
-            _leave!.leaveDetails.type,
-            Icons.work_outline,
-            isDark,
-          ),
-          const SizedBox(height: 20),
-
           // Reason
           Text(
             'Reason',
@@ -679,15 +638,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
               'dd MMM yyyy, hh:mm a',
             ).format(_leave!.leaveDetails.createdAt),
             Icons.schedule_outlined,
-            isDark,
-          ),
-          const SizedBox(height: 12),
-          _buildDetailRow(
-            'Last Updated',
-            DateFormat(
-              'dd MMM yyyy, hh:mm a',
-            ).format(_leave!.leaveDetails.updatedAt),
-            Icons.update_outlined,
             isDark,
           ),
         ],

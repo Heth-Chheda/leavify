@@ -9,6 +9,7 @@ import 'package:leavify/features/User/components/custom_bottom_nav_bar.dart';
 import 'package:leavify/features/User/components/home_calender_widget.dart';
 import 'package:leavify/features/User/components/home_screen_leave_card.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -206,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // MARK: ANNOUNCEMENTS SECTION
+  // MARK: - ANNOUNCEMENTS SECTION
   Widget _buildAnnouncementSection() {
     final theme = Theme.of(context);
     final announcements = _viewModel.announcements;
@@ -248,11 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               options: CarouselOptions(
                 height: 160,
-                viewportFraction: announcements.length == 1
-                    ? 1
-                    : announcements.length == 2
-                    ? 0.5
-                    : 0.85,
+                viewportFraction: 0.85,
                 enableInfiniteScroll: announcements.length > 1,
                 autoPlay: announcements.length > 1,
                 autoPlayInterval: const Duration(seconds: 4),

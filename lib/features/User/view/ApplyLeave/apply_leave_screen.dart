@@ -307,7 +307,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
           Navigator.of(context).pop();
         }
       },
-      child: Scaffold(
+      child: SafeArea(child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: FadeTransition(
           opacity: _fadeAnimation,
@@ -337,10 +338,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                       ),
                       Align(
                         alignment: Alignment.bottomCenter,
-                        child: SafeArea(
-                          minimum: const EdgeInsets.all(20),
-                          child: _buildSubmitButton(leaveViewModel, isDark),
-                        ),
+                        child: _buildSubmitButton(leaveViewModel, isDark),
+
                       ),
                     ],
                   );
@@ -349,7 +348,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -862,34 +861,37 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
 
   // MARK: - SUBMIT BUTTON
   Widget _buildSubmitButton(LeaveViewModel leaveViewModel, bool isDark) {
-    return Container(
+    return Padding(
+        padding: EdgeInsets.all(16),
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
         gradient: leaveViewModel.isLoading
             ? LinearGradient(
-                colors: [
-                  AppColors.highlightBlue.withOpacity(0.6),
-                  AppColors.highlightPink.withOpacity(0.6),
-                ],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              )
+          colors: [
+            AppColors.highlightBlue.withOpacity(0.6),
+            AppColors.highlightPink.withOpacity(0.6),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        )
             : const LinearGradient(
-                colors: [AppColors.highlightBlue, AppColors.highlightPink],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
+          colors: [AppColors.highlightBlue, AppColors.highlightPink],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: leaveViewModel.isLoading
             ? []
             : [
-                BoxShadow(
-                  color: AppColors.highlightBlue.withOpacity(0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+          BoxShadow(
+            color: AppColors.highlightBlue.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: ElevatedButton(
         onPressed: leaveViewModel.isLoading
@@ -904,43 +906,44 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
         ),
         child: leaveViewModel.isLoading
             ? Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Submitting...',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withOpacity(0.8),
-                    ),
-                  ),
-                ],
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Apply',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text('🚀', style: TextStyle(fontSize: 16)),
-                ],
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
               ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Submitting...',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withOpacity(0.8),
+              ),
+            ),
+          ],
+        )
+            : Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Apply',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text('🚀', style: TextStyle(fontSize: 16)),
+          ],
+        ),
       ),
+    ),
     );
   }
 }
