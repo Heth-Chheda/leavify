@@ -22,7 +22,7 @@ if (keystoreFile.exists()) {
 }
 
 android {
-    namespace = "com.ritetechnologies.leavify.leavify"
+    namespace = "com.ritetechnologies.leavify"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
