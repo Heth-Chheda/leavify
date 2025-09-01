@@ -65,4 +65,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'leavify-4f966.firebasestorage.app',
     iosBundleId: 'com.ritetechnologies.leavify.leavify',
   );
+
 }

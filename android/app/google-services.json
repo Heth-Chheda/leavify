@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:630448011861:android:0c2ab22a9129e91fbdf2dc",
+        "android_client_info": {
+          "package_name": "com.ritetechnologies.leavify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXEv4m4nIMGi6Yuwv98jCx97U4ep9hvUA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:630448011861:android:cad3b73540e75d26bdf2dc",
         "android_client_info": {
           "package_name": "com.ritetechnologies.leavify.leavify"
