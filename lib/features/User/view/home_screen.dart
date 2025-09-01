@@ -9,7 +9,6 @@ import 'package:leavify/features/User/components/custom_bottom_nav_bar.dart';
 import 'package:leavify/features/User/components/home_calender_widget.dart';
 import 'package:leavify/features/User/components/home_screen_leave_card.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
-import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
