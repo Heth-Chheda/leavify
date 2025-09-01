@@ -12,9 +12,11 @@ class ApiEndpoints {
   static final String getUserSummary = '$baseUrl/employee/summary';
   static final String uploadProfileImage = '$baseUrl/employee/upload-profile';
   static final String getWorkingDays = '$baseUrl/employee/workingdays';
+  static final String getLeaveBalance = '$baseUrl/employee/workingdays';
 
   // Announcements
   static final String getAnnouncements = '$baseUrl/notifications/get';
+  static final String makeAnnouncement = '$baseUrl/notifications/add';
   // only for specific users
   static final String sendAnnouncement = '$baseUrl/notifications/get';
 
@@ -27,6 +29,12 @@ class ApiEndpoints {
 
   // leave by id
   static final String getLeaveById = '$baseUrl/request/getleavesbyid';
+
+  // escalate
+  static final String escalateLeave = '$baseUrl/request/escalate';
+  static final String getEscalatedLeaves = '$baseUrl/request/getescalated';
+  static final String processEscalatedLeaves =
+      '$baseUrl/request/processescalated';
 
   // Leaves // Manager
   static final String processLeave = '$baseUrl/request/process';

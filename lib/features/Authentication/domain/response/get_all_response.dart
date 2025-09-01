@@ -8,6 +8,9 @@ class GetAllResponse {
   final String reason;
   final String status;
   final String leaveId;
+  final bool escalated;
+  final int documentsCount;
+  final String? designation;
 
   GetAllResponse({
     required this.profileImage,
@@ -19,6 +22,9 @@ class GetAllResponse {
     required this.reason,
     required this.status,
     required this.leaveId,
+    required this.escalated,
+    required this.documentsCount,
+    this.designation
   });
 
   factory GetAllResponse.fromJson(Map<String, dynamic> json) {
@@ -32,6 +38,9 @@ class GetAllResponse {
       reason: json['reason'] ?? '',
       status: json['status'] ?? '',
       leaveId: json['leaveId'] ?? '',
+      escalated: json['escalated'] ?? false,
+      documentsCount: json['documentsCount'] ?? 0,
+        designation: json['designation'] ?? ''
     );
   }
   Map<String, dynamic> toJson() => {
@@ -44,5 +53,8 @@ class GetAllResponse {
     'reason': reason,
     'status': status,
     'leaveId': leaveId,
+    'escalated' : escalated,
+    'documentsCount': documentsCount,
+    'designation' : designation
   };
 }

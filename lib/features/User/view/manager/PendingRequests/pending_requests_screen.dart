@@ -1,6 +1,5 @@
 // pending_requests_screen.dart
 import 'package:flutter/material.dart';
-import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/User/components/manager/pending_request_card.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
@@ -30,7 +29,21 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   }
 
   List<GetAllResponse> _getFilteredRequests(List<GetAllResponse> requests) {
-    return requests.where((r) {
+    final homeViewModel = context.read<HomeViewModel>();
+    final isHR = homeViewModel.userRole.toLowerCase() == 'hr';
+
+    final filtered = requests.where((r) {
+      // For HR → Escalated means escalated flag true
+      // For others → Escalated means status == 'escalated'
+      final isEscalated = isHR
+          ? r.escalated == true
+          : r.status.toLowerCase() == 'escalated';
+
+      // If current filter is NOT "Escalated" and leave is escalated → exclude
+      if (_selectedFilter.toLowerCase() != 'escalated' && isEscalated) {
+        return false;
+      }
+
       // Search filter
       final query = _searchQuery.toLowerCase();
       final fullName = '${r.firstName} ${r.lastName}'.toLowerCase();
@@ -44,13 +57,40 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       final matchesFilter = switch (_selectedFilter.toLowerCase()) {
         'pending' => r.status.toLowerCase() == 'pending',
         'approved' => r.status.toLowerCase() == 'approved',
-        'rejected' => r.status.toLowerCase() == 'rejected',
-        'escalated' => r.status.toLowerCase() == 'escalated',
+        'rejected' || 'denied' =>
+          r.status.toLowerCase() == 'rejected' ||
+              r.status.toLowerCase() == 'denied',
+        'escalated' => isEscalated,
         _ => true, // "All"
       };
 
       return matchesSearch && matchesFilter;
     }).toList();
+
+    // Define status priority for sorting
+    final statusPriority = {
+      'escalated': 0,
+      'pending': 1,
+      'approved': 2,
+      'rejected': 3,
+      'denied': 3, // treat denied same as rejected
+    };
+
+    // Sort the filtered list by status priority
+    filtered.sort((a, b) {
+      final aStatus = isHR && a.escalated == true
+          ? 'escalated'
+          : a.status.toLowerCase();
+      final bStatus = isHR && b.escalated == true
+          ? 'escalated'
+          : b.status.toLowerCase();
+
+      final aPriority = statusPriority[aStatus] ?? 999;
+      final bPriority = statusPriority[bStatus] ?? 999;
+      return aPriority.compareTo(bPriority);
+    });
+
+    return filtered;
   }
 
   void _onSearchChanged(String value) {
@@ -72,6 +112,13 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   Future<void> _onRefresh() async {
     await context.read<LeaveViewModel>().fetchPendingLeaves();
   }
+
+  final statusPriority = {
+    'escalated': 0,
+    'pending': 1,
+    'approved': 2,
+    'rejected': 3,
+  };
 
   // MARK: - BUILD SECTION
   @override
@@ -149,47 +196,12 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
 
     return Container(
       color: colorScheme.surface,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Column(
         children: [
-          _buildUrgentBadge(pendingCount),
-          const SizedBox(height: 16),
           _buildSearchBar(context),
           const SizedBox(height: 12),
           _buildFilterChips(context, homeViewModel.userRole),
-        ],
-      ),
-    );
-  }
-
-  // MARK: - URGENT BADGE
-  Widget _buildUrgentBadge(int urgentCount) {
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.highlightOrange,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.schedule,
-            size: 24,
-            color: isDarkMode ? Colors.white : AppColors.darkBackground,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '$urgentCount Pending',
-            style: TextStyle(
-              color: isDarkMode ? Colors.white : Colors.black,
-              fontWeight: FontWeight.w600,
-              fontSize: 20,
-            ),
-          ),
         ],
       ),
     );

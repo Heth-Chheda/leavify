@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/features/User/components/ApplyLeave/custom_calendar_component.dart';
+import 'package:leavify/features/User/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
 import 'package:leavify/features/User/viewmodel/profile_view_model.dart';
@@ -40,18 +41,64 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     });
   }
 
-  void onRemindPressed() {
-    // Implement remind logic here
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Reminder sent')));
+  void onRemindPressed() async {
+    final leaveVM = context.read<LeaveViewModel>();
+
+    await leaveVM.sendReminderForLeave(leaveId: widget.leaveId);
+
+    if (!mounted) return;
+    if (leaveVM.errorMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(leaveVM.errorMessage!)));
+    } else if (leaveVM.reminderResponse?.success == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(leaveVM.reminderResponse?.message ?? 'Reminder sent'),
+        ),
+      );
+    }
   }
 
-  void onEscalatePressed() {
-    // Implement escalate logic here
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Escalation sent')));
+  void onEscalatePressed() async {
+    final leaveVM = context.read<LeaveViewModel>();
+
+    await leaveVM.escalateLeave(leaveId: widget.leaveId);
+    if (!mounted) return;
+    if (leaveVM.errorMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(leaveVM.errorMessage!)));
+    } else if (leaveVM.escalateLeaveResponse?.success == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            leaveVM.escalateLeaveResponse?.message ?? 'Escalation sent',
+          ),
+        ),
+      );
+    }
+  }
+
+  void onCancelPressed() async {
+    final leaveVM = context.read<LeaveViewModel>();
+
+    await leaveVM.cancelLeave(leaveId: widget.leaveId);
+    if (!mounted) return;
+    if (leaveVM.errorMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(leaveVM.errorMessage!)));
+    } else if (leaveVM.cancelLeaveResponse?.success == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            leaveVM.cancelLeaveResponse?.message ?? 'Escalation sent',
+          ),
+        ),
+      );
+      Navigator.pop(context, true);
+    }
   }
 
   void _initializeData() async {
@@ -112,6 +159,52 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
                         // Leave Details Form with themed styling
                         _buildDetailsCard(viewModel, isDark),
+                        const SizedBox(height: 20),
+
+                        if (_leave != null &&
+                            _leave!.leaveDetails.reqStatusTracking.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).cardColor.withOpacity(isDark ? 0.8 : 1.0),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: StatusTrackingCard(
+                              statusTracking:
+                                  _leave!.leaveDetails.reqStatusTracking,
+                            ),
+                          ),
+
+                        if (_leave != null &&
+                            _leave!.leaveDetails.documents.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).cardColor.withOpacity(isDark ? 0.8 : 1.0),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: DocumentsCard(
+                              documents: _leave!.leaveDetails.documents,
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -133,51 +226,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Status badge
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                statusColor.withOpacity(0.2),
-                statusColor.withOpacity(0.1),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(25),
-            border: Border.all(color: statusColor.withOpacity(0.4), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: statusColor.withOpacity(0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                _getStatusIcon(_leave!.leaveDetails.status),
-                color: statusColor,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                _leave!.leaveDetails.status.toUpperCase(),
-                style: TextStyle(
-                  color: statusColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-
         // Remind and Escalate Buttons
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -194,6 +242,13 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
               Icons.warning_amber,
               Colors.red,
               onEscalatePressed,
+            ),
+            const SizedBox(width: 16),
+            _buildActionButton(
+              'Cancel',
+              Icons.cancel,
+              Colors.grey,
+              onCancelPressed,
             ),
           ],
         ),
@@ -216,10 +271,10 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(color: color.withOpacity(0.4)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       ),
       onPressed: onPressed,
-      icon: Icon(icon, size: 18),
+      icon: Icon(icon, size: 16),
       label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
@@ -490,47 +545,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.assignment_outlined,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Leave Details',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Leave Type
-          _buildDetailRow(
-            'Leave Type',
-            _leave!.leaveDetails.type,
-            Icons.work_outline,
-            isDark,
-          ),
-          const SizedBox(height: 20),
-
           // Reason
           Text(
             'Reason',
@@ -624,15 +638,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
               'dd MMM yyyy, hh:mm a',
             ).format(_leave!.leaveDetails.createdAt),
             Icons.schedule_outlined,
-            isDark,
-          ),
-          const SizedBox(height: 12),
-          _buildDetailRow(
-            'Last Updated',
-            DateFormat(
-              'dd MMM yyyy, hh:mm a',
-            ).format(_leave!.leaveDetails.updatedAt),
-            Icons.update_outlined,
             isDark,
           ),
         ],
@@ -816,44 +821,23 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient:
-                        _leave!.leaveDetails.status.toUpperCase() == 'PENDING'
-                        ? LinearGradient(
-                            colors: [
-                              Theme.of(context).colorScheme.primary,
-                              Theme.of(context).colorScheme.secondary,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
-                        : LinearGradient(
-                            colors: [
-                              Colors.grey.withOpacity(0.3),
-                              Colors.grey.withOpacity(0.2),
-                            ],
-                          ),
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.secondary,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ElevatedButton.icon(
-                    onPressed:
-                        _leave!.leaveDetails.status.toUpperCase() == 'PENDING'
-                        ? () => viewModel.toggleEditMode()
-                        : null,
-                    icon: Icon(
-                      Icons.edit_outlined,
-                      color:
-                          _leave!.leaveDetails.status.toUpperCase() == 'PENDING'
-                          ? Colors.white
-                          : Colors.grey,
-                    ),
+                    onPressed: () => viewModel.toggleEditMode(),
+                    icon: Icon(Icons.edit_outlined, color: Colors.white),
                     label: Text(
                       'Edit Leave',
                       style: TextStyle(
-                        color:
-                            _leave!.leaveDetails.status.toUpperCase() ==
-                                'PENDING'
-                            ? Colors.white
-                            : Colors.grey,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -1010,21 +994,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         return Colors.grey;
       default:
         return Colors.grey;
-    }
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status.toUpperCase()) {
-      case 'APPROVED':
-        return Icons.check_circle_outline;
-      case 'PENDING':
-        return Icons.schedule_outlined;
-      case 'REJECTED':
-        return Icons.cancel_outlined;
-      case 'CANCELLED':
-        return Icons.block_outlined;
-      default:
-        return Icons.help_outline;
     }
   }
 }

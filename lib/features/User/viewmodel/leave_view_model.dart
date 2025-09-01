@@ -6,10 +6,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/core/utils/components/app_snackbar.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/User/components/ApplyLeave/custom_calendar_component.dart';
 import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
+import 'package:leavify/features/User/domain/response/send_reminder_response.dart';
+import 'package:leavify/models/general_response.dart';
 
 import '../data/leave_repository.dart';
 import '../domain/request/apply_leave_request_model.dart';
@@ -48,6 +51,8 @@ class LeaveViewModel extends ChangeNotifier {
   List<String> uploadedDocumentUrls = [];
 
   // MARK: - REQUEST STATE PROPERTIES
+  bool isRejectLoading = false;
+  bool isApproveLoading = false;
   bool isLoading = false;
   String? errorMessage;
   String? successLeaveId;
@@ -62,6 +67,15 @@ class LeaveViewModel extends ChangeNotifier {
   // MARK: - LEAVE BY ID
   GetLeaveByIdResponse? selectedLeaveById;
   String? processLeaveError;
+
+  // MARK: - SEND REMINDER
+  SendReminderResponse? reminderResponse;
+
+  // MARK: - ESCALATE LEVE
+  GeneralResponse? escalateLeaveResponse;
+  bool isProcessEscalatedLeaveLoading = false;
+
+  GeneralResponse? cancelLeaveResponse;
 
   // MARK: - INITIALIZATION
   void initializeForm(LeaveFormType formType) {
@@ -110,8 +124,6 @@ class LeaveViewModel extends ChangeNotifier {
           child: CustomCalendarComponent(
             enableRangeSelection: true,
             initialDate: selectedStartDate ?? now,
-            firstDate: now,
-            lastDate: DateTime(now.year + 1),
             onClose: () => Navigator.of(context).pop(),
             onDateRangeSelected: (startDate, endDate) {
               selectedStartDate = startDate;
@@ -365,6 +377,12 @@ class LeaveViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (reasonController.text.length < 10) {
+        isLoading = false;
+        notifyListeners();
+        showSnackBar('Reason must be at least 10 characters long', Colors.red);
+        return;
+      }
       // Load user ID from SharedPreferences
       final userId = await _loadUserId();
       if (userId == null || userId.isEmpty) {
@@ -374,10 +392,6 @@ class LeaveViewModel extends ChangeNotifier {
         return;
       }
 
-      // Create request (this will convert documents to base64 internally)
-      debugPrint(
-        "Creating leave request with ${selectedDocuments.length} documents...",
-      );
       final request = await _createLeaveRequest(userId);
 
       // Submit the request
@@ -482,35 +496,24 @@ class LeaveViewModel extends ChangeNotifier {
         if (file.bytes != null) {
           // Web platform or when bytes are available
           fileBytes = file.bytes!;
-          debugPrint("Got file bytes directly from file.bytes");
         } else if (file.path != null) {
           // Mobile platforms - read from file path
           File fileFromPath = File(file.path!);
           if (await fileFromPath.exists()) {
             fileBytes = await fileFromPath.readAsBytes();
-            debugPrint("Read file bytes from path: ${file.path}");
           } else {
-            debugPrint("ERROR: File does not exist at path: ${file.path}");
             throw Exception('File not found at path: ${file.path}');
           }
         } else {
-          debugPrint(
-            "ERROR: Both file.bytes and file.path are null for ${file.name}",
-          );
           throw Exception('Unable to access file data for ${file.name}');
         }
 
         if (fileBytes != null) {
-          debugPrint("File bytes length: ${fileBytes.length}");
-
           // Convert bytes to base64
           String base64String = base64Encode(fileBytes);
-          debugPrint("Base64 string length: ${base64String.length}");
-
           // Get file extension and determine docType
           String extension = file.extension?.toLowerCase() ?? '';
           String docType = _getDocumentType(extension);
-
           // Create LeaveDocument object
           LeaveDocument leaveDocument = LeaveDocument(
             docType: docType,
@@ -518,19 +521,12 @@ class LeaveViewModel extends ChangeNotifier {
           );
 
           leaveDocuments.add(leaveDocument);
-          debugPrint("Successfully processed: ${file.name} as $docType");
         } else {
-          debugPrint(
-            'ERROR: File bytes are still null after processing ${file.name}',
-          );
           throw Exception('Failed to read file bytes for ${file.name}');
         }
       }
-
-      debugPrint("Total documents converted: ${leaveDocuments.length}");
       return leaveDocuments;
     } catch (e) {
-      debugPrint('ERROR converting documents to LeaveDocuments: $e');
       throw Exception('Failed to process documents: $e');
     }
   }
@@ -591,6 +587,11 @@ class LeaveViewModel extends ChangeNotifier {
   }) async {
     try {
       isLoading = true;
+      if (status.toLowerCase() == 'rejected') {
+        isRejectLoading = true;
+      } else {
+        isApproveLoading = true;
+      }
       processLeaveError = null;
       notifyListeners();
 
@@ -620,6 +621,8 @@ class LeaveViewModel extends ChangeNotifier {
       return false;
     } finally {
       isLoading = false;
+      isApproveLoading = false;
+      isRejectLoading = false;
       notifyListeners();
     }
   }
@@ -655,6 +658,110 @@ class LeaveViewModel extends ChangeNotifier {
     }
   }
 
+  // MARK: SEND REMINDER FOR LEAVE
+  Future<void> sendReminderForLeave({required String leaveId}) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      reminderResponse = null;
+      notifyListeners();
+
+      final userId = await _loadUserId();
+
+      final response = await _repository.sendReminderForLeave(
+        userId: userId ?? '',
+        leaveId: leaveId,
+      );
+
+      reminderResponse = response;
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // MARK: - ESCALATE LEAVE
+  Future<void> escalateLeave({required String leaveId}) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      escalateLeaveResponse = null;
+      notifyListeners();
+
+      final userId = await _loadUserId();
+
+      final response = await _repository.escalateLeave(
+        userId: userId ?? '',
+        leaveId: leaveId,
+      );
+
+      escalateLeaveResponse = response;
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // MARK: - CANCEL LEAVE
+  Future<void> cancelLeave({required String leaveId}) async {
+    try {
+      isLoading = true;
+      errorMessage = null;
+      cancelLeaveResponse = null;
+      notifyListeners();
+
+      final userId = await _loadUserId();
+
+      final response = await _repository.cancelLeave(
+        userId: userId ?? '',
+        leaveId: leaveId,
+      );
+
+      cancelLeaveResponse = response;
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // MARK: - PROCESS ESCALATED LEAVES
+  Future<bool> processEscalatedLeaveRequest({
+    required String leaveId,
+    required String comment,
+  }) async {
+    isProcessEscalatedLeaveLoading = true;
+    notifyListeners();
+    final userId = await _loadUserId();
+
+    try {
+      final response = await _repository.processEscalatedLeaves(
+        userId: userId ?? '',
+        leaveId: leaveId,
+        comment: comment,
+      );
+
+      if (response.success == true) {
+        AppToast.showSuccess("Leave Resolved successfully");
+        return true;
+      } else {
+        AppToast.showError("Error resolving leave");
+        return false;
+      }
+    } catch (e) {
+      AppToast.showError('Error : $e');
+      return false;
+    } finally {
+      isProcessEscalatedLeaveLoading = false;
+      notifyListeners();
+    }
+  }
+
   String _getLeaveType() {
     switch (currentFormType) {
       case LeaveFormType.leave:
@@ -683,7 +790,7 @@ class LeaveViewModel extends ChangeNotifier {
 
   String formatDateRange() {
     if (selectedStartDate == null) {
-      return 'Select date range';
+      return 'Select dates';
     }
 
     if (selectedEndDate == null) {
@@ -698,7 +805,8 @@ class LeaveViewModel extends ChangeNotifier {
   }
 
   Map<String, DateTime> getAdjustedDateRange() {
-    final fromDateTime = DateTime(
+    // Create dates in UTC to avoid timezone conversion issues
+    final fromDateTime = DateTime.utc(
       selectedStartDate!.year,
       selectedStartDate!.month,
       selectedStartDate!.day,
@@ -708,7 +816,7 @@ class LeaveViewModel extends ChangeNotifier {
     );
 
     final endDate = selectedEndDate ?? selectedStartDate!;
-    final toDateTime = DateTime(
+    final toDateTime = DateTime.utc(
       endDate.year,
       endDate.month,
       endDate.day,

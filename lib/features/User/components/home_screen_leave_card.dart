@@ -5,11 +5,26 @@ class LeaveCard extends StatelessWidget {
   final Leave leave;
   final VoidCallback? onTap;
 
-  const LeaveCard({super.key, required this.leave, this.onTap});
+  // Add these to get profile image info
+  final String baseUrl;
+  final String? profileImagePath;
+
+  const LeaveCard({
+    super.key,
+    required this.leave,
+    this.onTap,
+    required this.baseUrl,
+    this.profileImagePath,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final String? fullImageUrl =
+        (profileImagePath != null && profileImagePath!.isNotEmpty)
+        ? '$baseUrl/$profileImagePath'
+        : null;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -35,23 +50,25 @@ class LeaveCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Profile Picture
+                // Profile Picture or Initials
                 CircleAvatar(
                   radius: 24,
                   backgroundColor: Colors.grey[300],
-                  foregroundImage: const NetworkImage(
-                    'https://picsum.photos/200',
-                  ),
-                  child: Text(
-                    leave.employeeName.isNotEmpty
-                        ? leave.employeeName[0].toUpperCase()
-                        : 'A',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                  foregroundImage: fullImageUrl != null
+                      ? NetworkImage(fullImageUrl)
+                      : null,
+                  child: fullImageUrl == null
+                      ? Text(
+                          leave.employeeName.isNotEmpty
+                              ? leave.employeeName[0].toUpperCase()
+                              : 'A',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        )
+                      : null,
                 ),
 
                 const SizedBox(width: 16),

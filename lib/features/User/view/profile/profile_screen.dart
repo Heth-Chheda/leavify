@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:leavify/core/api/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/models/user.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
@@ -71,172 +72,183 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     if (user == null) {
-      return Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
-              const SizedBox(height: 16),
-              Text(
-                'Unable to load user data',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onBackground,
+      return SafeArea(
+        child: Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'Unable to load user data',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onBackground,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Please try logging in again',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onBackground.withOpacity(0.7),
+                const SizedBox(height: 8),
+                Text(
+                  'Please try logging in again',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onBackground.withOpacity(0.7),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                  ),
+                  child: const Text('Go Back'),
                 ),
-                child: const Text('Go Back'),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header Section with Gradient Background
-            SizedBox(
-              height: 280,
-              width: double.infinity,
-              child: SafeArea(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Profile Avatar
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Header Section with Gradient Background
+              SizedBox(
+                height: 280,
+                width: double.infinity,
+                child: SafeArea(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Profile Avatar
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ProfileAvatar(
+                          initials: '${user!.firstName[0]}${user!.lastName[0]}',
+                          size: 100,
+                          baseUrl: ApiEndpoints.baseUrl, // Your base URL
+                          imagePath: (user?.profileImageUrl?.isNotEmpty ?? false)
+                              ? user!.profileImageUrl
+                              : null, // Pass null if empty or null, // Path from backend, e.g. "profilepics/abc.png"
+                        ),
                       ),
-                      child: ProfileAvatar(initials: 'PP', size: 100),
-                    ),
 
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                    // User Name and Role
-                    Text(
-                      '${user!.firstName} ${user!.lastName}'.trim(),
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
+                      // User Name and Role
+                      Text(
+                        '${user!.firstName} ${user!.lastName}'.trim(),
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      user!.role,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 4),
+                      Text(
+                        user!.designation ?? 'Unknown',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Content Section
-            Container(
-              width: double.infinity,
-              color: theme.scaffoldBackgroundColor,
-              child: Consumer<ProfileViewModel>(
-                builder: (context, viewModel, child) {
-                  return Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Personal Information Section
-                        const SectionHeader(title: 'Personal Information'),
-                        const SizedBox(height: 16),
+              // Content Section
+              Container(
+                width: double.infinity,
+                color: theme.scaffoldBackgroundColor,
+                child: Consumer<ProfileViewModel>(
+                  builder: (context, viewModel, child) {
+                    return Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Personal Information Section
+                          const SectionHeader(title: 'Personal Information'),
+                          const SizedBox(height: 16),
 
-                        InfoCard(
-                          icon: Icons.email_outlined,
-                          title: 'Email Address',
-                          value: user!.email,
-                          iconColor: Colors.blue[600],
-                        ),
-                        const SizedBox(height: 12),
-
-                        InfoCard(
-                          icon: Icons.phone_outlined,
-                          title: 'Mobile Number',
-                          value: user!.mobile,
-                          iconColor: Colors.green[600],
-                        ),
-                        const SizedBox(height: 12),
-
-                        InfoCard(
-                          icon: Icons.calendar_today_outlined,
-                          title: 'Joining Date',
-                          value: _formatJoiningDate(user!.joiningDate),
-                          iconColor: Colors.purple[600],
-                        ),
-
-                        const SizedBox(height: 30),
-
-                        // Work Information Section
-                        const SectionHeader(title: 'Work Information'),
-                        const SizedBox(height: 16),
-
-                        if (user!.reportingTo.isNotEmpty) ...[
                           InfoCard(
-                            icon: Icons.supervisor_account_outlined,
-                            title: 'Reporting To',
-                            value: user!.reportingTo.join(', '),
-                            iconColor: Colors.orange[600],
+                            icon: Icons.email_outlined,
+                            title: 'Email Address',
+                            value: user!.email,
+                            iconColor: Colors.blue[600],
                           ),
                           const SizedBox(height: 12),
-                        ],
 
-                        if (user!.projectList.isNotEmpty) ...[
                           InfoCard(
-                            icon: Icons.work_outline,
-                            title: 'Projects',
-                            value: user!.projectList.join(', '),
-                            iconColor: Colors.teal[600],
+                            icon: Icons.phone_outlined,
+                            title: 'Mobile Number',
+                            value: user!.mobile,
+                            iconColor: Colors.green[600],
                           ),
+                          const SizedBox(height: 12),
+
+                          InfoCard(
+                            icon: Icons.calendar_today_outlined,
+                            title: 'Joining Date',
+                            value: _formatJoiningDate(user!.joiningDate),
+                            iconColor: Colors.purple[600],
+                          ),
+
                           const SizedBox(height: 30),
+
+                          // Work Information Section
+                          const SectionHeader(title: 'Work Information'),
+                          const SizedBox(height: 16),
+
+                          if (user!.reportingTo.isNotEmpty) ...[
+                            InfoCard(
+                              icon: Icons.supervisor_account_outlined,
+                              title: 'Reporting To',
+                              value: user!.reportingTo.join(', '),
+                              iconColor: Colors.orange[600],
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+
+                          if (user!.projectList.isNotEmpty) ...[
+                            InfoCard(
+                              icon: Icons.work_outline,
+                              title: 'Projects',
+                              value: user!.projectList.join(', '),
+                              iconColor: Colors.teal[600],
+                            ),
+                            const SizedBox(height: 30),
+                          ],
+
+                          // Leave Information Section
+                          const SectionHeader(title: 'My Leaves'),
+                          const SizedBox(height: 16),
+
+                          _buildLeaveSection(viewModel, theme),
+
+                          const SizedBox(height: 20),
                         ],
-
-                        // Leave Information Section
-                        const SectionHeader(title: 'My Leaves'),
-                        const SizedBox(height: 16),
-
-                        _buildLeaveSection(viewModel, theme),
-
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  );
-                },
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

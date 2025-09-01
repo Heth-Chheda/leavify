@@ -4,7 +4,7 @@ import 'package:leavify/features/Authentication/domain/models/leave.dart';
 
 class WeekCalendarView extends StatefulWidget {
   final DateTime currentDate;
-  final DateTime selectedDate;
+  final DateTime? selectedDate;
   final Function(DateTime) onDateSelected;
   final PageController pageController;
   final int initialPage;
@@ -77,7 +77,7 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    color: isDark ? Colors.white : Colors.black,
                     letterSpacing: -0.2,
                   ),
                 ),
@@ -98,7 +98,10 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
       children: List.generate(7, (index) {
         final date = weekStart.add(Duration(days: index));
         final isToday = _isSameDay(date, today);
-        final isSelected = _isSameDay(date, widget.selectedDate);
+        final isSelected = _isSameDay(
+          date,
+          widget.selectedDate ?? DateTime.now(),
+        );
         final leaveInfo = _getLeaveInfoForDate(date);
 
         return Expanded(
@@ -142,7 +145,7 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
                               ? theme.colorScheme.onPrimary
                               : isToday
                               ? theme.colorScheme.primary
-                              : Colors.black,
+                              : (isDark ? Colors.white : Colors.black),
                           letterSpacing: -0.5,
                         ),
                       ),

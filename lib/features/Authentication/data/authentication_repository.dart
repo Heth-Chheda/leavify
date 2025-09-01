@@ -1,12 +1,12 @@
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
 import 'package:leavify/core/api/api_endpoints.dart';
 import 'package:leavify/core/network/perform_request.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Authentication/domain/response/login_response.dart';
 import 'package:leavify/features/User/domain/response/get_announcements_response.dart';
+import 'package:leavify/features/User/domain/response/get_working_days_response.dart';
 
 import '../domain/request/login_request.dart';
 
@@ -34,8 +34,6 @@ class AuthenticationRepository {
           try {
             final Map<String, dynamic> data = jsonDecode(response.body);
             final loginResponse = LoginResponse.fromJson(data);
-            debugPrint("Login Response: ${loginResponse.jwtToken}");
-            debugPrint("Login Response: ${loginResponse.userId}");
 
             if (loginResponse.success) {
               AppStorage.saveBoolean('USER_IS_ALREADY_LOGGED_IN', true);
@@ -251,6 +249,41 @@ class AuthenticationRepository {
                 : 'Unknown error occurred';
           }
           throw Exception('$errorMessage (${response.statusCode})');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // MARK: - GET BALANCE
+  Future<BalanceResponse> getLeaveBalance({required String userId}) async {
+    try {
+      final response = await _performRequest.performRequest(
+        url: ApiEndpoints.getLeaveBalance, // define in ApiEndpoints
+        method: RequestType.post,
+        body: {'userId': userId},
+      );
+
+      final jsonData = json.decode(response.body);
+
+      switch (response.statusCode) {
+        case 200:
+          return BalanceResponse.fromJson(jsonData);
+
+        case 400:
+          throw Exception(jsonData['error'] ?? 'Bad Request');
+
+        case 404:
+          throw Exception(jsonData['error'] ?? 'Leave balance not found');
+
+        case 401:
+          throw Exception('Unauthorized: Please login again.');
+
+        case 500:
+          throw Exception('Server error: Please try again later.');
+
+        default:
+          throw Exception('Unexpected error: ${response.statusCode}');
       }
     } catch (e) {
       rethrow;

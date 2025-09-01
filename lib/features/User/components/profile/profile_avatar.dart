@@ -3,17 +3,23 @@ import 'package:flutter/material.dart';
 class ProfileAvatar extends StatelessWidget {
   final String initials;
   final double size;
-  final String? imageUrl;
+  final String? imagePath; // This will be the path from backend
+  final String baseUrl; // Backend base URL
 
   const ProfileAvatar({
     super.key,
     required this.initials,
+    required this.baseUrl,
     this.size = 80,
-    this.imageUrl,
+    this.imagePath,
   });
 
   @override
   Widget build(BuildContext context) {
+    final String? fullImageUrl = (imagePath != null && imagePath!.isNotEmpty)
+        ? "$baseUrl/$imagePath"
+        : null;
+
     return Container(
       width: size,
       height: size,
@@ -35,10 +41,10 @@ class ProfileAvatar extends StatelessWidget {
           ),
         ],
       ),
-      child: imageUrl != null
+      child: fullImageUrl != null
           ? ClipOval(
               child: Image.network(
-                imageUrl!,
+                fullImageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) =>
                     _buildInitialsWidget(),

@@ -20,6 +20,11 @@ class AppStorage {
     await _prefs.setBool(key, value);
   }
 
+  static Future<bool?> getBoolean(String key) async {
+    await _ensureInitialized();
+    return _prefs.getBool(key);
+  }
+
   static Future<String?> getString(String key) async {
     await _ensureInitialized();
     return _prefs.getString(key);
@@ -58,6 +63,31 @@ class AppStorage {
     // Just to safeguard against accidental use without init
     if (!(_prefs is SharedPreferences)) {
       _prefs = await SharedPreferences.getInstance();
+    }
+  }
+
+  static Future<void> clearAllExcept(String keyToKeep) async {
+    await _ensureInitialized();
+
+    // Save the value of the key to keep
+    final valueToKeep = _prefs.get(keyToKeep);
+
+    // Clear all preferences
+    await _prefs.clear();
+
+    // Restore the kept key value (if it existed before)
+    if (valueToKeep != null) {
+      if (valueToKeep is String) {
+        await _prefs.setString(keyToKeep, valueToKeep);
+      } else if (valueToKeep is bool) {
+        await _prefs.setBool(keyToKeep, valueToKeep);
+      } else if (valueToKeep is int) {
+        await _prefs.setInt(keyToKeep, valueToKeep);
+      } else if (valueToKeep is double) {
+        await _prefs.setDouble(keyToKeep, valueToKeep);
+      } else if (valueToKeep is List<String>) {
+        await _prefs.setStringList(keyToKeep, valueToKeep);
+      }
     }
   }
 }

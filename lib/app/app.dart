@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/app/SplashScreen.dart';
 import 'package:leavify/app/routes.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 
@@ -10,11 +11,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Leavify',
       debugShowCheckedModeBanner: false,
-      initialRoute: Routes.login,
+      // initialRoute: Routes.login,
+      home: const SplashScreen(),
       onGenerateRoute: Routes.generateRoute,
       theme: AppTheme2.lightTheme,
-      darkTheme: AppTheme2.darkTheme,
-      themeMode: ThemeMode.system,
+      // themeMode: ThemeMode.system,
     );
   }
 }

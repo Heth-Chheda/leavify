@@ -1,11 +1,10 @@
 // calendar_widget.dart
 import 'package:flutter/material.dart';
-import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/User/components/calendar/week_calendar_view.dart';
 
 class HomeCalendarWidget extends StatefulWidget {
-  final Function(DateTime)? onDateSelected;
+  final Function(DateTime?)? onDateSelected;
   final DateTime? selectedDate;
   final bool showToggle;
   final List<Leave> userLeaves;
@@ -24,14 +23,13 @@ class HomeCalendarWidget extends StatefulWidget {
 
 class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
   late DateTime _currentDate;
-  late DateTime _selectedDate;
+  DateTime? _selectedDate;
   late PageController _weekPageController;
   final int _initialWeekPage =
       52; // Start from middle to allow backward scrolling
 
   // Modern color palette for different users using your highlight colors
   final List<Color> _userColors = [
-    const Color(0xFF4735DD), // highlightBlue
     const Color(0xFFFF3E6C), // highlightPink
     const Color(0xFF61BFC2), // highlightTeal
     const Color(0xFFFFA200), // highlightOrange
@@ -75,25 +73,32 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.all(8),
+      margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.highlightOrange,
-        borderRadius: BorderRadius.circular(28),
-        border: Border(
-          left: BorderSide(color: theme.colorScheme.secondary, width: 10.0),
-        ),
+        color: isDark
+            ? const Color(0xFF1E1E1E) // Dark greyish card
+            : Colors.white, // Pure white card for light theme
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withOpacity(0.4)
-                : const Color(0xFF1A1A1A).withOpacity(0.2),
-            spreadRadius: 0,
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.06),
+          width: 0.5,
+        ),
       ),
-      child: Column(children: [_buildHeader(), _buildCalendarContent()]),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(children: [_buildHeader(), _buildCalendarContent()]),
+      ),
     );
   }
 
@@ -104,53 +109,58 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-      decoration: BoxDecoration(
-        color: AppColors.highlightOrange,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
-        ),
-      ),
-      child: Column(
+      padding: EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _getHeaderTitle(),
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                        letterSpacing: -1.0,
-                        height: 1.1,
-                      ),
-                    ),
-                  ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getHeaderTitle(),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: isDark
+                        ? Colors.white.withOpacity(0.95)
+                        : const Color(0xFF1A1A1A),
+                    letterSpacing: -0.8,
+                    height: 1.2,
+                  ),
                 ),
+              ],
+            ),
+          ),
+          // Icons Row
+          Row(
+            children: [
+              IconButton(
+                tooltip: 'Refresh selected date',
+                icon: Icon(
+                  Icons.refresh_rounded,
+                  size: 20,
+                  color: isDark
+                      ? Colors.white.withOpacity(0.7)
+                      : Colors.black.withOpacity(0.6),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _selectedDate = null;
+                    _currentDate = DateTime.now();
+                  });
+                  // Optionally notify parent widget of the change:
+                  widget.onDateSelected?.call(_selectedDate);
+                },
+              ),
+              Icon(
+                Icons.calendar_today_rounded,
+                size: 20,
+                color: isDark
+                    ? Colors.white.withOpacity(0.7)
+                    : Colors.black.withOpacity(0.6),
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            height: 1,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  Colors.transparent,
-                  theme.colorScheme.primary.withOpacity(0.8),
-                  Colors.transparent,
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -158,40 +168,49 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
   }
 
   Widget _buildCalendarContent() {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 400),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position:
-                Tween<Offset>(
-                  begin: const Offset(0.0, 0.15),
-                  end: Offset.zero,
-                ).animate(
-                  CurvedAnimation(
-                    parent: animation,
-                    curve: Curves.easeOutCubic,
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      ),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(0.0, 0.1),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    ),
                   ),
-                ),
-            child: child,
-          ),
-        );
-      },
-      child: WeekCalendarView(
-        key: const ValueKey('week'),
-        currentDate: _currentDate,
-        selectedDate: _selectedDate,
-        onDateSelected: _onDateSelected,
-        pageController: _weekPageController,
-        initialPage: _initialWeekPage,
-        onWeekChanged: (date) {
-          setState(() {
-            _currentDate = date;
-          });
+              child: child,
+            ),
+          );
         },
-        userLeaves: widget.userLeaves,
-        userColorMap: _userColorMap,
+        child: WeekCalendarView(
+          key: const ValueKey('week'),
+          currentDate: _currentDate,
+          selectedDate: _selectedDate,
+          onDateSelected: _onDateSelected,
+          pageController: _weekPageController,
+          initialPage: _initialWeekPage,
+          onWeekChanged: (date) {
+            setState(() {
+              _currentDate = date;
+            });
+          },
+          userLeaves: widget.userLeaves,
+          userColorMap: _userColorMap,
+        ),
       ),
     );
   }

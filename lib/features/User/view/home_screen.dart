@@ -1,6 +1,7 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:leavify/core/utils/components/shimmer_widget.dart';
+import 'package:leavify/core/api/api_endpoints.dart';
+import 'package:leavify/core/utils/components/shimmer/shimmer_home_screen.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/User/components/announcement_card.dart';
 import 'package:leavify/features/User/components/custom_app_bar.dart';
@@ -8,6 +9,7 @@ import 'package:leavify/features/User/components/custom_bottom_nav_bar.dart';
 import 'package:leavify/features/User/components/home_calender_widget.dart';
 import 'package:leavify/features/User/components/home_screen_leave_card.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,25 +19,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final PageController _pageController = PageController();
   int _currentPage = 0;
   DateTime? _selectedDate;
   late HomeViewModel _viewModel;
-
-  final List<Map<String, String>> _dummyAnnouncements = [
-    {
-      "title": "Company Holiday",
-      "message": "We will be closed on 15th Aug for Independence Day.",
-    },
-    {
-      "title": "Leave Policy Updated",
-      "message": "New leave carry-forward rules apply from this month.",
-    },
-    {
-      "title": "Server Maintenance",
-      "message": "Portal will be offline on Sunday 12–3 AM.",
-    },
-  ];
 
   @override
   void initState() {
@@ -116,25 +102,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
+    final String role = _viewModel.userRole.toLowerCase();
+    final bool isManagerOrHR = role != 'employee';
+    int addButtonIndex = isManagerOrHR ? 2 : 1;
 
-    return Stack(
-      children: [
-        // Background with theme-aware gradient
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isDarkMode
-                  ? [AppColors.darkBackground, AppColors.darkSurface]
-                  : [AppColors.lightBackground, AppColors.lightBackground],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
+    return Container(
+      // Theme-aware gradient background for entire screen
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [AppColors.darkBackground, AppColors.darkSurface]
+              : [AppColors.lightBackground, AppColors.lightBackground],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
 
-        // Main content
-        SafeArea(
-          bottom: false,
+        body: SafeArea(
           child: _viewModel.isLoading
               ? const ShimmerHomeScreen()
               : _viewModel.error != null
@@ -147,7 +133,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         child: Container(
                           constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight,
+                            minHeight:
+                                constraints.maxHeight -
+                                kBottomNavigationBarHeight -
+                                MediaQuery.of(context).padding.bottom,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,9 +144,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               CustomAppBar(),
                               _buildAnnouncementSection(),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 8),
                               _buildCalendarSection(),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 8),
                               _buildUpcomingEventsSection(),
                             ],
                           ),
@@ -167,20 +156,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
         ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: SafeArea(
-            top: false,
-            child: CustomBottomNavBar(
-              currentIndex: _currentIndex,
-              onTabSelected: _onTabSelected,
-              role: _viewModel.userRole,
-            ),
-          ),
+
+        // Bottom navigation bar (automatically handles safe area)
+        bottomNavigationBar: CustomBottomNavBar(
+          currentIndex: _currentIndex,
+          onTabSelected: _onTabSelected,
+          role: _viewModel.userRole,
         ),
-      ],
+
+        // Floating action button for the add button
+        floatingActionButton: FloatingAddButton(
+          onPressed: () => _onTabSelected(addButtonIndex),
+          isSelected: _currentIndex == addButtonIndex,
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      ),
     );
   }
 
@@ -217,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // MARK: ANNOUNCEMENTS SECTION
+  // MARK: - ANNOUNCEMENTS SECTION
   Widget _buildAnnouncementSection() {
     final theme = Theme.of(context);
     final announcements = _viewModel.announcements;
@@ -242,26 +232,30 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildAnnouncementHeaderSection(),
+          const SizedBox(height: 10),
           if (hasAnnouncements) ...[
             CarouselSlider.builder(
               itemCount: announcements.length,
               itemBuilder: (context, index, realIndex) {
                 final item = announcements[index];
                 return AnnouncementCard(
-                  title: item.senderName,
+                  title: item.title,
                   message: item.body,
                   colorIndex: index % 5,
+                  timeAgo: item.timeAgo,
+                  profileImage: item.profileImage,
+                  senderName: item.senderName,
                 );
               },
               options: CarouselOptions(
                 height: 160,
                 viewportFraction: 0.85,
-                enableInfiniteScroll: _dummyAnnouncements.length > 1,
-                autoPlay: _dummyAnnouncements.length > 1,
+                enableInfiniteScroll: announcements.length > 1,
+                autoPlay: announcements.length > 1,
                 autoPlayInterval: const Duration(seconds: 4),
                 autoPlayAnimationDuration: const Duration(milliseconds: 800),
                 autoPlayCurve: Curves.fastOutSlowIn,
-                enlargeCenterPage: true,
+                enlargeCenterPage: announcements.length > 1,
                 enlargeFactor: 0.2,
                 onPageChanged: (index, reason) {
                   setState(() {
@@ -341,13 +335,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // MARK: - PAGE INDICATORS
   Widget _buildPageIndicators() {
     final theme = Theme.of(context);
+    final announcements = _viewModel.announcements;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
-        _dummyAnnouncements.length,
+        announcements.length,
         (index) => AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
@@ -366,21 +362,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       : Colors.black.withOpacity(0.3))
                 : null,
             borderRadius: BorderRadius.circular(4),
-            boxShadow: _currentPage == index
-                ? [
-                    BoxShadow(
-                      color: AppColors.highlightBlue.withOpacity(0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
           ),
         ),
       ),
     );
   }
 
+  // MARK: - EMPTY ANNOUNCEMENTS
   Widget _buildEmptyAnnouncementState(ThemeData theme) {
     return Container(
       width: double.infinity,
@@ -436,24 +424,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // MARK: CALENDAR SECTION
   Widget _buildCalendarSection() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          HomeCalendarWidget(
-            selectedDate: _selectedDate,
-            onDateSelected: (date) {
-              setState(() {
-                _selectedDate = date;
-              });
-              _handleDateSelection(date);
-            },
-            showToggle: true,
-            userLeaves: _viewModel.teamUpcomingLeaves,
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        HomeCalendarWidget(
+          selectedDate: _selectedDate,
+          onDateSelected: (date) {
+            setState(() {
+              _selectedDate = date;
+            });
+            _handleDateSelection(date ?? DateTime.now());
+          },
+          showToggle: true,
+          userLeaves: _viewModel.teamUpcomingLeaves,
+        ),
+      ],
     );
   }
 
@@ -504,23 +489,15 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildTeamUpcomingLeaveSection(),
+        const SizedBox(height: 10),
         if (teamUpcomingLeaves.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             margin: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: theme.colorScheme.onSurface.withOpacity(0.8),
-              ),
-            ),
             child: Center(
               child: Text(
-                _selectedDate != null
-                    ? "No leaves scheduled for this date"
-                    : "No upcoming leaves",
+                _selectedDate != null ? "No leaves" : "No leaves",
                 style: TextStyle(
                   fontSize: 16,
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -536,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
             separatorBuilder: (context, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final leave = teamUpcomingLeaves[index];
-              return LeaveCard(leave: leave);
+              return LeaveCard(leave: leave, baseUrl: ApiEndpoints.baseUrl);
             },
           ),
 
@@ -549,15 +526,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.only(left: 16),
+      padding: const EdgeInsets.only(left: 22),
       child: Text(
         _selectedDate != null
             ? "Leaves for ${_formatDate(_selectedDate!)}"
-            : "Upcoming Team Leaves",
+            : "Upcoming Leaves",
         style: TextStyle(
           fontSize: 22,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w900,
           color: theme.colorScheme.onBackground,
+          letterSpacing: -0.5,
         ),
       ),
     );

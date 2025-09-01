@@ -28,9 +28,12 @@ class PerformRequest {
 
       return await _retry.retry(
         () async {
+          http.Response response;
+
           switch (method) {
             case RequestType.get:
-              return await http.get(Uri.parse(url), headers: authHeaders);
+              response = await http.get(Uri.parse(url), headers: authHeaders);
+              break;
 
             case RequestType.post:
             case RequestType.put:
@@ -44,26 +47,33 @@ class PerformRequest {
               debugPrint('📤 Method: ${method.name}');
               debugPrint('📤 Request Headers: ${jsonEncode(authHeaders)}');
               debugPrint('📤 Request Body: ${jsonEncode(updatedJsonBody)}');
+
               final requestFn = method == RequestType.post
                   ? http.post
                   : http.put;
-              return await requestFn(
+              response = await requestFn(
                 Uri.parse(url),
                 headers: authHeaders,
                 body: jsonEncode(updatedJsonBody),
               );
+              break;
 
             case RequestType.delete:
-              return await http.delete(Uri.parse(url), headers: authHeaders);
+              response = await http.delete(
+                Uri.parse(url),
+                headers: authHeaders,
+              );
+              break;
 
             case RequestType.urlEncoded:
               final encodedHeaders = await _buildUrlEncodedHeaders(headers);
               final updatedFormBody = _prepareFormBody(urlEncodedBody, token);
-              return await http.post(
+              response = await http.post(
                 Uri.parse(url),
                 headers: encodedHeaders,
                 body: updatedFormBody,
               );
+              break;
 
             case RequestType.multipart:
               var request = http.MultipartRequest("POST", Uri.parse(url));
@@ -81,8 +91,20 @@ class PerformRequest {
               }
 
               final streamed = await request.send();
-              return await http.Response.fromStream(streamed);
+              response = await http.Response.fromStream(streamed);
+              break;
           }
+
+          // 📥 Print JSON Response
+          try {
+            final jsonResponse = json.decode(response.body);
+            const encoder = JsonEncoder.withIndent('  ');
+            debugPrint('📥 Response JSON:\n${encoder.convert(jsonResponse)}');
+          } catch (_) {
+            debugPrint('📥 Response (non-JSON): ${response.body}');
+          }
+
+          return response;
         },
         retryIf: (e) =>
             e is SocketException ||
@@ -168,7 +190,7 @@ class PerformRequest {
   Map<String, dynamic> _prepareJsonBody(
     Map<String, dynamic>? original,
     String? token, {
-    String key = 'token',
+    String key = 'jwtToken',
   }) {
     return {...?original, if (token != null && token.isNotEmpty) key: token};
   }
@@ -176,7 +198,7 @@ class PerformRequest {
   Map<String, String> _prepareFormBody(
     Map<String, String>? original,
     String? token, {
-    String key = 'token',
+    String key = 'jwtToken',
   }) {
     return {...?original, if (token != null && token.isNotEmpty) key: token};
   }

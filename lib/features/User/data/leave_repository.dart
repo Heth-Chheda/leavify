@@ -7,6 +7,7 @@ import 'package:leavify/features/User/domain/models/my_leaves.dart';
 import 'package:leavify/features/User/domain/request/apply_leave_request_model.dart';
 import 'package:leavify/features/User/domain/response/apply_leave_response_model.dart';
 import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
+import 'package:leavify/features/User/domain/response/send_reminder_response.dart';
 import 'package:leavify/models/general_response.dart';
 
 class LeaveRepository {
@@ -108,7 +109,7 @@ class LeaveRepository {
   }
 
   // MARK: SEND REMINDER FOR LEAVE
-  Future<GeneralResponse> sendReminderForLeave({
+  Future<SendReminderResponse> sendReminderForLeave({
     required String userId,
     required String leaveId,
   }) async {
@@ -121,10 +122,12 @@ class LeaveRepository {
       final jsonData = json.decode(sendReminderResponse.body);
       switch (sendReminderResponse.statusCode) {
         case 200:
-          // TODO: HANDLE THE SUCCESSFUL RESPONSE FOR SENDING REMINDER
-          return GeneralResponse.fromJson(jsonData);
+          return SendReminderResponse.fromJson(jsonData);
 
         case 400:
+          throw Exception(jsonData['error'] ?? 'Bad Request');
+
+        case 404:
           throw Exception(jsonData['error'] ?? 'Bad Request');
 
         case 401:
@@ -168,6 +171,46 @@ class LeaveRepository {
         default:
           throw Exception(
             'Unexpected error: ${cancelLeaveResponse.statusCode}',
+          );
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // MARK: - ESCALATE LEAVES
+  Future<GeneralResponse> escalateLeave({
+    required String leaveId,
+    required String userId,
+  }) async {
+    try {
+      final escalateLeaveResponse = await _api.performRequest(
+        url: ApiEndpoints.escalateLeave,
+        method: RequestType.post,
+        body: {'userId': userId, 'leaveId': leaveId},
+      );
+
+      final jsonData = json.decode(escalateLeaveResponse.body);
+
+      switch (escalateLeaveResponse.statusCode) {
+        case 200:
+          return GeneralResponse.fromJson(jsonData);
+
+        case 400:
+          throw Exception(jsonData['error'] ?? 'Bad Request');
+
+        case 404:
+          throw Exception(jsonData['error'] ?? 'Leave not found');
+
+        case 401:
+          throw Exception('Unauthorized: Please login again.');
+
+        case 500:
+          throw Exception('Server error: Please try again later.');
+
+        default:
+          throw Exception(
+            'Unexpected error: ${escalateLeaveResponse.statusCode}',
           );
       }
     } catch (e) {
@@ -285,6 +328,52 @@ class LeaveRepository {
           throw Exception("Server Error: Please try again later.");
         default:
           throw Exception("Unexpected Error: ${response.statusCode}");
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // MARK: GET USER LEAVES
+  Future<LeaveData> getEscalatedLeaves(String userId) async {
+    try {
+      final getUserLeavesResponse = await _api.performRequest(
+        url: ApiEndpoints.getEscalatedLeaves,
+        method: RequestType.post,
+        body: {'userId': userId},
+      );
+      if (getUserLeavesResponse.statusCode == 200) {
+        final jsonData = json.decode(getUserLeavesResponse.body);
+        return LeaveData.fromJson(jsonData);
+      } else {
+        throw Exception(
+          'Failed to load leaves: ${getUserLeavesResponse.statusCode}',
+        );
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // MARK: - PROCESS ESCALATED LEAVES
+  Future<GeneralResponse> processEscalatedLeaves({
+    required String userId,
+    required String leaveId,
+    required String comment,
+  }) async {
+    try {
+      final getUserLeavesResponse = await _api.performRequest(
+        url: ApiEndpoints.processEscalatedLeaves,
+        method: RequestType.post,
+        body: {'userId': userId, 'leaveId': leaveId, 'comment': comment},
+      );
+      if (getUserLeavesResponse.statusCode == 200) {
+        final jsonData = json.decode(getUserLeavesResponse.body);
+        return GeneralResponse.fromJson(jsonData);
+      } else {
+        throw Exception(
+          'Failed to load leaves: ${getUserLeavesResponse.statusCode}',
+        );
       }
     } catch (e) {
       rethrow;

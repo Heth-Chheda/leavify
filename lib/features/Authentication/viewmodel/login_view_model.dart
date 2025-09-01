@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/core/utils/components/app_snackbar.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/request/login_request.dart';
+import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:provider/provider.dart';
 
 class LoginViewModel extends ChangeNotifier {
-  final usernameController = TextEditingController(
-    text: 'Amit.Gupta@ritetechnologies.net',
-  );
-  final passwordController = TextEditingController(text: '1234');
+  final usernameController = TextEditingController(text: '');
+  final passwordController = TextEditingController(text: '');
 
   final AuthenticationRepository _authenticationRepository =
       AuthenticationRepository();
@@ -59,18 +60,14 @@ class LoginViewModel extends ChangeNotifier {
         loginType: 'EMAIL',
         fcmToken: fcmToken,
       );
-
-      debugPrint("Login Request: ${loginRequest.toJson()}");
-
       // logins only
       await _authenticationRepository.login(loginRequest);
       if (!context.mounted) return;
+      AppToast.showSuccess('Login successful!');
       Navigator.pushNamed(context, '/home');
     } catch (e) {
       debugPrint("Login error: $e");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Login failed: $e')));
+      AppToast.showError('Login failed!');
     } finally {
       isLoading = false;
       notifyListeners();

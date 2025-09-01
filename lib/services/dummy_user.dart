@@ -31,6 +31,7 @@ class DummyUserData {
       organization: 'TechCorp Solutions Pvt Ltd',
       empId: 'EMP001234',
       joiningDate: joiningDate.toIso8601String(),
+      canSendAnnouncement: false,
     );
   }
 
@@ -201,6 +202,7 @@ class DummyUserData {
         organization: 'TechCorp Solutions Pvt Ltd',
         empId: 'EMP001234',
         joiningDate: now.subtract(const Duration(days: 730)).toIso8601String(),
+        canSendAnnouncement: false,
       ),
 
       // User 2 - Team Lead
@@ -226,6 +228,7 @@ class DummyUserData {
         organization: 'TechCorp Solutions Pvt Ltd',
         empId: 'EMP005678',
         joiningDate: now.subtract(const Duration(days: 1095)).toIso8601String(),
+        canSendAnnouncement: false,
       ),
 
       // User 3 - Junior Developer
@@ -247,6 +250,7 @@ class DummyUserData {
         organization: 'TechCorp Solutions Pvt Ltd',
         empId: 'EMP009876',
         joiningDate: now.subtract(const Duration(days: 365)).toIso8601String(),
+        canSendAnnouncement: false,
       ),
     ];
   }
@@ -285,6 +289,7 @@ class DummyUserData {
       empId:
           'EMP${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
       joiningDate: joiningDate.toIso8601String(),
+      canSendAnnouncement: false,
     );
   }
 

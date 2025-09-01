@@ -19,6 +19,9 @@ class User {
   final String empId;
   final String joiningDate;
   final int? workingDays;
+  final String? profileImageUrl;
+  final bool canSendAnnouncement;
+  final String? designation;
 
   User({
     required this.id,
@@ -39,6 +42,9 @@ class User {
     required this.empId,
     required this.joiningDate,
     this.workingDays,
+    this.profileImageUrl,
+    required this.canSendAnnouncement,
+    this.designation
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
@@ -60,6 +66,9 @@ class User {
     empId: json['empId'] ?? '',
     joiningDate: json['joiningDate'] ?? '',
     workingDays: json['workingDays'] ?? 0,
+    profileImageUrl: json['profileImageUrl'] ?? '',
+    canSendAnnouncement: json['canSendAnnouncement'] ?? false,
+    designation: json['designation'] ?? 'Unknown'
   );
 
   Map<String, dynamic> toJson() => {
@@ -81,6 +90,9 @@ class User {
     'empId': empId,
     'joiningDate': joiningDate,
     'workingDays': workingDays,
+    'profileImageUrl': profileImageUrl,
+    'canSendAnnouncement': canSendAnnouncement,
+    'designation' : designation
   };
 
   factory User.fromJsonString(String jsonString) {
