@@ -1,33 +1,25 @@
-import 'package:leavify/features/Authentication/domain/models/leave.dart';
-import 'package:leavify/features/Authentication/domain/models/user.dart';
+class LoginResponse {
+  final bool success;
+  final String? message;
+  final String? userId;
+  final String? jwtToken;
+  final String? error;
 
-class LoginResponseModel {
-  final User? currentUser;
-  final List<Leave>? myUpcomingLeaves;
-  final List<Leave>? teamUpcomingLeaves;
-
-  LoginResponseModel({
-    this.currentUser,
-    this.myUpcomingLeaves,
-    this.teamUpcomingLeaves,
+  LoginResponse({
+    required this.success,
+    this.message,
+    this.userId,
+    this.jwtToken,
+    this.error,
   });
 
-  factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
-    return LoginResponseModel(
-      currentUser: json['currentUser'] != null
-          ? User.fromJson(json['currentUser'])
-          : null,
-      myUpcomingLeaves: (json['myUpcomingLeaves'] as List<dynamic>?)
-          ?.map((e) => Leave.fromJson(e))
-          .toList(),
-      teamUpcomingLeaves: (json['teamUpcomingLeaves'] as List<dynamic>?)
-          ?.map((e) => Leave.fromJson(e))
-          .toList(),
+  factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    return LoginResponse(
+      success: json['success'] ?? false,
+      message: json['message'],
+      userId: json['userId'],
+      jwtToken: json['jwtToken'],
+      error: json['error'],
     );
   }
-  Map<String, dynamic> toJson() => {
-    'currentUser': currentUser?.toJson(),
-    'myUpcomingLeaves': myUpcomingLeaves?.map((e) => e.toJson()).toList(),
-    'teamUpcomingLeaves': teamUpcomingLeaves?.map((e) => e.toJson()).toList(),
-  };
 }

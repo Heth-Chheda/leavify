@@ -3,20 +3,33 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppStorage {
-  // Save a particular string
+  static late SharedPreferences _prefs;
+
+  // Call this once during app startup (e.g. in main())
+  static Future<void> init() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
+
   static Future<void> saveString(String key, String value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(key, value);
+    await _ensureInitialized();
+    await _prefs.setString(key, value);
   }
 
-  // function to get the string value from the shared prefereneces
-  // Note: this returns a string value only !!
+  static Future<void> saveBoolean(String key, bool value) async {
+    await _ensureInitialized();
+    await _prefs.setBool(key, value);
+  }
+
+  static Future<bool?> getBoolean(String key) async {
+    await _ensureInitialized();
+    return _prefs.getBool(key);
+  }
+
   static Future<String?> getString(String key) async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(key);
+    await _ensureInitialized();
+    return _prefs.getString(key);
   }
 
-  /// Save amap/object by converting it to JSON string
   static Future<void> saveObject(
     String key,
     Map<String, dynamic> object,
@@ -25,7 +38,6 @@ class AppStorage {
     await saveString(key, jsonString);
   }
 
-  // Function to get the object from the shared prefs.
   static Future<T?> getObject<T>(
     String key,
     T Function(Map<String, dynamic>) fromJson,
@@ -37,15 +49,45 @@ class AppStorage {
     return fromJson(map);
   }
 
-  // Remove a key from the shared prefs.
   static Future<void> remove(String key) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(key);
+    await _ensureInitialized();
+    await _prefs.remove(key);
   }
 
-  // clearing all the data from the storage. / shared prefs
   static Future<void> clearAllDataFromSharedPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await _ensureInitialized();
+    await _prefs.clear();
+  }
+
+  static Future<void> _ensureInitialized() async {
+    // Just to safeguard against accidental use without init
+    if (!(_prefs is SharedPreferences)) {
+      _prefs = await SharedPreferences.getInstance();
+    }
+  }
+
+  static Future<void> clearAllExcept(String keyToKeep) async {
+    await _ensureInitialized();
+
+    // Save the value of the key to keep
+    final valueToKeep = _prefs.get(keyToKeep);
+
+    // Clear all preferences
+    await _prefs.clear();
+
+    // Restore the kept key value (if it existed before)
+    if (valueToKeep != null) {
+      if (valueToKeep is String) {
+        await _prefs.setString(keyToKeep, valueToKeep);
+      } else if (valueToKeep is bool) {
+        await _prefs.setBool(keyToKeep, valueToKeep);
+      } else if (valueToKeep is int) {
+        await _prefs.setInt(keyToKeep, valueToKeep);
+      } else if (valueToKeep is double) {
+        await _prefs.setDouble(keyToKeep, valueToKeep);
+      } else if (valueToKeep is List<String>) {
+        await _prefs.setStringList(keyToKeep, valueToKeep);
+      }
+    }
   }
 }

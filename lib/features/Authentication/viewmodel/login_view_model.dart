@@ -1,0 +1,83 @@
+import 'package:flutter/material.dart';
+import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/core/utils/components/app_snackbar.dart';
+import 'package:leavify/features/Authentication/data/authentication_repository.dart';
+import 'package:leavify/features/Authentication/domain/request/login_request.dart';
+import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:provider/provider.dart';
+
+class LoginViewModel extends ChangeNotifier {
+  final usernameController = TextEditingController(text: '');
+  final passwordController = TextEditingController(text: '');
+
+  final AuthenticationRepository _authenticationRepository =
+      AuthenticationRepository();
+
+  bool isLoading = false;
+
+  Future<void> login(BuildContext context) async {
+    final password = passwordController.text.trim();
+    final username = usernameController.text.trim();
+
+    // Validation of email.
+    // final usernameValidation = ValidationUtils.validateUsernameAsEmailOrPhone(
+    //   username,
+    // );
+    // if (usernameValidation != null) {
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(SnackBar(content: Text(usernameValidation)));
+    //   return;
+    // }
+
+    // Validation of password.
+    // final passwordValidation = ValidationUtils.validatePassword(password);
+    // if (passwordValidation != null) {
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(SnackBar(content: Text(passwordValidation)));
+    //   return;
+    // }
+
+    isLoading = true;
+    notifyListeners();
+
+    final fcmToken = await AppStorage.getString('USER_FCM_TOKEN');
+    if (!context.mounted) return;
+    try {
+      // Create login request with username (can be email or phone)
+      // keeping it email for now later can be changed to dynamic according to the requirement
+      if (fcmToken == null || fcmToken.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('FCM token is not available')));
+        return;
+      }
+
+      final loginRequest = LoginRequest(
+        username: username,
+        password: password,
+        loginType: 'EMAIL',
+        fcmToken: fcmToken,
+      );
+      // logins only
+      await _authenticationRepository.login(loginRequest);
+      if (!context.mounted) return;
+      AppToast.showSuccess('Login successful!');
+      Navigator.pushNamed(context, '/home');
+    } catch (e) {
+      debugPrint("Login error: $e");
+      AppToast.showError('Login failed!');
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    usernameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+}

@@ -1,71 +1,133 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
-import 'package:leavify/features/Authentication/domain/response/login_response.dart';
+import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
+import 'package:leavify/features/User/domain/response/get_announcements_response.dart';
 
 class HomeViewModel extends ChangeNotifier {
-  LoginResponseModel? _homeData;
+  final AuthenticationRepository _authenticationRepository =
+      AuthenticationRepository();
+
+  GetUserSummaryResponse? _homeData;
   bool _isLoading = true;
   String? _error;
 
   // Getters
-  LoginResponseModel? get homeData => _homeData;
+  GetUserSummaryResponse? get homeData => _homeData;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  List<GetAnnouncementsResponse> _announcements = [];
+  List<GetAnnouncementsResponse> get announcements => _announcements;
 
-  // User specific getters for easy access
+  // User-specific getters
   String get userName => _homeData?.currentUser?.firstName ?? 'User';
   String get userFullName =>
       '${_homeData?.currentUser?.firstName ?? ''} ${_homeData?.currentUser?.lastName ?? ''}'
           .trim();
   String get userEmail => _homeData?.currentUser?.email ?? '';
-  int get leaveBalance => _homeData?.currentUser?.balance ?? 0;
+  String get userRole => _homeData?.currentUser?.role ?? '';
   int get approvedLeaves => _homeData?.currentUser?.approved ?? 0;
   int get rejectedLeaves => _homeData?.currentUser?.rejected ?? 0;
   int get pendingLeaves => _homeData?.currentUser?.pending ?? 0;
+  String get profileImageUrl => _homeData?.currentUser?.profileImageUrl ?? '';
+  bool get canSendAnnouncement =>
+      _homeData?.currentUser?.canSendAnnouncement ?? false;
+  String get designation => _homeData?.currentUser?.designation ?? '';
 
-  // Initialize and load data
+  // working days
+  int _leaveBalance = 0;
+  int _workingDays = 0;
+
+  // working day getters
+  int get leaveBalance => _leaveBalance;
+  int get workingDays => _workingDays;
+
   Future<void> initialize() async {
-    await loadHomeData();
+    await _loadUserSummaryFromApi();
+    await _fetchAnnouncements();
+    await _getLeaveBalance();
   }
 
-  Future<void> loadHomeData() async {
+  Future<void> _loadUserSummaryFromApi() async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
-      // Get user data from SharedPreferences
-      final userData = await AppStorage.getObject<LoginResponseModel>(
-        "user_details",
-        (json) => LoginResponseModel.fromJson(json),
-      );
 
-      if (userData != null) {
-        _homeData = userData;
-      } else {
-        _error = "No user data found";
-      }
+      // Replace with actual user ID (ideally get from AppStorage or token decoding)
+      final userId = await AppStorage.getString("USER_ID") ?? "";
+      final response = await _authenticationRepository.getUserSummary(userId);
+
+      _homeData = response;
+      await AppStorage.saveObject("user_details", response.toJson());
     } catch (e) {
       _error = "Failed to load user data: $e";
-      debugPrint("HomeViewModel error: $e");
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Refresh data
-  Future<void> refresh() async {
-    await loadHomeData();
+  /// Clear all data when logging out
+  void clearData() {
+    _homeData = null;
+    _announcements = [];
+    _leaveBalance = 0;
+    _workingDays = 0;
+    _isLoading = false;
+    _error = null;
+
+    notifyListeners();
   }
 
-  // Get upcoming leaves for current user
-  List<Leave> get myUpcomingLeaves => _homeData?.myUpcomingLeaves ?? [];
+  // MARK: - GET LEAVE BALANCE
+  Future<void> _getLeaveBalance() async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
 
-  // Get team upcoming leaves
+      final userId = await AppStorage.getString("USER_ID") ?? "";
+      final result = await _authenticationRepository.getLeaveBalance(
+        userId: userId,
+      );
+
+      // Update from API response
+      _leaveBalance = result.balance ?? 0;
+      _workingDays = result.remainingWorkingDays ?? 0;
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _fetchAnnouncements() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _announcements = await _authenticationRepository.getAnnouncements();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refresh() async {
+    await _loadUserSummaryFromApi();
+    await _fetchAnnouncements();
+    await _getLeaveBalance();
+  }
+
+  List<Leave> get myUpcomingLeaves => _homeData?.myUpcomingLeaves ?? [];
   List<Leave> get teamUpcomingLeaves => _homeData?.teamUpcomingLeaves ?? [];
 
-  // Get all upcoming leaves (my + team)
   List<Leave> get allUpcomingLeaves {
     final all = <Leave>[];
     all.addAll(myUpcomingLeaves);
@@ -73,9 +135,6 @@ class HomeViewModel extends ChangeNotifier {
     return all;
   }
 
-  // Check if user has any upcoming leaves
   bool get hasUpcomingLeaves => myUpcomingLeaves.isNotEmpty;
-
-  // Check if team has any upcoming leaves
   bool get hasTeamUpcomingLeaves => teamUpcomingLeaves.isNotEmpty;
 }

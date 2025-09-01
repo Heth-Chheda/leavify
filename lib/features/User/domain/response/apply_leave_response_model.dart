@@ -1,15 +1,20 @@
 class ApplyLeaveResponseModel {
-  final bool success;
+  final bool? success;
   final String? leaveId;
   final String? error;
 
-  ApplyLeaveResponseModel({required this.success, this.leaveId, this.error});
+  ApplyLeaveResponseModel({this.success, this.leaveId, this.error});
 
   factory ApplyLeaveResponseModel.fromJson(Map<String, dynamic> json) {
     return ApplyLeaveResponseModel(
-      success: json['success'] ?? false,
+      success: json['success'],
       leaveId: json['leaveId'],
       error: json['error'],
     );
+  }
+
+  @override
+  String toString() {
+    return 'ApplyLeaveResponseModel(success: $success, leaveId: $leaveId, error: $error)';
   }
 }

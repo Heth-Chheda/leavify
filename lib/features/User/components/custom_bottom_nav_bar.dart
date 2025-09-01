@@ -1,12 +1,13 @@
+import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:leavify/core/utils/theme/app_theme.dart';
+import 'package:leavify/core/utils/theme/app_colors.dart';
 
 enum UserRole { employee, manager, hr }
 
 class CustomBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final Function(int) onTabSelected;
-  final UserRole role;
+  final String role;
 
   const CustomBottomNavBar({
     super.key,
@@ -20,187 +21,129 @@ class CustomBottomNavBar extends StatefulWidget {
 }
 
 class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
-  bool _isPositionCalculated = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    final bool isManagerOrHR =
-        widget.role == UserRole.manager || widget.role == UserRole.hr;
+    final String role = widget.role.toLowerCase();
+    final bool isManagerOrHR = role != 'employee';
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    // Navigation items based on role
-    final List<_NavItemData> navItems = [];
+    // Navigation items based on role (excluding the add button)
+    final List<IconData> navIcons = [];
+    int addButtonOriginalIndex;
 
     if (isManagerOrHR) {
-      navItems.addAll([
-        _NavItemData(icon: Icons.home_rounded, label: 'Home', index: 0),
-        _NavItemData(
-          icon: Icons.pending_actions_rounded,
-          label: 'Analytics',
-          index: 1,
-        ),
-        _NavItemData(icon: Icons.add_rounded, label: 'Add', index: 2),
-        _NavItemData(icon: Icons.bar_chart, label: 'Statistics', index: 3),
-        _NavItemData(icon: Icons.person_rounded, label: 'Profile', index: 4),
+      navIcons.addAll([
+        Icons.home_rounded,
+        Icons.pending_actions_rounded,
+        Icons.bar_chart,
+        Icons.person_rounded,
       ]);
+      addButtonOriginalIndex = 2;
     } else {
-      navItems.addAll([
-        _NavItemData(icon: Icons.home_rounded, label: 'Home', index: 0),
-        _NavItemData(icon: Icons.add_rounded, label: 'Add', index: 1),
-        _NavItemData(icon: Icons.person_rounded, label: 'History', index: 2),
-      ]);
+      navIcons.addAll([Icons.home_rounded, Icons.person_rounded]);
+      addButtonOriginalIndex = 1;
     }
 
-    return SafeArea(
-      bottom: true,
-      right: false,
-      top: false,
-      left: false,
-      child: Container(
-        height: 60,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              offset: const Offset(0, -2),
-              blurRadius: 20,
-              spreadRadius: 0,
-            ),
-          ],
-          border: Border(
-            top: BorderSide(color: Colors.black.withOpacity(0.1), width: 0.5),
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Navigation Items
-            Row(
-              children: navItems.map((item) {
-                return Expanded(
-                  child: _NavItem(
-                    icon: item.icon,
-                    // Only home tab (index 0) should be selected since others navigate away
-                    isSelected: item.index == 0,
-                    onTap: () {
-                      widget.onTabSelected(item.index);
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
+    return AnimatedBottomNavigationBar(
+      icons: navIcons,
+      activeIndex: _getActiveIndex(
+        widget.currentIndex,
+        addButtonOriginalIndex,
+        isManagerOrHR,
+      ),
+      onTap: (index) {
+        try {
+          // Check if the HomeScreen is still mounted and provider is available
+          int originalIndex = _convertToOriginalIndex(
+            index,
+            addButtonOriginalIndex,
+            isManagerOrHR,
+          );
+          widget.onTabSelected(originalIndex);
+        } catch (e) {
+          // Provider might be unavailable (e.g., during/after logout)
+          debugPrint('Navigation error: $e');
+        }
+      },
+      // Styling
+      activeColor: AppColors.highlightBlue,
+      inactiveColor: Colors.grey.withOpacity(0.9),
+      backgroundColor: Color(0xFF060838),
+      splashColor: const Color(0xFF4735DD).withOpacity(0.9),
+      splashSpeedInMilliseconds: 300,
+      notchSmoothness: NotchSmoothness.smoothEdge,
+      gapLocation: GapLocation.center,
+      iconSize: 30,
+      elevation: 8,
+      shadow: BoxShadow(
+        color: Colors.black.withOpacity(0.1),
+        offset: const Offset(0, -2),
+        blurRadius: 20,
+        spreadRadius: 0,
       ),
     );
   }
+
+  // Convert current index to the package's expected index (excluding add button)
+  int _getActiveIndex(
+    int currentIndex,
+    int addButtonIndex,
+    bool isManagerOrHR,
+  ) {
+    if (currentIndex == addButtonIndex) {
+      return -1; // Add button is floating, not in the regular nav
+    } else if (currentIndex > addButtonIndex) {
+      return currentIndex - 1; // Shift down by 1 since add button is removed
+    } else {
+      return currentIndex; // No change needed
+    }
+  }
+
+  // Convert package index back to original indexing
+  int _convertToOriginalIndex(
+    int packageIndex,
+    int addButtonIndex,
+    bool isManagerOrHR,
+  ) {
+    if (packageIndex >= addButtonIndex) {
+      return packageIndex + 1; // Shift up by 1 to account for add button
+    } else {
+      return packageIndex; // No change needed
+    }
+  }
 }
 
-class _NavItem extends StatefulWidget {
-  final IconData icon;
+class FloatingAddButton extends StatelessWidget {
+  final VoidCallback onPressed;
   final bool isSelected;
-  final VoidCallback onTap;
 
-  const _NavItem({
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
+  const FloatingAddButton({
+    super.key,
+    required this.onPressed,
+    this.isSelected = false,
   });
 
   @override
-  State<_NavItem> createState() => _NavItemState();
-}
-
-class _NavItemState extends State<_NavItem>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _opacityAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    _opacityAnimation = Tween<double>(
-      begin: 0.1,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    if (widget.isSelected) {
-      _controller.forward();
-    }
-  }
-
-  @override
-  void didUpdateWidget(_NavItem oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isSelected != oldWidget.isSelected) {
-      if (widget.isSelected) {
-        _controller.forward();
-      } else {
-        _controller.reverse();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      behavior: HitTestBehavior.translucent,
+    return FloatingActionButton(
+      onPressed: onPressed,
+      backgroundColor: Colors.red,
+      elevation: isSelected ? 8 : 6,
+      shape: const CircleBorder(),
       child: Container(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _scaleAnimation.value,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      widget.icon,
-                      size: 32,
-                      color: widget.isSelected
-                          ? AppTheme.infoBlue
-                          : Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [const Color(0xFF4735DD), const Color(0xFF1111E1)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          shape: BoxShape.circle,
         ),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 36),
       ),
     );
   }
-}
-
-class _NavItemData {
-  final IconData icon;
-  final String label;
-  final int index;
-
-  _NavItemData({required this.icon, required this.label, required this.index});
 }

@@ -4,7 +4,7 @@ import 'package:leavify/features/Authentication/domain/models/leave.dart';
 
 class WeekCalendarView extends StatefulWidget {
   final DateTime currentDate;
-  final DateTime selectedDate;
+  final DateTime? selectedDate;
   final Function(DateTime) onDateSelected;
   final PageController pageController;
   final int initialPage;
@@ -32,11 +32,10 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
           _buildWeekDaysHeader(),
-          const SizedBox(height: 20),
           SizedBox(
             height: 70,
             child: PageView.builder(
@@ -63,6 +62,8 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
   }
 
   Widget _buildWeekDaysHeader() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     return Row(
@@ -73,10 +74,10 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
               child: Center(
                 child: Text(
                   day,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF6B7280),
+                    color: isDark ? Colors.white : Colors.black,
                     letterSpacing: -0.2,
                   ),
                 ),
@@ -89,13 +90,18 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
 
   Widget _buildWeekDates(DateTime weekStart) {
     final today = DateTime.now();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: List.generate(7, (index) {
         final date = weekStart.add(Duration(days: index));
         final isToday = _isSameDay(date, today);
-        final isSelected = _isSameDay(date, widget.selectedDate);
+        final isSelected = _isSameDay(
+          date,
+          widget.selectedDate ?? DateTime.now(),
+        );
         final leaveInfo = _getLeaveInfoForDate(date);
 
         return Expanded(
@@ -113,14 +119,16 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
                     height: 48,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? Colors.blueAccent
+                          ? theme.colorScheme.primary
                           : isToday
-                          ? const Color(0xFFF3F4F6)
+                          ? (isDark
+                                ? Colors.grey.withOpacity(0.2)
+                                : Colors.grey.withOpacity(0.1))
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                       border: isToday && !isSelected
                           ? Border.all(
-                              color: const Color(0xFF667EEA).withOpacity(0.3),
+                              color: theme.colorScheme.primary.withOpacity(0.3),
                               width: 2,
                             )
                           : null,
@@ -134,10 +142,10 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
                               ? FontWeight.w700
                               : FontWeight.w600,
                           color: isSelected
-                              ? Colors.white
+                              ? theme.colorScheme.onPrimary
                               : isToday
-                              ? const Color(0xFF667EEA)
-                              : const Color(0xFF374151),
+                              ? theme.colorScheme.primary
+                              : (isDark ? Colors.white : Colors.black),
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -161,6 +169,9 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
   Widget _buildModernLeaveIndicators(List<LeaveInfo> leaveInfo) {
     if (leaveInfo.isEmpty) return const SizedBox.shrink();
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return SizedBox(
       width: 24,
       height: 8,
@@ -169,7 +180,8 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
           final index = entry.key;
           final info = entry.value;
           final color =
-              widget.userColorMap[info.userId] ?? const Color(0xFF9CA3AF);
+              widget.userColorMap[info.userId] ??
+              (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280));
           final totalDots = leaveInfo.length;
 
           // Calculate position for overlapping effect
@@ -189,7 +201,9 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
                 color: color,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.black.withAlpha(1),
+                  color: isDark
+                      ? Colors.white.withOpacity(0.2)
+                      : Colors.black.withOpacity(0.1),
                   width: 1.5,
                 ),
               ),

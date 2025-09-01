@@ -1,5 +1,5 @@
 name: leavify
-description: "A Leave management project."
+description: 'A Leave management project.'
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -41,6 +41,22 @@ dependencies:
   intl: ^0.20.2
   file_picker: ^10.2.0
   fluttertoast: ^8.2.12
+  package_info_plus: ^8.3.0 # force update package
+  url_launcher: ^6.3.2 # launch app store or play store links
+  carousel_slider: ^5.1.1
+  firebase_messaging: ^16.0.0
+  firebase_core: ^4.0.0
+  image_picker: ^1.1.2
+  animated_bottom_navigation_bar: ^1.4.0
+  font_awesome_flutter: ^10.9.0
+  flutter_slidable: ^4.0.0
+  flutter_launcher_icons: ^0.14.4
+  syncfusion_flutter_pdfviewer: ^30.2.4
+
+  # LOGIN
+  custom_refresh_indicator: ^4.0.1
+  awesome_snackbar_content: ^0.1.7
+  animate_do: ^4.2.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -57,13 +73,19 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
 
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: 'lib/assets/rite.jpeg'
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
   assets:
-   - .env
+    - .env
+    - lib/assets/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:leavify/core/storage/app_storage.dart';
 import 'package:retry/retry.dart';
 
 enum RequestType { get, post, put, delete, multipart, urlEncoded }
@@ -9,6 +12,7 @@ enum RequestType { get, post, put, delete, multipart, urlEncoded }
 class PerformRequest {
   final _retry = RetryOptions(maxAttempts: 3);
 
+  // MARK: - PERFORM REQUEST WITH JWT TOKEN IN THE BODY
   Future<http.Response> performRequest({
     required String url,
     RequestType method = RequestType.get,
@@ -19,45 +23,65 @@ class PerformRequest {
     Map<String, String>? multipartFiles,
   }) async {
     try {
+      final token = await AppStorage.getString('JWT_TOKEN');
+      final authHeaders = await _buildHeaders(headers);
+
       return await _retry.retry(
         () async {
+          http.Response response;
+
           switch (method) {
             case RequestType.get:
-              return await http.get(Uri.parse(url), headers: headers);
+              response = await http.get(Uri.parse(url), headers: authHeaders);
+              break;
 
             case RequestType.post:
-              return await http.post(
-                Uri.parse(url),
-                headers: _defaultHeaders(headers),
-                body: jsonEncode(body),
-              );
-
             case RequestType.put:
-              return await http.put(
-                Uri.parse(url),
-                headers: _defaultHeaders(headers),
-                body: jsonEncode(body),
+              final updatedJsonBody = _prepareJsonBody(
+                body,
+                token,
+                key: 'jwtToken',
               );
+              debugPrint('🔐 JWT Token: $token');
+              debugPrint('📤 Request URL: $url');
+              debugPrint('📤 Method: ${method.name}');
+              debugPrint('📤 Request Headers: ${jsonEncode(authHeaders)}');
+              debugPrint('📤 Request Body: ${jsonEncode(updatedJsonBody)}');
+
+              final requestFn = method == RequestType.post
+                  ? http.post
+                  : http.put;
+              response = await requestFn(
+                Uri.parse(url),
+                headers: authHeaders,
+                body: jsonEncode(updatedJsonBody),
+              );
+              break;
 
             case RequestType.delete:
-              return await http.delete(
+              response = await http.delete(
                 Uri.parse(url),
-                headers: _defaultHeaders(headers),
+                headers: authHeaders,
               );
+              break;
 
             case RequestType.urlEncoded:
-              return await http.post(
+              final encodedHeaders = await _buildUrlEncodedHeaders(headers);
+              final updatedFormBody = _prepareFormBody(urlEncodedBody, token);
+              response = await http.post(
                 Uri.parse(url),
-                headers: _urlEncodedHeaders(headers),
-                body: urlEncodedBody,
+                headers: encodedHeaders,
+                body: updatedFormBody,
               );
+              break;
 
             case RequestType.multipart:
               var request = http.MultipartRequest("POST", Uri.parse(url));
-              if (headers != null) request.headers.addAll(headers);
-              if (multipartFields != null) {
-                request.fields.addAll(multipartFields);
-              }
+              request.headers.addAll(authHeaders);
+
+              final updatedFields = _prepareFormBody(multipartFields, token);
+              request.fields.addAll(updatedFields);
+
               if (multipartFiles != null) {
                 for (var entry in multipartFiles.entries) {
                   request.files.add(
@@ -65,6 +89,90 @@ class PerformRequest {
                   );
                 }
               }
+
+              final streamed = await request.send();
+              response = await http.Response.fromStream(streamed);
+              break;
+          }
+
+          // 📥 Print JSON Response
+          try {
+            final jsonResponse = json.decode(response.body);
+            const encoder = JsonEncoder.withIndent('  ');
+            debugPrint('📥 Response JSON:\n${encoder.convert(jsonResponse)}');
+          } catch (_) {
+            debugPrint('📥 Response (non-JSON): ${response.body}');
+          }
+
+          return response;
+        },
+        retryIf: (e) =>
+            e is SocketException ||
+            e is http.ClientException ||
+            e is TimeoutException,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // MARK: - UNAUTHORIZED REQUEST
+  Future<http.Response> performUnauthorizedRequest({
+    required String url,
+    RequestType method = RequestType.get,
+    Map<String, String>? headers,
+    Map<String, dynamic>? body,
+    Map<String, String>? urlEncodedBody,
+    Map<String, String>? multipartFields,
+    Map<String, String>? multipartFiles,
+  }) async {
+    try {
+      final authHeaders = await _buildHeaders(headers);
+
+      return await _retry.retry(
+        () async {
+          switch (method) {
+            case RequestType.get:
+              return await http.get(Uri.parse(url), headers: authHeaders);
+
+            case RequestType.post:
+            case RequestType.put:
+              final requestFn = method == RequestType.post
+                  ? http.post
+                  : http.put;
+              return await requestFn(
+                Uri.parse(url),
+                headers: authHeaders,
+                body: jsonEncode(body ?? {}),
+              );
+
+            case RequestType.delete:
+              return await http.delete(Uri.parse(url), headers: authHeaders);
+
+            case RequestType.urlEncoded:
+              final encodedHeaders = await _buildUrlEncodedHeaders(headers);
+              return await http.post(
+                Uri.parse(url),
+                headers: encodedHeaders,
+                body: urlEncodedBody ?? {},
+              );
+
+            case RequestType.multipart:
+              var request = http.MultipartRequest("POST", Uri.parse(url));
+              request.headers.addAll(authHeaders);
+
+              if (multipartFields != null) {
+                request.fields.addAll(multipartFields);
+              }
+
+              if (multipartFiles != null) {
+                for (var entry in multipartFiles.entries) {
+                  request.files.add(
+                    await http.MultipartFile.fromPath(entry.key, entry.value),
+                  );
+                }
+              }
+
               final streamed = await request.send();
               return await http.Response.fromStream(streamed);
           }
@@ -79,7 +187,23 @@ class PerformRequest {
     }
   }
 
-  Map<String, String> _defaultHeaders(Map<String, String>? custom) {
+  Map<String, dynamic> _prepareJsonBody(
+    Map<String, dynamic>? original,
+    String? token, {
+    String key = 'jwtToken',
+  }) {
+    return {...?original, if (token != null && token.isNotEmpty) key: token};
+  }
+
+  Map<String, String> _prepareFormBody(
+    Map<String, String>? original,
+    String? token, {
+    String key = 'jwtToken',
+  }) {
+    return {...?original, if (token != null && token.isNotEmpty) key: token};
+  }
+
+  Future<Map<String, String>> _buildHeaders(Map<String, String>? custom) async {
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -87,7 +211,9 @@ class PerformRequest {
     };
   }
 
-  Map<String, String> _urlEncodedHeaders(Map<String, String>? custom) {
+  Future<Map<String, String>> _buildUrlEncodedHeaders(
+    Map<String, String>? custom,
+  ) async {
     return {'Content-Type': 'application/x-www-form-urlencoded', ...?custom};
   }
 }
