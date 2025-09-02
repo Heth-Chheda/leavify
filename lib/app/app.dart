@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:leavify/app/SplashScreen.dart';
 import 'package:leavify/app/routes.dart';
+import 'package:leavify/app/splash_screen.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 
 class MyApp extends StatelessWidget {
