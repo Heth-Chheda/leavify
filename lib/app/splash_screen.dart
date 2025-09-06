@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:leavify/app/routes.dart';
+import 'package:leavify/app/router/app_navigator.dart';
+import 'package:leavify/app/router/route_names.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:video_player/video_player.dart';
@@ -49,11 +50,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
   void _navigateNext() {
     if (!mounted) return;
-    if (_isLoggedIn == true) {
-      Navigator.of(context).pushReplacementNamed(Routes.home);
-    } else {
-      Navigator.of(context).pushReplacementNamed(Routes.login);
-    }
+
+    final routeName = RouteNames.login;
+
+    AppNavigator.setRootView(routeName);
   }
 
   @override

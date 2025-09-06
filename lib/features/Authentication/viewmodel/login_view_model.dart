@@ -3,8 +3,6 @@ import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/components/app_snackbar.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/request/login_request.dart';
-import 'package:leavify/features/User/viewmodel/home_view_model.dart';
-import 'package:provider/provider.dart';
 
 class LoginViewModel extends ChangeNotifier {
   final usernameController = TextEditingController(text: '');
