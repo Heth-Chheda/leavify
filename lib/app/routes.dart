@@ -5,7 +5,6 @@ import 'package:leavify/features/Authentication/view/login_view.dart';
 import 'package:leavify/features/User/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/User/components/profile/leave_detail_screeen.dart';
 import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
-import 'package:leavify/features/User/view/announcements/add_announcement_view.dart';
 import 'package:leavify/features/User/view/landing_view.dart';
 import 'package:leavify/features/User/view/manager/PendingRequests/pending_requests_screen.dart';
 import 'package:leavify/features/User/view/profile/profile_screen.dart';

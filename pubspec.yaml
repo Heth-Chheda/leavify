@@ -53,6 +53,9 @@ dependencies:
   flutter_launcher_icons: ^0.14.4
   syncfusion_flutter_pdfviewer: ^30.2.4
 
+  # SPLASH SCREEN
+  video_player: ^2.10.0
+
   # LOGIN
   custom_refresh_indicator: ^4.0.1
   awesome_snackbar_content: ^0.1.7
