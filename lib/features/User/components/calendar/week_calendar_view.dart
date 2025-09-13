@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:leavify/core/utils/helpers/calendar/leave_info.dart';
+import 'package:leavify/models/leave_info.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 
 class WeekCalendarView extends StatefulWidget {

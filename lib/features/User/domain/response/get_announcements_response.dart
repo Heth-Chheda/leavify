@@ -10,7 +10,7 @@ class GetAnnouncementsResponse {
     required this.senderName,
     required this.body,
     required this.timeAgo,
-    required this.title
+    required this.title,
   });
 
   factory GetAnnouncementsResponse.fromJson(Map<String, dynamic> json) {
@@ -29,7 +29,14 @@ class GetAnnouncementsResponse {
       'senderName': senderName,
       'body': body,
       'timeAgo': timeAgo,
-      'title' : title,
+      'title': title,
     };
+  }
+
+  /// ✅ Helper to parse list of announcements
+  static List<GetAnnouncementsResponse> listFromJson(List<dynamic> jsonList) {
+    return jsonList
+        .map((json) => GetAnnouncementsResponse.fromJson(json))
+        .toList();
   }
 }

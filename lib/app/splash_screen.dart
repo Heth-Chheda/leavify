@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/app/router/app_navigator.dart';
 import 'package:leavify/app/router/route_names.dart';
-import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:video_player/video_player.dart';
 
@@ -14,7 +13,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   late VideoPlayerController _controller;
-  bool? _isLoggedIn; // store login status
 
   @override
   void initState() {
@@ -26,26 +24,12 @@ class _SplashScreenState extends State<SplashScreen> {
         setState(() {}); // refresh after init
         _controller.play();
         _controller.setVolume(0.0);
-        _controller.setPlaybackSpeed(3.0);
+        _controller.setPlaybackSpeed(5.0);
 
-        // 3. Navigate when video finishes
-        _controller.addListener(() {
-          if (_controller.value.position >= _controller.value.duration) {
-            _navigateNext();
-          }
+        Future.delayed(_controller.value.duration, () {
+          if (mounted) _navigateNext();
         });
       });
-
-    // 2. Check login in background while video plays
-    _checkLoginStatus();
-  }
-
-  Future<void> _checkLoginStatus() async {
-    final loggedIn = await AppStorage.getBoolean('USER_IS_ALREADY_LOGGED_IN');
-    if (!mounted) return;
-    setState(() {
-      _isLoggedIn = loggedIn;
-    });
   }
 
   void _navigateNext() {

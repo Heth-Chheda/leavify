@@ -1,7 +1,5 @@
-import 'dart:convert';
-
-import 'package:leavify/core/api/api_endpoints.dart';
-import 'package:leavify/core/network/perform_request.dart';
+import 'package:leavify/base/base_repository.dart';
+import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Authentication/domain/response/login_response.dart';
@@ -10,283 +8,60 @@ import 'package:leavify/features/User/domain/response/get_working_days_response.
 
 import '../domain/request/login_request.dart';
 
-class AuthenticationRepository {
-  final PerformRequest _performRequest;
-
-  AuthenticationRepository({PerformRequest? performRequest})
-    : _performRequest = performRequest ?? PerformRequest();
-
-  final get = RequestType.get;
-  final post = RequestType.post;
-
+class AuthenticationRepository extends BaseRepository {
   // MARK: - LOGIN
   Future<LoginResponse> login(LoginRequest request) async {
-    try {
-      final response = await _performRequest.performRequest(
-        url: ApiEndpoints.login,
-        method: post,
-        body: request.toJson(),
-      );
-      // Handle response based on status code
-      switch (response.statusCode) {
-        case 200:
-          // Only decode JSON for successful responses
-          try {
-            final Map<String, dynamic> data = jsonDecode(response.body);
-            final loginResponse = LoginResponse.fromJson(data);
+    final result = await performRequest(
+      url: ApiEndpoints.login,
+      method: HttpMethod.post,
+      body: request.toJson(),
+      fromJson: (json) => LoginResponse.fromJson(json),
+    );
 
-            if (loginResponse.success) {
-              AppStorage.saveBoolean('USER_IS_ALREADY_LOGGED_IN', true);
-              AppStorage.saveString('JWT_TOKEN', loginResponse.jwtToken ?? '');
-              AppStorage.saveString('USER_ID', loginResponse.userId ?? '');
-            }
-            return loginResponse;
-          } catch (e) {
-            // If JSON decode fails, create a generic error response
-            throw Exception('Invalid response format from server');
-          }
-
-        case 400:
-          // Try to get error message from response, fallback to generic message
-          String errorMessage;
-          try {
-            final Map<String, dynamic> errorData = jsonDecode(response.body);
-            errorMessage =
-                errorData['message'] ?? errorData['error'] ?? 'Bad request';
-          } catch (e) {
-            // Response body is not JSON, use it as plain text or fallback
-            errorMessage = response.body.isNotEmpty
-                ? response.body
-                : 'Something went wrong please try again.';
-          }
-          throw Exception(errorMessage);
-
-        case 401:
-          // Try to get error message from response, fallback to generic message
-          String errorMessage;
-          try {
-            final Map<String, dynamic> errorData = jsonDecode(response.body);
-            errorMessage =
-                errorData['message'] ??
-                errorData['error'] ??
-                'Unauthorized access';
-          } catch (e) {
-            // Response body is not JSON, use it as plain text or fallback
-            errorMessage = response.body.isNotEmpty
-                ? response.body
-                : 'Unauthorized access.';
-          }
-          throw Exception(errorMessage);
-
-        case 500:
-          // Try to get error message from response, fallback to generic message
-          String errorMessage;
-          try {
-            final Map<String, dynamic> errorData = jsonDecode(response.body);
-            errorMessage =
-                errorData['message'] ??
-                errorData['error'] ??
-                'Internal server error';
-          } catch (e) {
-            // Response body is not JSON, use it as plain text or fallback
-            errorMessage = response.body.isNotEmpty
-                ? response.body
-                : 'Internal server error.';
-          }
-          throw Exception(errorMessage);
-
-        default:
-          // For any other status codes
-          String errorMessage;
-          try {
-            final Map<String, dynamic> errorData = jsonDecode(response.body);
-            errorMessage =
-                errorData['message'] ??
-                errorData['error'] ??
-                'Unexpected error occurred';
-          } catch (e) {
-            // Response body is not JSON, use it as plain text or fallback
-            errorMessage = response.body.isNotEmpty
-                ? response.body
-                : 'Unexpected error occurred';
-          }
-          throw Exception('$errorMessage (${response.statusCode})');
-      }
-    } catch (e) {
-      rethrow;
+    if (result.success) {
+      await AppStorage.saveBoolean('USER_IS_ALREADY_LOGGED_IN', true);
+      await AppStorage.saveString('JWT_TOKEN', result.jwtToken ?? '');
+      await AppStorage.saveString('USER_ID', result.userId ?? '');
     }
+
+    return result;
   }
 
   // MARK: - GET USER SUMMARY
   Future<GetUserSummaryResponse> getUserSummary(String userId) async {
-    try {
-      final getUserSummaryResponse = await _performRequest.performRequest(
-        url: '${ApiEndpoints.getUserSummary}/$userId',
-        method: get,
-      );
+    final result = await performRequest(
+      url: '${ApiEndpoints.getUserSummary}/$userId',
+      method: HttpMethod.get,
+      fromJson: (json) => GetUserSummaryResponse.fromJson(json),
+    );
 
-      switch (getUserSummaryResponse.statusCode) {
-        case 200:
-          try {
-            final Map<String, dynamic> json = jsonDecode(
-              getUserSummaryResponse.body,
-            );
-            return GetUserSummaryResponse.fromJson(json);
-          } catch (e) {
-            throw Exception('Invalid response format from server');
-          }
-
-        case 400:
-          String errorMessage;
-          try {
-            final Map<String, dynamic> errorData = jsonDecode(
-              getUserSummaryResponse.body,
-            );
-            errorMessage =
-                errorData['message'] ?? errorData['error'] ?? 'Bad request';
-          } catch (e) {
-            errorMessage = getUserSummaryResponse.body.isNotEmpty
-                ? getUserSummaryResponse.body
-                : 'Something went wrong. Please try logging in again.';
-          }
-          throw Exception(errorMessage);
-
-        case 500:
-          String errorMessage;
-          try {
-            final Map<String, dynamic> errorData = jsonDecode(
-              getUserSummaryResponse.body,
-            );
-            errorMessage =
-                errorData['message'] ??
-                errorData['error'] ??
-                'Internal server error';
-          } catch (e) {
-            errorMessage = getUserSummaryResponse.body.isNotEmpty
-                ? getUserSummaryResponse.body
-                : 'Internal server error. Please try again later.';
-          }
-          throw Exception(errorMessage);
-
-        default:
-          String errorMessage;
-          try {
-            final Map<String, dynamic> errorData = jsonDecode(
-              getUserSummaryResponse.body,
-            );
-            errorMessage =
-                errorData['message'] ??
-                errorData['error'] ??
-                'Unknown error occurred';
-          } catch (e) {
-            errorMessage = getUserSummaryResponse.body.isNotEmpty
-                ? getUserSummaryResponse.body
-                : 'Unknown error occurred';
-          }
-          throw Exception(
-            '$errorMessage (${getUserSummaryResponse.statusCode})',
-          );
-      }
-    } catch (e) {
-      rethrow;
-    }
+    return result;
   }
 
   // MARK: - GET ANNOUNCEMENTS
   Future<List<GetAnnouncementsResponse>> getAnnouncements() async {
-    try {
-      final response = await _performRequest.performRequest(
-        url: ApiEndpoints.getAnnouncements,
-        method: get,
-      );
-
-      switch (response.statusCode) {
-        case 200:
-          try {
-            final List<dynamic> jsonList = jsonDecode(response.body);
-            return jsonList
-                .map((json) => GetAnnouncementsResponse.fromJson(json))
-                .toList();
-          } catch (e) {
-            throw Exception('Invalid response format from server');
-          }
-
-        case 400:
-          String errorMessage;
-          try {
-            final Map<String, dynamic> errorData = jsonDecode(response.body);
-            errorMessage =
-                errorData['message'] ?? errorData['error'] ?? 'Bad request';
-          } catch (e) {
-            errorMessage = response.body.isNotEmpty
-                ? response.body
-                : 'Something went wrong. Please try again.';
-          }
-          throw Exception(errorMessage);
-
-        case 500:
-          String errorMessage;
-          try {
-            final Map<String, dynamic> errorData = jsonDecode(response.body);
-            errorMessage =
-                errorData['message'] ?? errorData['error'] ?? 'Server error';
-          } catch (e) {
-            errorMessage = response.body.isNotEmpty
-                ? response.body
-                : 'Internal server error. Please try again later.';
-          }
-          throw Exception(errorMessage);
-
-        default:
-          String errorMessage;
-          try {
-            final Map<String, dynamic> errorData = jsonDecode(response.body);
-            errorMessage =
-                errorData['message'] ?? errorData['error'] ?? 'Unknown error';
-          } catch (e) {
-            errorMessage = response.body.isNotEmpty
-                ? response.body
-                : 'Unknown error occurred';
-          }
-          throw Exception('$errorMessage (${response.statusCode})');
-      }
-    } catch (e) {
-      rethrow;
-    }
+    return await performRequest<List<GetAnnouncementsResponse>>(
+      url: ApiEndpoints.getAnnouncements,
+      method: HttpMethod.get,
+      fromJson: (json) {
+        final list = json as List<dynamic>;
+        return list
+            .map(
+              (e) =>
+                  GetAnnouncementsResponse.fromJson(e as Map<String, dynamic>),
+            )
+            .toList();
+      },
+    );
   }
 
   // MARK: - GET BALANCE
   Future<BalanceResponse> getLeaveBalance({required String userId}) async {
-    try {
-      final response = await _performRequest.performRequest(
-        url: ApiEndpoints.getLeaveBalance, // define in ApiEndpoints
-        method: RequestType.post,
-        body: {'userId': userId},
-      );
-
-      final jsonData = json.decode(response.body);
-
-      switch (response.statusCode) {
-        case 200:
-          return BalanceResponse.fromJson(jsonData);
-
-        case 400:
-          throw Exception(jsonData['error'] ?? 'Bad Request');
-
-        case 404:
-          throw Exception(jsonData['error'] ?? 'Leave balance not found');
-
-        case 401:
-          throw Exception('Unauthorized: Please login again.');
-
-        case 500:
-          throw Exception('Server error: Please try again later.');
-
-        default:
-          throw Exception('Unexpected error: ${response.statusCode}');
-      }
-    } catch (e) {
-      rethrow;
-    }
+    return await performRequest(
+      url: ApiEndpoints.getLeaveBalance,
+      method: HttpMethod.post,
+      body: {'userId': userId},
+      fromJson: BalanceResponse.fromJson,
+    );
   }
 }

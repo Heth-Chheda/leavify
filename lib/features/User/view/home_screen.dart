@@ -1,7 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:leavify/core/api/api_endpoints.dart';
-import 'package:leavify/core/utils/components/shimmer/shimmer_home_screen.dart';
+import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/User/components/announcement_card.dart';
 import 'package:leavify/features/User/components/custom_app_bar.dart';
@@ -9,6 +8,7 @@ import 'package:leavify/features/User/components/custom_bottom_nav_bar.dart';
 import 'package:leavify/features/User/components/home_calender_widget.dart';
 import 'package:leavify/features/User/components/home_screen_leave_card.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -121,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         body: SafeArea(
           child: _viewModel.isLoading
-              ? const ShimmerHomeScreen()
+              ? _buildLoadingWidget()
               : _viewModel.error != null
               ? _buildErrorWidget()
               : RefreshIndicator(
@@ -169,6 +169,20 @@ class _HomeScreenState extends State<HomeScreen> {
           isSelected: _currentIndex == addButtonIndex,
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      ),
+    );
+  }
+
+  Widget _buildLoadingWidget() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SpinKitCircle(
+            color: Colors.blue, // change to your theme color
+            size: 60.0,
+          ),
+        ],
       ),
     );
   }

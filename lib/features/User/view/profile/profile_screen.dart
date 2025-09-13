@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:leavify/core/api/api_endpoints.dart';
+import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/models/user.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
@@ -141,7 +141,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           initials: '${user!.firstName[0]}${user!.lastName[0]}',
                           size: 100,
                           baseUrl: ApiEndpoints.baseUrl, // Your base URL
-                          imagePath: (user?.profileImageUrl?.isNotEmpty ?? false)
+                          imagePath:
+                              (user?.profileImageUrl?.isNotEmpty ?? false)
                               ? user!.profileImageUrl
                               : null, // Pass null if empty or null, // Path from backend, e.g. "profilepics/abc.png"
                         ),

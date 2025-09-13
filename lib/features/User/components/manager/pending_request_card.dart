@@ -1,7 +1,7 @@
 // Main Pending Request Card - Optimized with Separate Widget Components
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:leavify/core/api/api_endpoints.dart';
+import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 
 class PendingRequestCard extends StatelessWidget {
@@ -65,21 +65,18 @@ class PendingRequestCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       gradient: isDark
           ? LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Colors.grey[900]!.withOpacity(0.3),
-          Colors.grey[900]!.withOpacity(0.1),
-        ],
-      )
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.grey[900]!.withOpacity(0.3),
+                Colors.grey[900]!.withOpacity(0.1),
+              ],
+            )
           : LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Colors.white,
-          Colors.grey[50]!.withOpacity(0.5),
-        ],
-      ),
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.white, Colors.grey[50]!.withOpacity(0.5)],
+            ),
     );
   }
 }
@@ -90,9 +87,7 @@ Widget _requestHeader({required GetAllResponse request}) {
     children: [
       _employeeAvatar(request: request),
       const SizedBox(width: 14),
-      Expanded(
-        child: _employeeInfo(request: request),
-      ),
+      Expanded(child: _employeeInfo(request: request)),
       _statusBadge(status: request.status),
     ],
   );
@@ -114,15 +109,21 @@ Widget _employeeAvatar({required GetAllResponse request}) {
         width: 52,
         height: 52,
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withOpacity(isDark ? 0.15 : 0.08),
+          color: Theme.of(
+            context,
+          ).primaryColor.withOpacity(isDark ? 0.15 : 0.08),
           borderRadius: BorderRadius.circular(26),
           border: Border.all(
-            color: Theme.of(context).secondaryHeaderColor.withOpacity(isDark ? 0.8 : 0.1),
+            color: Theme.of(
+              context,
+            ).secondaryHeaderColor.withOpacity(isDark ? 0.8 : 0.1),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).primaryColor.withOpacity(isDark ? 0.1 : 0.05),
+              color: Theme.of(
+                context,
+              ).primaryColor.withOpacity(isDark ? 0.1 : 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -130,13 +131,14 @@ Widget _employeeAvatar({required GetAllResponse request}) {
         ),
         child: getProfileImageUrl() != null
             ? ClipRRect(
-          borderRadius: BorderRadius.circular(26),
-          child: Image.network(
-            getProfileImageUrl()!,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => _employeeInitials(request: request),
-          ),
-        )
+                borderRadius: BorderRadius.circular(26),
+                child: Image.network(
+                  getProfileImageUrl()!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      _employeeInitials(request: request),
+                ),
+              )
             : _employeeInitials(request: request),
       );
     },
@@ -259,16 +261,24 @@ Widget _requestDurationAndDateRange({required GetAllResponse request}) {
 
       String formatDate(DateTime date) {
         const months = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
         ];
         return "${date.day} ${months[date.month - 1]} ${date.year}";
       }
 
       bool isSameDay(DateTime d1, DateTime d2) {
-        return d1.year == d2.year &&
-            d1.month == d2.month &&
-            d1.day == d2.day;
+        return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
       }
 
       final duration = getDuration();
@@ -325,7 +335,6 @@ Widget _requestDurationAndDateRange({required GetAllResponse request}) {
   );
 }
 
-
 // MARK: - REQUEST_REASON
 Widget _requestReason({required String reason}) {
   return Builder(
@@ -352,21 +361,23 @@ Widget _requestFooter({required GetAllResponse request}) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
 
       String getDaysAgoText() {
-        final daysSinceStart = DateTime.now().difference(request.startDate).inDays;
+        final daysSinceStart = DateTime.now()
+            .difference(request.startDate)
+            .inDays;
         if (daysSinceStart == 0) return "Today";
         if (daysSinceStart == 1) return "Yesterday";
         if (daysSinceStart > 0) return "$daysSinceStart days ago";
 
-        final daysUntilStart = request.startDate.difference(DateTime.now()).inDays;
+        final daysUntilStart = request.startDate
+            .difference(DateTime.now())
+            .inDays;
         if (daysUntilStart == 1) return "Tomorrow";
         return "In $daysUntilStart days";
       }
 
       return Row(
         mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          _actionHint(),
-        ],
+        children: [_actionHint()],
       );
     },
   );
@@ -405,11 +416,7 @@ Widget _actionHint() {
           ),
         ),
         const SizedBox(width: 4),
-        Icon(
-          Icons.arrow_forward_ios,
-          size: 10,
-          color: Colors.grey,
-        ),
+        Icon(Icons.arrow_forward_ios, size: 10, color: Colors.grey),
       ],
     ),
   );

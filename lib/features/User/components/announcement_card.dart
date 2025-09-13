@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:leavify/core/api/api_endpoints.dart';
+import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 
 class AnnouncementCard extends StatelessWidget {
@@ -17,7 +17,7 @@ class AnnouncementCard extends StatelessWidget {
     this.colorIndex,
     this.profileImage,
     this.timeAgo,
-    required this.senderName
+    required this.senderName,
   });
 
   // Static color schemes to avoid recreating on every build
@@ -48,9 +48,9 @@ class AnnouncementCard extends StatelessWidget {
   // Static constants to avoid recreating
   static const EdgeInsets _cardMargin = EdgeInsets.only(right: 12);
   static const EdgeInsets _cardPadding = EdgeInsets.all(16);
-  static const BorderRadius _borderRadius = BorderRadius.all(Radius.circular(16));
-  static const BorderRadius _iconRadius = BorderRadius.all(Radius.circular(8));
-  static const BorderRadius _badgeRadius = BorderRadius.all(Radius.circular(6));
+  static const BorderRadius _borderRadius = BorderRadius.all(
+    Radius.circular(16),
+  );
   static const double _cardHeight = 160.0;
   static const Offset _shadowOffset = Offset(0, 4);
 
@@ -62,25 +62,6 @@ class AnnouncementCard extends StatelessWidget {
     color: Colors.white,
     letterSpacing: -0.2,
     height: 1.2,
-  );
-
-  static const TextStyle _badgeStyle = TextStyle(
-    color: Colors.white,
-    fontSize: 9,
-    fontWeight: FontWeight.w800,
-    letterSpacing: 0.5,
-  );
-
-  static const TextStyle _dateStyle = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w500,
-  );
-
-  static const TextStyle _messageStyle = TextStyle(
-    fontSize: 16,
-    height: 1.4,
-    letterSpacing: 0.1,
-    fontWeight: FontWeight.w500,
   );
 
   ColorScheme get _selectedColorScheme {
@@ -115,10 +96,7 @@ class AnnouncementCard extends StatelessWidget {
   BoxDecoration _buildCardDecoration(ColorScheme scheme) {
     return BoxDecoration(
       gradient: LinearGradient(
-        colors: [
-          scheme.primary,
-          scheme.primary.withOpacity(0.8),
-        ],
+        colors: [scheme.primary, scheme.primary.withOpacity(0.8)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -141,9 +119,7 @@ class AnnouncementCard extends StatelessWidget {
       children: [
         _buildIcon(),
         const SizedBox(width: 12),
-        Expanded(
-          child: _buildTitleSection(),
-        ),
+        Expanded(child: _buildTitleSection()),
       ],
     );
   }
@@ -164,22 +140,14 @@ class AnnouncementCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias, // Ensures image respects border radius
       child: imageUrl != null
           ? Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          // Fallback icon if image fails
-          return const Icon(
-            Icons.person,
-            color: Colors.white,
-            size: 20,
-          );
-        },
-      )
-          : const Icon(
-        Icons.person,
-        color: Colors.white,
-        size: 20,
-      ),
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback icon if image fails
+                return const Icon(Icons.person, color: Colors.white, size: 20);
+              },
+            )
+          : const Icon(Icons.person, color: Colors.white, size: 20),
     );
   }
 
@@ -188,9 +156,7 @@ class AnnouncementCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildTitleRow(),
-      ],
+      children: [_buildTitleRow()],
     );
   }
 
@@ -219,30 +185,30 @@ class AnnouncementCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style:TextStyle(
-                fontSize: 18,
-                height: 1.4,
-                letterSpacing: 0.1,
-                fontWeight: FontWeight.w700,
-                color: Colors.white.withOpacity(0.95)
+            style: TextStyle(
+              fontSize: 18,
+              height: 1.4,
+              letterSpacing: 0.1,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withOpacity(0.95),
             ),
             maxLines: 4,
             overflow: TextOverflow.ellipsis,
           ),
           Text(
             message,
-            style:TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.4,
               letterSpacing: 0.1,
               fontWeight: FontWeight.w500,
-              color: Colors.white.withOpacity(0.95)
+              color: Colors.white.withOpacity(0.95),
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ],
-      )
+      ),
     );
   }
 }
@@ -253,8 +219,5 @@ class ColorScheme {
   final Color primary;
   final Color shadow;
 
-  const ColorScheme({
-    required this.primary,
-    required this.shadow,
-  });
+  const ColorScheme({required this.primary, required this.shadow});
 }

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:leavify/core/api/api_endpoints.dart';
+import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
-import 'package:leavify/core/utils/components/shimmer_widget.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/User/viewmodel/announcements_view_model.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
@@ -30,12 +30,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             // Profile Section
             Expanded(
               child: viewModel.isLoading
-                  ? _buildShimmerContent(theme)
+                  ? _buildLoadingWidget()
                   : _buildContent(viewModel.userName, theme, context),
             ),
             // Action Icons - Show shimmer when loading, actual icons when loaded
             viewModel.isLoading
-                ? _buildShimmerActionIcons(theme)
+                ? const SizedBox.shrink()
                 : _buildActionIcons(
                     context,
                     theme,
@@ -47,78 +47,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildShimmerContent(ThemeData theme) {
-    final isDarkMode = theme.brightness == Brightness.dark;
-
-    return Row(
-      children: [
-        // Profile Image Shimmer - Fixed to match actual size (40x40)
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(38),
-            border: Border.all(
-              color: theme.colorScheme.onBackground.withOpacity(0.1),
-              width: 2.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.shadowColor.withOpacity(0.1),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
+  Widget _buildLoadingWidget() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SpinKitCircle(
+            color: Colors.blue, // change to your theme color
+            size: 60.0,
           ),
-          child: ShimmerWidget.circular(width: 36, height: 36),
-        ),
-        const SizedBox(width: 12),
-
-        // Text Shimmer - Single line to match actual layout
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ShimmerWidget.rectangular(
-                width: 180,
-                height: 20,
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildShimmerActionIcons(ThemeData theme) {
-    final isDarkMode = theme.brightness == Brightness.dark;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Campaign Icon Shimmer (conditional based on role)
-        _buildShimmerIcon(theme, isDarkMode),
-
-        // Logout Icon Shimmer
-        _buildShimmerIcon(theme, isDarkMode),
-      ],
-    );
-  }
-
-  Widget _buildShimmerIcon(ThemeData theme, bool isDarkMode) {
-    return Container(
-      width: 48,
-      height: 48,
-      margin: const EdgeInsets.only(left: 4),
-      decoration: BoxDecoration(
-        color: isDarkMode
-            ? theme.colorScheme.surface.withOpacity(0.1)
-            : Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(24),
+        ],
       ),
-      child: Center(child: ShimmerWidget.circular(width: 24, height: 24)),
     );
   }
 
