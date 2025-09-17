@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:leavify/app/router/route_names.dart';
+import 'package:leavify/router/route_names.dart';
 
 // Screens
 import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
@@ -19,7 +19,7 @@ class LeaveRouter {
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     return MaterialPageRoute(
       builder: (_) => ChangeNotifierProvider(
-        create: (_) => LeaveViewModel(), // optional init
+        create: (_) => LeaveViewModel(),
         child: _buildLeaveFlow(settings),
       ),
       settings: settings,

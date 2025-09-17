@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:leavify/features/User/view/home_screen.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 import 'package:provider/provider.dart';
-import 'package:leavify/app/router/route_names.dart';
+import 'package:leavify/router/route_names.dart';
 
 // Screens
 import 'package:leavify/features/Authentication/view/login_view.dart';

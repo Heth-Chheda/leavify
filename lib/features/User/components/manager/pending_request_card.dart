@@ -335,54 +335,6 @@ Widget _requestDurationAndDateRange({required GetAllResponse request}) {
   );
 }
 
-// MARK: - REQUEST_REASON
-Widget _requestReason({required String reason}) {
-  return Builder(
-    builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-
-      return Text(
-        reason.length > 20 ? "${reason.substring(0, 20)}..." : reason,
-        style: TextStyle(
-          fontSize: 14,
-          color: isDark ? Colors.grey[200] : Colors.black87,
-          height: 1.4,
-          fontWeight: FontWeight.w400,
-        ),
-      );
-    },
-  );
-}
-
-// MARK: - REQUEST_FOOTER
-Widget _requestFooter({required GetAllResponse request}) {
-  return Builder(
-    builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-
-      String getDaysAgoText() {
-        final daysSinceStart = DateTime.now()
-            .difference(request.startDate)
-            .inDays;
-        if (daysSinceStart == 0) return "Today";
-        if (daysSinceStart == 1) return "Yesterday";
-        if (daysSinceStart > 0) return "$daysSinceStart days ago";
-
-        final daysUntilStart = request.startDate
-            .difference(DateTime.now())
-            .inDays;
-        if (daysUntilStart == 1) return "Tomorrow";
-        return "In $daysUntilStart days";
-      }
-
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [_actionHint()],
-      );
-    },
-  );
-}
-
 // MARK: - ICON_CONTAINER
 Widget _iconContainer({
   required IconData icon,
@@ -396,28 +348,6 @@ Widget _iconContainer({
       icon,
       size: size,
       color: isDark ? Colors.grey[400] : Colors.grey[600],
-    ),
-  );
-}
-
-// MARK: - ACTION_HINT
-Widget _actionHint() {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          "Tap to review",
-          style: TextStyle(
-            color: Colors.grey,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Icon(Icons.arrow_forward_ios, size: 10, color: Colors.grey),
-      ],
     ),
   );
 }

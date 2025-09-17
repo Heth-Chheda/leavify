@@ -111,14 +111,14 @@ class ProfileViewModel extends ChangeNotifier {
 
       final success = await _repository.editUserLeave(updateData);
 
-      if (success == true) {
+      if (success.success == true) {
         _isEditMode = false;
       }
 
       _isEditMode = false;
       _isLoading = false;
       notifyListeners();
-      return true; // TODO: HANDLING THE RESPONSE
+      return true;
       // return success;
     } catch (e) {
       _errorMessage = e.toString();

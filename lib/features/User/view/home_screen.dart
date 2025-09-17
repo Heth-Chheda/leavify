@@ -9,6 +9,8 @@ import 'package:leavify/features/User/components/home_calender_widget.dart';
 import 'package:leavify/features/User/components/home_screen_leave_card.dart';
 import 'package:leavify/features/User/viewmodel/home_view_model.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:leavify/router/app_navigator.dart';
+import 'package:leavify/router/route_names.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -211,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/login');
+              AppNavigator.setRootView(RouteNames.login);
             },
             child: const Text('Retry'),
           ),
@@ -557,7 +559,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void _handleDateSelection(DateTime date) {
     // Add your logic here for when a date is selected
     // For example: navigate to detailed view, show events, etc.
-    print("Selected date: ${_formatDate(date)}");
   }
 
   String _formatDate(DateTime date) {

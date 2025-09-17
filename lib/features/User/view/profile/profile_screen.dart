@@ -60,7 +60,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     if (isLoadingUser) {
       return Scaffold(
@@ -372,9 +371,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color:
-                            theme.colorScheme.outline?.withOpacity(0.2) ??
-                            Colors.grey.withOpacity(0.2),
+                        color: theme.colorScheme.outline.withOpacity(0.2),
                       ),
                       boxShadow: [
                         BoxShadow(

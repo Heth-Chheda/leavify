@@ -25,8 +25,6 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
   Widget build(BuildContext context) {
     final String role = widget.role.toLowerCase();
     final bool isManagerOrHR = role != 'employee';
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     // Navigation items based on role (excluding the add button)
     final List<IconData> navIcons = [];

@@ -124,7 +124,7 @@ class _PendingRequestDetailScreenState
         final homeViewModel = context.read<HomeViewModel>();
         final leave = leaveViewModel.selectedLeaveById;
         final latestStatus = leave?.currentUserAction?.latestStatus
-            ?.toLowerCase();
+            .toLowerCase();
         final userRole = homeViewModel.userRole.toLowerCase();
 
         Widget buttons;
@@ -392,50 +392,6 @@ class _EmployeeHeaderCard extends StatelessWidget {
     return 'U';
   }
 
-  Widget _buildStatusChip(String status) {
-    final statusLower = status.toLowerCase();
-    Color chipColor;
-    Color textColor;
-
-    switch (statusLower) {
-      case 'pending':
-        chipColor = Colors.orange.withOpacity(0.15);
-        textColor = Colors.orange.shade700;
-        break;
-      case 'approved':
-        chipColor = Colors.green.withOpacity(0.15);
-        textColor = Colors.green.shade700;
-        break;
-      case 'rejected':
-        chipColor = Colors.red.withOpacity(0.15);
-        textColor = Colors.red.shade700;
-        break;
-      case 'escalated':
-        chipColor = Colors.purple.withOpacity(0.15);
-        textColor = Colors.purple.shade700;
-        break;
-      default:
-        chipColor = Colors.grey.withOpacity(0.15);
-        textColor = Colors.grey.shade700;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: chipColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: textColor,
-        ),
-      ),
-    );
-  }
-
   Widget _buildBalanceInfo() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -605,7 +561,7 @@ class _CompOffDatesCard extends StatelessWidget {
               ],
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -1179,7 +1135,7 @@ class StatusTrackingCard extends StatelessWidget {
           final isLast = index == statusTracking.length - 1;
 
           return _TimelineItem(tracking: tracking, isLast: isLast);
-        }).toList(),
+        }),
       ],
     );
   }
@@ -1285,84 +1241,6 @@ class _TimelineItem extends StatelessWidget {
       default:
         return Colors.grey.shade600;
     }
-  }
-}
-
-// MARK: - Escalation Card
-class _EscalationCard extends StatelessWidget {
-  final EscalationDet escalationDet;
-
-  const _EscalationCard({required this.escalationDet});
-
-  @override
-  Widget build(BuildContext context) {
-    return _InfoCard(
-      title: 'Escalation Details',
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.purple.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.purple.withOpacity(0.2)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Status
-              if (escalationDet.escalationStatus?.isNotEmpty == true) ...[
-                Text(
-                  'Status: ${escalationDet.escalationStatus}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.purple.shade700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-
-              // Escalated Date
-              if (escalationDet.escalatedDate != null) ...[
-                Text(
-                  'Escalated At: ${DateFormat('dd MMM yyyy, hh:mm a').format(escalationDet.escalatedDate!.toLocal())}',
-                  style: TextStyle(fontSize: 12, color: Colors.purple.shade600),
-                ),
-                const SizedBox(height: 4),
-              ],
-
-              // Resolved Date (skip if it's the placeholder date)
-              if (escalationDet.resolvedDate != null &&
-                  escalationDet.resolvedDate!.year != 1) ...[
-                Text(
-                  'Resolved At: ${DateFormat('dd MMM yyyy, hh:mm a').format(escalationDet.resolvedDate!.toLocal())}',
-                  style: TextStyle(fontSize: 12, color: Colors.purple.shade600),
-                ),
-                const SizedBox(height: 4),
-              ],
-
-              // Comments
-              if (escalationDet.comments?.isNotEmpty == true) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Comments:',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.purple.shade700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  escalationDet.comments!,
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
   }
 }
 

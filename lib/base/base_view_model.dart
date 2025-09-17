@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/utils/components/toast/app_toast.dart';
 
 class BaseViewModel extends ChangeNotifier {
   // MARK: GLOBAL USER
@@ -51,5 +52,17 @@ class BaseViewModel extends ChangeNotifier {
     _errorMessage = null;
     _isLoading = false;
     notifyListeners();
+  }
+
+  void showSuccess(BuildContext context, String message) {
+    AppToast.success(context, message);
+  }
+
+  void showError(BuildContext context, String message) {
+    AppToast.error(context, message);
+  }
+
+  void showInfo(BuildContext context, String message) {
+    AppToast.info(context, message);
   }
 }

@@ -221,8 +221,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   }
 
   Widget _buildStatusSection(bool isDark) {
-    final statusColor = _getStatusColor(_leave!.leaveDetails.status);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -979,21 +977,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
-    }
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'APPROVED':
-        return const Color(0xFF51DC8E); // AppColors.highlightGreen
-      case 'PENDING':
-        return const Color(0xFFFFA200); // AppColors.highlightOrange
-      case 'REJECTED':
-        return const Color(0xFFFF3E6C); // AppColors.highlightPink
-      case 'CANCELLED':
-        return Colors.grey;
-      default:
-        return Colors.grey;
     }
   }
 }

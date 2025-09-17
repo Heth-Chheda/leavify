@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:leavify/app/router/app_navigator.dart';
-import 'package:leavify/app/router/route_names.dart';
+import 'package:leavify/router/app_navigator.dart';
+import 'package:leavify/router/route_names.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:video_player/video_player.dart';
 

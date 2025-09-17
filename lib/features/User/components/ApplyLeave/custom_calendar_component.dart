@@ -542,14 +542,6 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
     }
   }
 
-  void _resetRangeSelection() {
-    setState(() {
-      rangeStartDate = null;
-      rangeEndDate = null;
-      isSelectingEndDate = false;
-    });
-  }
-
   void _handleConfirm() {
     if (widget.enableRangeSelection) {
       if (rangeStartDate != null && widget.onDateRangeSelected != null) {
@@ -602,15 +594,17 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
 
   bool _isDateInRange(DateTime date, bool isCurrentMonth) {
     if (!isCurrentMonth) return false;
-    if (rangeStartDate != null && _isSameDay(date, rangeStartDate!))
+    if (rangeStartDate != null && _isSameDay(date, rangeStartDate!)) {
       return true;
+    }
     if (rangeEndDate != null && _isSameDay(date, rangeEndDate!)) return true;
     return false;
   }
 
   bool _isDateBetweenRange(DateTime date, bool isCurrentMonth) {
-    if (!isCurrentMonth || rangeStartDate == null || rangeEndDate == null)
+    if (!isCurrentMonth || rangeStartDate == null || rangeEndDate == null) {
       return false;
+    }
     return date.isAfter(rangeStartDate!) && date.isBefore(rangeEndDate!);
   }
 

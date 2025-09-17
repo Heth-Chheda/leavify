@@ -1,8 +1,8 @@
 // lib/routing/app_router.dart
 
 import 'package:flutter/material.dart';
-import 'package:leavify/app/router/routes/authenticaion_router.dart';
-import 'package:leavify/app/router/routes/leave_router.dart';
+import 'package:leavify/router/routes/authenticaion_router.dart';
+import 'package:leavify/router/routes/leave_router.dart';
 
 // Import flow routers
 
