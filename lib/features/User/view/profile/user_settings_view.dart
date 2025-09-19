@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/User/viewmodel/profile_view_model.dart';
 import 'package:provider/provider.dart';
 

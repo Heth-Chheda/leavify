@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/User/components/manager/pending_request_card.dart';
-import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
 import 'package:provider/provider.dart';
 

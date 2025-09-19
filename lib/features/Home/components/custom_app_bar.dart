@@ -3,7 +3,7 @@ import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/User/viewmodel/announcements_view_model.dart';
-import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 

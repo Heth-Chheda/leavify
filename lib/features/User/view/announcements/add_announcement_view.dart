@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/features/User/viewmodel/announcements_view_model.dart';
-import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:provider/provider.dart';
 
 class AnnouncementScreen extends StatefulWidget {

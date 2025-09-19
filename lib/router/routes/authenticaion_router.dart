@@ -1,8 +1,8 @@
 // lib/routing/routers/authentication_router.dart
 
 import 'package:flutter/material.dart';
-import 'package:leavify/features/User/view/home_screen.dart';
-import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Home/screens/home_screen.dart';
+import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:provider/provider.dart';
 import 'package:leavify/router/route_names.dart';
 

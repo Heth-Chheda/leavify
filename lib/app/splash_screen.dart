@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/router/app_navigator.dart';
 import 'package:leavify/router/route_names.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
@@ -32,11 +33,11 @@ class _SplashScreenState extends State<SplashScreen> {
       });
   }
 
-  void _navigateNext() {
+  Future<void> _navigateNext() async {
     if (!mounted) return;
-
-    final routeName = RouteNames.login;
-
+    final isLoggedIn =
+        await AppStorage.getBoolean('USER_IS_ALREADY_LOGGED_IN') ?? false;
+    final routeName = isLoggedIn ? RouteNames.home : RouteNames.login;
     AppNavigator.setRootView(routeName);
   }
 

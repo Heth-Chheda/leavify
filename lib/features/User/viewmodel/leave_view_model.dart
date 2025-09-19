@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
@@ -18,7 +19,7 @@ import '../domain/request/apply_leave_request_model.dart';
 
 enum LeaveFormType { leave, extra, workFromHome }
 
-class LeaveViewModel extends ChangeNotifier {
+class LeaveViewModel extends BaseViewModel {
   final LeaveRepository _repository = LeaveRepository();
 
   // MARK: - FORM CONTROLLERS
@@ -52,8 +53,6 @@ class LeaveViewModel extends ChangeNotifier {
   // MARK: - REQUEST STATE PROPERTIES
   bool isRejectLoading = false;
   bool isApproveLoading = false;
-  bool isLoading = false;
-  String? errorMessage;
   String? successLeaveId;
 
   // MARK: - GET ALL PENDING LEAVES (MANAGER)
@@ -83,27 +82,7 @@ class LeaveViewModel extends ChangeNotifier {
   }
 
   void _resetFormState() {
-    selectedStartDate = null;
-    selectedEndDate = null;
-    isSelectingEndDate = false;
-    isLeaveFullDay = true;
-    isLeaveHalfDay = false;
-    isHalfDayWorkFromOffice = true;
-    isHalfDayWorkFromHome = false;
-    hasCompOffPlans = false;
-    selectedCompOffDates.clear();
-    isCompOffWorkFromOffice = true;
-    isCompOffWorkFromHome = false;
-    selectedDocuments.clear();
-    uploadedDocumentUrls.clear();
-    reasonController.clear();
-    errorMessage = null;
-    successLeaveId = null;
-
-    // Defer notifyListeners to avoid calling during build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      notifyListeners();
-    });
+    resetForm();
   }
 
   // MARK: - DATE SELECTION METHODS
@@ -263,14 +242,12 @@ class LeaveViewModel extends ChangeNotifier {
   }
 
   // MARK: - FORM VALIDATION METHODS
-  bool validateForm(Function(String, Color) showSnackBar) {
+  bool validateForm() {
     if (selectedStartDate == null) {
-      showSnackBar('Please select a date', Colors.red);
       return false;
     }
 
     if (hasCompOffPlans && selectedCompOffDates.isEmpty) {
-      showSnackBar('Please select comp off dates', Colors.red);
       return false;
     }
 
@@ -278,29 +255,23 @@ class LeaveViewModel extends ChangeNotifier {
   }
 
   // MARK: - SUBMIT LEAVE FORM METHOD
-  Future<void> submitLeaveForm(
-    BuildContext context,
-    Function(String, Color) showSnackBar,
-  ) async {
-    if (!validateForm(showSnackBar)) return;
+  Future<void> submitLeaveForm(BuildContext context) async {
+    if (!validateForm()) return;
 
-    isLoading = true;
-    errorMessage = null;
+    update(isLoading: true, errorMessage: null);
     notifyListeners();
 
     try {
       if (reasonController.text.length < 10) {
-        isLoading = false;
+        update(isLoading: false);
         notifyListeners();
-        showSnackBar('Reason must be at least 10 characters long', Colors.red);
         return;
       }
       // Load user ID from SharedPreferences
       final userId = await _loadUserId();
       if (userId == null || userId.isEmpty) {
-        isLoading = false;
+        update(isLoading: false);
         notifyListeners();
-        showSnackBar('User ID not found. Please login again.', Colors.red);
         return;
       }
 
@@ -309,24 +280,19 @@ class LeaveViewModel extends ChangeNotifier {
       // Submit the request
       final success = await submitLeaveRequest(request);
 
-      isLoading = false;
+      update(isLoading: false);
       notifyListeners();
 
       if (!context.mounted) return;
 
       if (success) {
-        final formTitle = _getFormTitle();
-        showSnackBar('$formTitle applied successfully', Colors.green);
         resetForm();
         Navigator.pushNamed(context, '/home');
-      } else {
-        showSnackBar(errorMessage ?? 'Request failed', Colors.red);
       }
     } catch (e) {
-      isLoading = false;
+      update(isLoading: false);
       notifyListeners();
       debugPrint("Error in submitLeaveForm: $e");
-      showSnackBar('Error submitting request: $e', Colors.red);
     }
   }
 
@@ -335,10 +301,10 @@ class LeaveViewModel extends ChangeNotifier {
     final response = await _repository.applyLeave(request);
     if (response.success == true) {
       successLeaveId = response.leaveId;
-      errorMessage = null;
+      update(errorMessage: null);
       return true;
     } else {
-      errorMessage = response.error;
+      update(errorMessage: response.error);
       debugPrint("Error applying leave: $errorMessage");
       successLeaveId = null;
       return false;
@@ -469,8 +435,7 @@ class LeaveViewModel extends ChangeNotifier {
   // MARK: - MANAGER FUNCTIONS
   /// FETCH PENDING LEAVES
   Future<void> fetchPendingLeaves() async {
-    isLoading = true;
-    errorMessage = null;
+    update(isLoading: true, errorMessage: null);
     notifyListeners();
     final userId = await _loadUserId();
     try {
@@ -479,9 +444,9 @@ class LeaveViewModel extends ChangeNotifier {
         _getAllPendingLeaves = leaves;
       }
     } catch (e) {
-      errorMessage = e.toString();
+      update(errorMessage: e.toString());
     } finally {
-      isLoading = false;
+      update(isLoading: false);
       notifyListeners();
     }
   }
@@ -494,7 +459,7 @@ class LeaveViewModel extends ChangeNotifier {
     required String comment,
   }) async {
     try {
-      isLoading = true;
+      update(isLoading: true, errorMessage: null);
       if (status.toLowerCase() == 'rejected') {
         isRejectLoading = true;
       } else {
@@ -528,7 +493,7 @@ class LeaveViewModel extends ChangeNotifier {
       processLeaveError = e.toString();
       return false;
     } finally {
-      isLoading = false;
+      update(isLoading: false);
       isApproveLoading = false;
       isRejectLoading = false;
       notifyListeners();
@@ -538,8 +503,7 @@ class LeaveViewModel extends ChangeNotifier {
   // MARK: - GET LEAVE BY ID
   Future<void> getLeaveById({required String leaveId}) async {
     try {
-      isLoading = true;
-      errorMessage = null;
+      update(isLoading: true, errorMessage: null);
       selectedLeaveById = null;
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -555,10 +519,10 @@ class LeaveViewModel extends ChangeNotifier {
 
       selectedLeaveById = result;
     } catch (e) {
-      errorMessage = e.toString();
+      update(errorMessage: e.toString());
       debugPrint("getLeaveById error: $errorMessage");
     } finally {
-      isLoading = false;
+      update(isLoading: false);
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         notifyListeners();
@@ -569,8 +533,7 @@ class LeaveViewModel extends ChangeNotifier {
   // MARK: SEND REMINDER FOR LEAVE
   Future<void> sendReminderForLeave({required String leaveId}) async {
     try {
-      isLoading = true;
-      errorMessage = null;
+      update(isLoading: true, errorMessage: null);
       reminderResponse = null;
       notifyListeners();
 
@@ -583,9 +546,8 @@ class LeaveViewModel extends ChangeNotifier {
 
       reminderResponse = response;
     } catch (e) {
-      errorMessage = e.toString();
+      update(isLoading: false, errorMessage: e.toString());
     } finally {
-      isLoading = false;
       notifyListeners();
     }
   }
@@ -593,8 +555,7 @@ class LeaveViewModel extends ChangeNotifier {
   // MARK: - ESCALATE LEAVE
   Future<void> escalateLeave({required String leaveId}) async {
     try {
-      isLoading = true;
-      errorMessage = null;
+      update(isLoading: true, errorMessage: null);
       escalateLeaveResponse = null;
       notifyListeners();
 
@@ -607,9 +568,8 @@ class LeaveViewModel extends ChangeNotifier {
 
       escalateLeaveResponse = response;
     } catch (e) {
-      errorMessage = e.toString();
+      update(isLoading: false, errorMessage: e.toString());
     } finally {
-      isLoading = false;
       notifyListeners();
     }
   }
@@ -617,8 +577,7 @@ class LeaveViewModel extends ChangeNotifier {
   // MARK: - CANCEL LEAVE
   Future<void> cancelLeave({required String leaveId}) async {
     try {
-      isLoading = true;
-      errorMessage = null;
+      update(isLoading: true, errorMessage: null);
       cancelLeaveResponse = null;
       notifyListeners();
 
@@ -631,9 +590,8 @@ class LeaveViewModel extends ChangeNotifier {
 
       cancelLeaveResponse = response;
     } catch (e) {
-      errorMessage = e.toString();
+      update(isLoading: false, errorMessage: e.toString());
     } finally {
-      isLoading = false;
       notifyListeners();
     }
   }
@@ -677,19 +635,6 @@ class LeaveViewModel extends ChangeNotifier {
         return 'WFH';
       default:
         return 'LEAVE';
-    }
-  }
-
-  String _getFormTitle() {
-    switch (currentFormType) {
-      case LeaveFormType.leave:
-        return 'Leave';
-      case LeaveFormType.extra:
-        return 'Extra Day';
-      case LeaveFormType.workFromHome:
-        return 'Work From Home';
-      default:
-        return 'Leave';
     }
   }
 
@@ -780,7 +725,7 @@ class LeaveViewModel extends ChangeNotifier {
     selectedDocuments.clear();
     uploadedDocumentUrls.clear();
     reasonController.clear();
-    errorMessage = null;
+    update(errorMessage: null);
     successLeaveId = null;
     notifyListeners();
   }

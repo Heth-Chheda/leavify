@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
-import 'package:leavify/features/User/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -307,48 +307,54 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
           Navigator.of(context).pop();
         }
       },
-      child: SafeArea(child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: SafeArea(
-              child: Consumer<LeaveViewModel>(
-                builder: (context, leaveViewModel, child) {
-                  return Stack(
-                    children: [
-                      // Main scrollable content
-                      SingleChildScrollView(
-                        padding: const EdgeInsets.all(20).copyWith(bottom: 100),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildStatsCards(isDark),
-                            const SizedBox(height: 30),
-                            _buildDateSelectionSection(leaveViewModel, isDark),
-                            const SizedBox(height: 24),
-                            _buildReasonSection(leaveViewModel, isDark),
-                            const SizedBox(height: 24),
-                            _buildDocumentsSection(leaveViewModel, isDark),
-                            const SizedBox(height: 100), // space for button
-                          ],
+      child: SafeArea(
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: SafeArea(
+                child: Consumer<LeaveViewModel>(
+                  builder: (context, leaveViewModel, child) {
+                    return Stack(
+                      children: [
+                        // Main scrollable content
+                        SingleChildScrollView(
+                          padding: const EdgeInsets.all(
+                            20,
+                          ).copyWith(bottom: 100),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildStatsCards(isDark),
+                              const SizedBox(height: 30),
+                              _buildDateSelectionSection(
+                                leaveViewModel,
+                                isDark,
+                              ),
+                              const SizedBox(height: 24),
+                              _buildReasonSection(leaveViewModel, isDark),
+                              const SizedBox(height: 24),
+                              _buildDocumentsSection(leaveViewModel, isDark),
+                              const SizedBox(height: 100), // space for button
+                            ],
+                          ),
                         ),
-                      ),
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: _buildSubmitButton(leaveViewModel, isDark),
-
-                      ),
-                    ],
-                  );
-                },
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: _buildSubmitButton(leaveViewModel, isDark),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ),
         ),
-      )),
+      ),
     );
   }
 
@@ -862,88 +868,88 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
   // MARK: - SUBMIT BUTTON
   Widget _buildSubmitButton(LeaveViewModel leaveViewModel, bool isDark) {
     return Padding(
-        padding: EdgeInsets.all(16),
-    child: Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: leaveViewModel.isLoading
-            ? LinearGradient(
-          colors: [
-            AppColors.highlightBlue.withOpacity(0.6),
-            AppColors.highlightPink.withOpacity(0.6),
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        )
-            : const LinearGradient(
-          colors: [AppColors.highlightBlue, AppColors.highlightPink],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+      padding: EdgeInsets.all(16),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        width: double.infinity,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: leaveViewModel.isLoading
+              ? LinearGradient(
+                  colors: [
+                    AppColors.highlightBlue.withOpacity(0.6),
+                    AppColors.highlightPink.withOpacity(0.6),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                )
+              : const LinearGradient(
+                  colors: [AppColors.highlightBlue, AppColors.highlightPink],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: leaveViewModel.isLoading
+              ? []
+              : [
+                  BoxShadow(
+                    color: AppColors.highlightBlue.withOpacity(0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: leaveViewModel.isLoading
-            ? []
-            : [
-          BoxShadow(
-            color: AppColors.highlightBlue.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+        child: ElevatedButton(
+          onPressed: leaveViewModel.isLoading
+              ? null
+              : () => leaveViewModel.submitLeaveForm(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: leaveViewModel.isLoading
-            ? null
-            : () => leaveViewModel.submitLeaveForm(context, _showSnackBar),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child: leaveViewModel.isLoading
-            ? Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Submitting...',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withOpacity(0.8),
-              ),
-            ),
-          ],
-        )
-            : Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Apply',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Text('🚀', style: TextStyle(fontSize: 16)),
-          ],
+          child: leaveViewModel.isLoading
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Submitting...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Apply',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text('🚀', style: TextStyle(fontSize: 16)),
+                  ],
+                ),
         ),
       ),
-    ),
     );
   }
 }
