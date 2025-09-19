@@ -4,7 +4,7 @@ import 'package:leavify/features/User/components/ApplyLeave/custom_calendar_comp
 import 'package:leavify/features/User/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
-import 'package:leavify/features/User/viewmodel/profile_view_model.dart';
+import 'package:leavify/features/profile/viewmodel/profile_view_model.dart';
 import 'package:provider/provider.dart';
 
 class LeaveDetailScreen extends StatefulWidget {

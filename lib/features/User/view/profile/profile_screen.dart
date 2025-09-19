@@ -7,7 +7,7 @@ import 'package:leavify/features/Authentication/domain/response/get_user_summary
 import 'package:leavify/features/User/components/profile/info_card.dart';
 import 'package:leavify/features/User/components/profile/profile_avatar.dart';
 import 'package:leavify/features/User/components/profile/section_header.dart';
-import 'package:leavify/features/User/viewmodel/profile_view_model.dart';
+import 'package:leavify/features/profile/viewmodel/profile_view_model.dart';
 import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatefulWidget {
