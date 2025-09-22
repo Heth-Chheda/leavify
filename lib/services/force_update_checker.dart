@@ -50,7 +50,6 @@ class _ForceUpdateWrapperState extends State<ForceUpdateWrapper> {
       }
     } catch (e) {
       // If there's an error checking for updates, allow the app to continue
-      print('Error checking for updates: $e');
     }
   }
 
@@ -181,10 +180,8 @@ class UpdateDialog extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Launch App Store / Play Store link
                         // You can use `url_launcher` like:
                         // launchUrl(Uri.parse('https://your-app-store-link'));
-                        print('Redirecting to app store...');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,

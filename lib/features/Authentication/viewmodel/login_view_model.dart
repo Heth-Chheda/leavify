@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
-import 'package:leavify/core/utils/components/app_snackbar.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/request/login_request.dart';
-import 'package:leavify/features/User/viewmodel/home_view_model.dart';
-import 'package:provider/provider.dart';
+import 'package:leavify/router/app_navigator.dart';
+import 'package:leavify/router/route_names.dart';
 
-class LoginViewModel extends ChangeNotifier {
+class LoginViewModel extends BaseViewModel {
   final usernameController = TextEditingController(text: '');
   final passwordController = TextEditingController(text: '');
 
   final AuthenticationRepository _authenticationRepository =
       AuthenticationRepository();
-
-  bool isLoading = false;
 
   Future<void> login(BuildContext context) async {
     final password = passwordController.text.trim();
@@ -39,7 +37,7 @@ class LoginViewModel extends ChangeNotifier {
     //   return;
     // }
 
-    isLoading = true;
+    update(isLoading: true);
     notifyListeners();
 
     final fcmToken = await AppStorage.getString('USER_FCM_TOKEN');
@@ -63,13 +61,13 @@ class LoginViewModel extends ChangeNotifier {
       // logins only
       await _authenticationRepository.login(loginRequest);
       if (!context.mounted) return;
-      AppToast.showSuccess('Login successful!');
-      Navigator.pushNamed(context, '/home');
+      AppNavigator.setRootView(RouteNames.home);
+      showSuccess(context, "Login successful");
     } catch (e) {
       debugPrint("Login error: $e");
-      AppToast.showError('Login failed!');
+      showError(context, 'Login error: $e');
     } finally {
-      isLoading = false;
+      update(isLoading: false);
       notifyListeners();
     }
   }

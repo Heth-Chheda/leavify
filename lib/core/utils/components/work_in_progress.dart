@@ -21,7 +21,6 @@ class _WorkInProgressScreenState extends State<WorkInProgressScreen>
   late Animation<double> _mainRotation;
   late Animation<double> _orbitRotation;
   late Animation<double> _pulseAnimation;
-  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
@@ -55,11 +54,6 @@ class _WorkInProgressScreenState extends State<WorkInProgressScreen>
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeIn));
 
     // Start animations
     _mainController.repeat();

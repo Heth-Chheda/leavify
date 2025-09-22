@@ -61,8 +61,11 @@ class AppStorage {
 
   static Future<void> _ensureInitialized() async {
     // Just to safeguard against accidental use without init
-    if (!(_prefs is SharedPreferences)) {
-      _prefs = await SharedPreferences.getInstance();
+    // ignore: unnecessary_null_comparison
+    if (_prefs == null) {
+      throw Exception(
+        "AppStorage not initialized. Call AppStorage.init() first.",
+      );
     }
   }
 
