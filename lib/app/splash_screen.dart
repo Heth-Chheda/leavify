@@ -25,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
         setState(() {}); // refresh after init
         _controller.play();
         _controller.setVolume(0.0);
-        _controller.setPlaybackSpeed(5.0);
+        _controller.setPlaybackSpeed(10.0);
 
         Future.delayed(_controller.value.duration, () {
           if (mounted) _navigateNext();

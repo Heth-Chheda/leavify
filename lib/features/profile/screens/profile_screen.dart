@@ -42,7 +42,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
 
         if (mounted) {
-          context.read<ProfileViewModel>().loadUserLeaves(user!.id);
+          final viewModel = Provider.of<ProfileViewModel?>(
+            context,
+            listen: false,
+          );
+          viewModel?.loadUserLeaves(user!.id);
         }
       } else {
         setState(() {
@@ -174,77 +178,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 width: double.infinity,
                 color: theme.scaffoldBackgroundColor,
-                child: Consumer<ProfileViewModel>(
-                  builder: (context, viewModel, child) {
-                    return Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Personal Information Section
-                          const SectionHeader(title: 'Personal Information'),
-                          const SizedBox(height: 16),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Personal Information Section
+                      const SectionHeader(title: 'Personal Information'),
+                      const SizedBox(height: 16),
 
-                          InfoCard(
-                            icon: Icons.email_outlined,
-                            title: 'Email Address',
-                            value: user!.email,
-                            iconColor: Colors.blue[600],
-                          ),
-                          const SizedBox(height: 12),
-
-                          InfoCard(
-                            icon: Icons.phone_outlined,
-                            title: 'Mobile Number',
-                            value: user!.mobile,
-                            iconColor: Colors.green[600],
-                          ),
-                          const SizedBox(height: 12),
-
-                          InfoCard(
-                            icon: Icons.calendar_today_outlined,
-                            title: 'Joining Date',
-                            value: _formatJoiningDate(user!.joiningDate),
-                            iconColor: Colors.purple[600],
-                          ),
-
-                          const SizedBox(height: 30),
-
-                          // Work Information Section
-                          const SectionHeader(title: 'Work Information'),
-                          const SizedBox(height: 16),
-
-                          if (user!.reportingTo.isNotEmpty) ...[
-                            InfoCard(
-                              icon: Icons.supervisor_account_outlined,
-                              title: 'Reporting To',
-                              value: user!.reportingTo.join(', '),
-                              iconColor: Colors.orange[600],
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-
-                          if (user!.projectList.isNotEmpty) ...[
-                            InfoCard(
-                              icon: Icons.work_outline,
-                              title: 'Projects',
-                              value: user!.projectList.join(', '),
-                              iconColor: Colors.teal[600],
-                            ),
-                            const SizedBox(height: 30),
-                          ],
-
-                          // Leave Information Section
-                          const SectionHeader(title: 'My Leaves'),
-                          const SizedBox(height: 16),
-
-                          _buildLeaveSection(viewModel, theme),
-
-                          const SizedBox(height: 20),
-                        ],
+                      InfoCard(
+                        icon: Icons.email_outlined,
+                        title: 'Email Address',
+                        value: user!.email,
+                        iconColor: Colors.blue[600],
                       ),
-                    );
-                  },
+                      const SizedBox(height: 12),
+
+                      InfoCard(
+                        icon: Icons.phone_outlined,
+                        title: 'Mobile Number',
+                        value: user!.mobile,
+                        iconColor: Colors.green[600],
+                      ),
+                      const SizedBox(height: 12),
+
+                      InfoCard(
+                        icon: Icons.calendar_today_outlined,
+                        title: 'Joining Date',
+                        value: _formatJoiningDate(user!.joiningDate),
+                        iconColor: Colors.purple[600],
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // Work Information Section
+                      const SectionHeader(title: 'Work Information'),
+                      const SizedBox(height: 16),
+
+                      if (user!.reportingTo.isNotEmpty) ...[
+                        InfoCard(
+                          icon: Icons.supervisor_account_outlined,
+                          title: 'Reporting To',
+                          value: user!.reportingTo.join(', '),
+                          iconColor: Colors.orange[600],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      if (user!.projectList.isNotEmpty) ...[
+                        InfoCard(
+                          icon: Icons.work_outline,
+                          title: 'Projects',
+                          value: user!.projectList.join(', '),
+                          iconColor: Colors.teal[600],
+                        ),
+                        const SizedBox(height: 30),
+                      ],
+
+                      // Leave Information Section
+                      const SectionHeader(title: 'My Leaves'),
+                      const SizedBox(height: 16),
+
+                      _buildLeaveSection(
+                        Provider.of<ProfileViewModel>(
+                          context,
+                        ), // 👈 direct access
+                        theme,
+                      ),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -531,7 +536,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (result == true && mounted) {
-      context.read<ProfileViewModel>().loadUserLeaves(user!.id);
+      final viewModel = Provider.of<ProfileViewModel>(context, listen: false);
+      viewModel.loadUserLeaves(user!.id);
     }
   }
 

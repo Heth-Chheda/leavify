@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:leavify/features/Home/screens/home_screen.dart';
-import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:provider/provider.dart';
 import 'package:leavify/router/route_names.dart';
 
@@ -18,20 +17,20 @@ import 'package:leavify/features/Authentication/viewmodel/login_view_model.dart'
 /// Wraps the entire flow with a single LoginViewModel instance.
 class AuthenticationRouter {
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    final Widget? screen = _buildAuthFlow(settings);
+    if (screen == null) return null;
+
     return MaterialPageRoute(
       builder: (_) => MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => LoginViewModel()),
-          ChangeNotifierProvider(create: (_) => HomeViewModel()..initialize()),
-        ],
-        child: _buildAuthFlow(settings),
+        providers: [ChangeNotifierProvider(create: (_) => LoginViewModel())],
+        child: screen,
       ),
       settings: settings,
     );
   }
 
   /// Builds the actual screen for the route
-  static Widget _buildAuthFlow(RouteSettings settings) {
+  static Widget? _buildAuthFlow(RouteSettings settings) {
     switch (settings.name) {
       case RouteNames.login:
         return const LoginPage();
@@ -45,17 +44,9 @@ class AuthenticationRouter {
       //
       // case RouteNames.forgotPassword:
       //   return const ForgotPasswordScreen();
-    }
 
-    // Fallback for unknown auth routes
-    return Scaffold(
-      body: Center(
-        child: Text(
-          '❌ Unknown Authentication Route: ${settings.name}',
-          style: const TextStyle(color: Colors.red, fontSize: 16),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
+      default:
+        return null;
+    }
   }
 }

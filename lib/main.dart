@@ -4,6 +4,7 @@ import 'package:leavify/app/app.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/config/app_environment.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/services/fcm_service.dart';
 import 'package:provider/provider.dart';
 
@@ -17,7 +18,10 @@ void main() async {
   await FCMService.initialize();
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => BaseViewModel())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => BaseViewModel()),
+        ChangeNotifierProvider(create: (_) => HomeViewModel()..initialize()),
+      ],
       child: const MyApp(),
     ),
   );

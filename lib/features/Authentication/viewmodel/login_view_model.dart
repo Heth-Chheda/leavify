@@ -58,8 +58,11 @@ class LoginViewModel extends BaseViewModel {
         loginType: 'EMAIL',
         fcmToken: fcmToken,
       );
+      showInfo(context, '$loginRequest');
       // logins only
-      await _authenticationRepository.login(loginRequest);
+      // await _authenticationRepository.login(loginRequest);
+
+      await Future.delayed(const Duration(milliseconds: 500));
       if (!context.mounted) return;
       AppNavigator.setRootView(RouteNames.home);
       showSuccess(context, "Login successful");

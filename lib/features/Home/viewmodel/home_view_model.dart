@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/dummydata/announcement/announcement.dart';
+import 'package:leavify/dummydata/users/balance_leaves.dart';
+import 'package:leavify/dummydata/users/employer.dart';
+import 'package:leavify/dummydata/users/manager.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
@@ -56,8 +60,9 @@ class HomeViewModel extends ChangeNotifier {
       notifyListeners();
 
       // Replace with actual user ID (ideally get from AppStorage or token decoding)
-      final userId = await AppStorage.getString("USER_ID") ?? "";
-      final response = await _authenticationRepository.getUserSummary(userId);
+      // final userId = await AppStorage.getString("USER_ID") ?? "";
+      // final response = await _authenticationRepository.getUserSummary(userId);
+      final response = dummyManagerData;
 
       _homeData = response;
       await AppStorage.saveObject("user_details", response.toJson());
@@ -88,10 +93,11 @@ class HomeViewModel extends ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      final userId = await AppStorage.getString("USER_ID") ?? "";
-      final result = await _authenticationRepository.getLeaveBalance(
-        userId: userId,
-      );
+      // final userId = await AppStorage.getString("USER_ID") ?? "";
+      // final result = await _authenticationRepository.getLeaveBalance(
+      //   userId: userId,
+      // );
+      final result = dummyBalanceData;
 
       // Update from API response
       _leaveBalance = result.balance ?? 0;
@@ -104,13 +110,15 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
+  // MARK: - FETCH ANNOUNCEMENTS
   Future<void> _fetchAnnouncements() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _announcements = await _authenticationRepository.getAnnouncements();
+      // _announcements = await _authenticationRepository.getAnnouncements();
+      _announcements = dummyAnnouncements;
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -119,6 +127,7 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
+  // MARK: REFRESH
   Future<void> refresh() async {
     await _loadUserSummaryFromApi();
     await _fetchAnnouncements();

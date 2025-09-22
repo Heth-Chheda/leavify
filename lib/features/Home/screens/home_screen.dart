@@ -61,18 +61,20 @@ class _HomeScreenState extends State<HomeScreen> {
           break;
         case 1:
           // Analytics - navigate to new screen
-          Navigator.pushNamed(context, '/pending');
+          // Navigator.pushNamed(context, '/pending');
           break;
         case 2:
           // Add Leave - navigate to new screen
-          Navigator.pushNamed(context, '/apply-leave');
+          // Navigator.pushNamed(context, '/apply-leave');
+          AppNavigator.navigateTo(RouteNames.applyLeave);
           break;
         case 3:
           Navigator.pushNamed(context, '/analytics');
           break;
         case 4:
           // Pending - navigate to new screen
-          Navigator.pushNamed(context, '/profile');
+          // Navigator.pushNamed(context, '/profile');
+          AppNavigator.navigateTo(RouteNames.profile);
           break;
       }
     } else {
@@ -86,11 +88,13 @@ class _HomeScreenState extends State<HomeScreen> {
           break;
         case 1:
           // Add Leave - navigate to new screen
-          Navigator.pushNamed(context, '/apply-leave');
+          // Navigator.pushNamed(context, '/apply-leave');
+          AppNavigator.navigateTo(RouteNames.applyLeave);
           break;
         case 2:
           // History - navigate to new screen
-          Navigator.pushNamed(context, '/profile');
+          // Navigator.pushNamed(context, '/profile');
+          AppNavigator.navigateTo(RouteNames.profile);
           break;
       }
     }
