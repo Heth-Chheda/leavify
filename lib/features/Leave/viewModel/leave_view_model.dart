@@ -7,9 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/dummydata/leave/dummy_team_users.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/custom_calendar_component.dart';
+import 'package:leavify/features/Leave/models/general/request_for_user.dart';
 import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/Leave/models/response/send_reminder_response.dart';
@@ -75,9 +77,16 @@ class LeaveViewModel extends BaseViewModel {
 
   GeneralResponse? cancelLeaveResponse;
 
+  // MARK: REQEUSTED FOR
+  bool isReqeustedFor = false;
+  List<RequestForUser> teamUsers =
+      []; // TODO: WE WILL BE GETTING THIS FROM THE API.
+
   // MARK: - INITIALIZATION
   void initializeForm(LeaveFormType formType) {
     currentFormType = formType;
+    // TODO: FOR NOW INITIALISING THE TEAM USERS WITH DUMMY DATA, BUT AFTER THE API CALL FFED THE RESPONSE WITH THE LIST.
+    teamUsers = dummyTeamUsers;
     _resetFormState();
   }
 
