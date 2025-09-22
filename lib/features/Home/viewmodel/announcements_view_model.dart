@@ -1,12 +1,12 @@
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
-import 'package:leavify/features/User/data/user_repository.dart';
-import 'package:leavify/features/User/domain/request/add_announcement_request.dart';
+import 'package:leavify/features/Leave/models/request/add_announcement_request.dart';
+import 'package:leavify/features/Profile/data/profile_repository.dart';
 import 'package:leavify/models/general_response.dart';
 
 class AnnouncementViewModel extends BaseViewModel {
-  final UserRepository _repository = UserRepository();
+  final ProfileRepository _repository = ProfileRepository();
 
   GeneralResponse? latestAnnouncement;
 

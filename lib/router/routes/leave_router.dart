@@ -5,13 +5,13 @@ import 'package:provider/provider.dart';
 import 'package:leavify/router/route_names.dart';
 
 // Screens
-import 'package:leavify/features/User/view/ApplyLeave/apply_leave_screen.dart';
-import 'package:leavify/features/User/components/profile/leave_detail_screeen.dart';
-import 'package:leavify/features/User/view/manager/PendingRequests/pending_requests_screen.dart';
-import 'package:leavify/features/User/components/manager/pending_request_detail_screen.dart';
+import 'package:leavify/features/Leave/screen/ApplyLeave/apply_leave_screen.dart';
+import 'package:leavify/features/Profile/components/leave_detail_screeen.dart';
+import 'package:leavify/features/Leave/screen/manager/PendingRequests/pending_requests_screen.dart';
+import 'package:leavify/features/Leave/components/manager/pending_request_detail_screen.dart';
 
 // ViewModel
-import 'package:leavify/features/User/viewmodel/leave_view_model.dart';
+import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 
 /// Router dedicated to Leave flow.
 /// Wraps the entire flow with a single LeaveViewModel instance.

@@ -9,13 +9,13 @@ import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
-import 'package:leavify/features/User/components/ApplyLeave/custom_calendar_component.dart';
-import 'package:leavify/features/User/domain/response/get_leave_by_id_response.dart';
-import 'package:leavify/features/User/domain/response/send_reminder_response.dart';
+import 'package:leavify/features/Leave/components/ApplyLeave/custom_calendar_component.dart';
+import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
+import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
+import 'package:leavify/features/Leave/models/response/send_reminder_response.dart';
 import 'package:leavify/models/general_response.dart';
 
 import '../data/leave_repository.dart';
-import '../domain/request/apply_leave_request_model.dart';
 
 enum LeaveFormType { leave, extra, workFromHome }
 

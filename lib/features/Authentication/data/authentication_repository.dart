@@ -3,8 +3,8 @@ import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Authentication/domain/response/login_response.dart';
-import 'package:leavify/features/User/domain/response/get_announcements_response.dart';
-import 'package:leavify/features/User/domain/response/get_working_days_response.dart';
+import 'package:leavify/features/Leave/models/response/get_announcements_response.dart';
+import 'package:leavify/features/Leave/models/response/get_working_days_response.dart';
 
 import '../domain/request/login_request.dart';
 

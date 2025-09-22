@@ -1,4 +1,4 @@
-import 'package:leavify/features/User/domain/models/leave_document.dart';
+import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
 
 class EditLeaveRequest {
   final String leaveId;

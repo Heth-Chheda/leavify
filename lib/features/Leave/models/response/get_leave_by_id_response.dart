@@ -1,4 +1,4 @@
-import 'package:leavify/features/User/domain/models/leave_document.dart';
+import 'package:leavify/features/Leave/models/general/leave_document.dart';
 
 class GetLeaveByIdResponse {
   final String userId;

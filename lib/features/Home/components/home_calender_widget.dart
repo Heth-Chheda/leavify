@@ -1,7 +1,7 @@
 // calendar_widget.dart
 import 'package:flutter/material.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
-import 'package:leavify/features/User/components/calendar/week_calendar_view.dart';
+import 'package:leavify/features/Leave/components/calendar/week_calendar_view.dart';
 
 class HomeCalendarWidget extends StatefulWidget {
   final Function(DateTime?)? onDateSelected;

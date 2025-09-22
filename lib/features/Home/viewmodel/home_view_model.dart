@@ -3,7 +3,7 @@ import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
-import 'package:leavify/features/User/domain/response/get_announcements_response.dart';
+import 'package:leavify/features/Leave/models/response/get_announcements_response.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final AuthenticationRepository _authenticationRepository =

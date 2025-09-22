@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
-import 'package:leavify/features/User/data/leave_repository.dart';
-import 'package:leavify/features/User/data/user_repository.dart';
-import 'package:leavify/features/User/domain/models/leave_document.dart';
-import 'package:leavify/features/User/domain/models/my_leaves.dart';
+import 'package:leavify/features/Leave/data/leave_repository.dart';
+import 'package:leavify/features/Leave/models/general/leave_document.dart';
+import 'package:leavify/features/Leave/models/general/my_leaves.dart';
+import 'package:leavify/features/Profile/data/profile_repository.dart';
 
 enum ProfileViewState { loading, success, error }
 
 class ProfileViewModel extends ChangeNotifier {
   final LeaveRepository _repository = LeaveRepository();
-  final UserRepository _userRepository = UserRepository();
+  final ProfileRepository _userRepository = ProfileRepository();
 
   ProfileViewState _state = ProfileViewState.loading;
   LeaveData? _leaveData;
