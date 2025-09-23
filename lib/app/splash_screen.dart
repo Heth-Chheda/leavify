@@ -20,16 +20,19 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
 
     // 1. Prepare video
-    _controller = VideoPlayerController.asset("lib/assets/splash.mp4")
+    _controller = VideoPlayerController.asset("lib/assets/splash2.mp4")
       ..initialize().then((_) {
         setState(() {}); // refresh after init
         _controller.play();
         _controller.setVolume(0.0);
-        _controller.setPlaybackSpeed(10.0);
+        _controller.setPlaybackSpeed(2.0);
 
-        Future.delayed(_controller.value.duration, () {
-          if (mounted) _navigateNext();
-        });
+        Future.delayed(
+          _controller.value.duration - const Duration(seconds: 1),
+          () {
+            if (mounted) _navigateNext();
+          },
+        );
       });
   }
 

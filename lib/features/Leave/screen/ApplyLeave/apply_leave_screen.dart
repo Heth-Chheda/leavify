@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Leave/models/general/request_for_user.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -338,6 +339,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                               _buildReasonSection(leaveViewModel, isDark),
                               const SizedBox(height: 24),
                               _buildDocumentsSection(leaveViewModel, isDark),
+                              const SizedBox(height: 24),
+                              _buildRequestedForToggle(leaveViewModel, isDark),
                               const SizedBox(height: 100), // space for button
                             ],
                           ),
@@ -442,7 +445,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                 Text(
                   '$title : ',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: isDark
                         ? Colors.white70
                         : Colors.black.withOpacity(0.6),
@@ -562,6 +565,81 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showUserPicker(BuildContext context, List<RequestForUser> users) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return ListView.separated(
+          shrinkWrap: true,
+          itemCount: users.length,
+          separatorBuilder: (context, index) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Container(height: 1, color: Colors.grey),
+          ),
+          itemBuilder: (context, index) {
+            final user = users[index];
+            return ListTile(
+              title: Text(user.name),
+              onTap: () {
+                Navigator.pop(context);
+                // TODO: HERE WE HAVE SELECT THE NAME OF THE EMPLOYEE WHICH THE MANAGER WANTS TO APPLY THE LEAVE FOR.
+                // TODO: TASKS TO BE COMPLETED:
+                /*
+                1. THE SHOULD REFLECT ON THE BUTTON
+                2. ON SELECTING THE NAME, AND WHEN WE APPLY THE FORM
+                WE WOULD NEED THE USERID TO BE SENT IN THE REQUEST.
+                */
+                // do something with selected user
+                debugPrint("Selected: ${user.name}");
+                // maybe call _navigateNext(user);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRequestedForToggle(LeaveViewModel leaveViewModel, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(
+          'Leave on behalf',
+          isDark,
+          iconColor: AppColors.highlightTeal,
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              _showUserPicker(context, leaveViewModel.teamUsers);
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: const Color.fromARGB(255, 243, 13, 116),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
+            ),
+            child: const Text(
+              "Request For",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -691,7 +769,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
         _buildSectionTitle(
           'Documents',
           isDark,
-          iconColor: AppColors.highlightGreen,
+          iconColor: const Color.fromARGB(255, 217, 0, 255),
         ),
         const SizedBox(height: 8),
         GestureDetector(
@@ -728,7 +806,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.highlightGreen,
+                    color: const Color.fromARGB(255, 201, 9, 253),
                   ),
                 ),
                 Text(
