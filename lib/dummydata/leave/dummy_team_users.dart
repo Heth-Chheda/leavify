@@ -1,29 +1,34 @@
-import 'package:leavify/features/Leave/models/general/request_for_user.dart';
+import 'package:leavify/features/Leave/models/response/reportee_response.dart';
 
-List<RequestForUser> dummyTeamUsers = [
-  RequestForUser(
-    userId: 'u101',
-    name: 'Alice Johnson',
-    profileImageUrl: 'https://randomuser.me/api/portraits/women/1.jpg',
+List<Reportee> dummyTeamUsers = [
+  Reportee(
+    fName: 'Alice',
+    lName: 'Johnson',
+    profileImagePath: 'https://randomuser.me/api/portraits/women/1.jpg',
+    id: 'u101',
   ),
-  RequestForUser(
-    userId: 'u102',
-    name: 'Bob Smith',
-    profileImageUrl: 'https://randomuser.me/api/portraits/men/2.jpg',
+  Reportee(
+    fName: 'Bob',
+    lName: 'Smith',
+    profileImagePath: 'https://randomuser.me/api/portraits/men/2.jpg',
+    id: 'u102',
   ),
-  RequestForUser(
-    userId: 'u103',
-    name: 'Carol Davis',
-    profileImageUrl: 'https://randomuser.me/api/portraits/women/3.jpg',
+  Reportee(
+    fName: 'Carol',
+    lName: 'Davis',
+    profileImagePath: 'https://randomuser.me/api/portraits/women/3.jpg',
+    id: 'u103',
   ),
-  RequestForUser(
-    userId: 'u104',
-    name: 'David Lee',
-    profileImageUrl: 'https://randomuser.me/api/portraits/men/4.jpg',
+  Reportee(
+    fName: 'David',
+    lName: 'Lee',
+    profileImagePath: 'https://randomuser.me/api/portraits/men/4.jpg',
+    id: 'u104',
   ),
-  RequestForUser(
-    userId: 'u105',
-    name: 'Eva Martinez',
-    profileImageUrl: 'https://randomuser.me/api/portraits/women/5.jpg',
+  Reportee(
+    fName: 'Eva',
+    lName: 'Martinez',
+    profileImagePath: 'https://randomuser.me/api/portraits/women/5.jpg',
+    id: 'u105',
   ),
 ];

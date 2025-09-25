@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/features/Leave/data/leave_repository.dart';
 import 'package:leavify/features/Leave/models/general/leave_document.dart';
 import 'package:leavify/features/Leave/models/general/my_leaves.dart';
@@ -6,25 +6,20 @@ import 'package:leavify/features/Profile/data/profile_repository.dart';
 
 enum ProfileViewState { loading, success, error }
 
-class ProfileViewModel extends ChangeNotifier {
+class ProfileViewModel extends BaseViewModel {
   final LeaveRepository _repository = LeaveRepository();
   final ProfileRepository _userRepository = ProfileRepository();
 
   ProfileViewState _state = ProfileViewState.loading;
   LeaveData? _leaveData;
-  String? _errorMessage;
   bool _isEditMode = false;
-  bool _isLoading = false;
-
-  bool get isLoading => _isLoading;
   bool get isEditMode => _isEditMode;
   ProfileViewState get state => _state;
   LeaveData? get leaveData => _leaveData;
-  String? get errorMessage => _errorMessage;
 
   void toggleEditMode() {
     _isEditMode = !_isEditMode;
-    _errorMessage = null;
+    update(errorMessage: null);
     notifyListeners();
   }
 
@@ -36,7 +31,7 @@ class ProfileViewModel extends ChangeNotifier {
       _leaveData = await _repository.getUserLeaves(userId);
       _setState(ProfileViewState.success);
     } catch (e) {
-      _errorMessage = e.toString();
+      update(errorMessage: e.toString());
       _setState(ProfileViewState.error);
     }
   }
@@ -62,8 +57,7 @@ class ProfileViewModel extends ChangeNotifier {
     List<DateTime>? compDates,
     List<LeaveDocument>? documents,
   }) async {
-    _isLoading = true;
-    _errorMessage = null;
+    update(isLoading: true, errorMessage: null);
     notifyListeners();
 
     try {
@@ -103,8 +97,10 @@ class ProfileViewModel extends ChangeNotifier {
       );
 
       if (!hasUpdates) {
-        _errorMessage = 'At least one field must be updated';
-        _isLoading = false;
+        update(
+          errorMessage: 'At least one field must be updated',
+          isLoading: false,
+        );
         notifyListeners();
         return false;
       }
@@ -116,13 +112,12 @@ class ProfileViewModel extends ChangeNotifier {
       }
 
       _isEditMode = false;
-      _isLoading = false;
+      update(isLoading: false);
       notifyListeners();
       return true;
       // return success;
     } catch (e) {
-      _errorMessage = e.toString();
-      _isLoading = false;
+      update(errorMessage: e.toString(), isLoading: false);
       notifyListeners();
       return false;
     }
@@ -130,8 +125,7 @@ class ProfileViewModel extends ChangeNotifier {
 
   // MARK: UPLOAD PROFILE IMAGE
   Future<bool> uploadProfileImage(String imagePath) async {
-    _isLoading = true;
-    _errorMessage = null;
+    update(isLoading: true, errorMessage: null);
     notifyListeners();
 
     try {
@@ -139,7 +133,7 @@ class ProfileViewModel extends ChangeNotifier {
         profileImagePath: imagePath,
       );
 
-      _isLoading = false;
+      update(isLoading: false);
       notifyListeners();
 
       if (result.success == true) {
@@ -149,15 +143,9 @@ class ProfileViewModel extends ChangeNotifier {
         throw Exception(result.message ?? "Failed to update profile image");
       }
     } catch (e) {
-      _errorMessage = e.toString();
-      _isLoading = false;
+      update(errorMessage: e.toString(), isLoading: false);
       notifyListeners();
       return false;
     }
-  }
-
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
   }
 }

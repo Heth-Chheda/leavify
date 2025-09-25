@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
-import 'package:leavify/features/Leave/models/general/request_for_user.dart';
+import 'package:leavify/features/Leave/models/response/reportee_response.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -572,7 +572,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     );
   }
 
-  void _showUserPicker(BuildContext context, List<RequestForUser> users) {
+  void _showUserPicker(
+    BuildContext context,
+    List<Reportee> users,
+    LeaveViewModel leaveViewModel,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -589,7 +593,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
           itemBuilder: (context, index) {
             final user = users[index];
             return ListTile(
-              title: Text(user.name),
+              title: Text('${user.fName} ${user.lName}'),
               onTap: () {
                 Navigator.pop(context);
                 // TODO: HERE WE HAVE SELECT THE NAME OF THE EMPLOYEE WHICH THE MANAGER WANTS TO APPLY THE LEAVE FOR.
@@ -598,9 +602,14 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                 1. THE SHOULD REFLECT ON THE BUTTON
                 2. ON SELECTING THE NAME, AND WHEN WE APPLY THE FORM
                 WE WOULD NEED THE USERID TO BE SENT IN THE REQUEST.
+                3. WHAT WE NEED TO DO IS THAT IN THE REQUESTEDBY WE WILL HAVE THE MANAGER'S USER ID AND IN THE USER ID WE WILL HAVE THE USER'S ID FOR WHOM WE NEED TO APPLY LEAVE FOR.
                 */
                 // do something with selected user
-                debugPrint("Selected: ${user.name}");
+                leaveViewModel.selectedUser = user;
+                debugPrint("Selected: ${user.fName} ${user.lName}");
+                debugPrint(
+                  "Selected: ${leaveViewModel.selectedUser?.fName} ${leaveViewModel.selectedUser?.lName}",
+                );
                 // maybe call _navigateNext(user);
               },
             );
@@ -624,7 +633,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              _showUserPicker(context, leaveViewModel.teamUsers);
+              _showUserPicker(
+                context,
+                leaveViewModel.teamUsers,
+                leaveViewModel,
+              );
             },
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -633,9 +646,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                 borderRadius: BorderRadius.all(Radius.circular(16)),
               ),
             ),
-            child: const Text(
-              "Request For",
-              style: TextStyle(
+            child: Text(
+              leaveViewModel.selectedUser != null
+                  ? 'Requested for ${leaveViewModel.selectedUser!.fName} ${leaveViewModel.selectedUser!.lName}'
+                  : 'Request For',
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,

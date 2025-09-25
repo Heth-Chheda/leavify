@@ -5,6 +5,7 @@ import 'package:leavify/features/Leave/models/general/my_leaves.dart';
 import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
 import 'package:leavify/features/Leave/models/response/apply_leave_response_model.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
+import 'package:leavify/features/Leave/models/response/reportee_response.dart';
 import 'package:leavify/features/Leave/models/response/send_reminder_response.dart';
 import 'package:leavify/models/general_response.dart';
 
@@ -113,6 +114,15 @@ class LeaveRepository extends BaseRepository {
         final List<dynamic> data = json['leaves'] ?? [];
         return data.map((e) => GetAllResponse.fromJson(e)).toList();
       },
+    );
+  }
+
+  // MARK: GET REPORTEES
+  Future<ReporteesResponse> getReprtees({required String userId}) async {
+    return await performRequest(
+      url: ApiEndpoints.getReportees,
+      method: HttpMethod.post,
+      fromJson: ReporteesResponse.fromJson,
     );
   }
 
