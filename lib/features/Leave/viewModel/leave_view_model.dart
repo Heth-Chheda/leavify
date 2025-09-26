@@ -83,9 +83,11 @@ class LeaveViewModel extends BaseViewModel {
   Reportee? _selectedUser;
   Reportee? get selectedUser => _selectedUser;
 
+  // MARK: LEAVE TYPE
+  String? selectedLeaveType;
+
   // MARK: - INITIALIZATION
-  void initializeForm(LeaveFormType formType) {
-    currentFormType = formType;
+  void initializeForm() {
     // TODO: FOR NOW INITIALISING THE TEAM USERS WITH DUMMY DATA, BUT AFTER THE API CALL FFED THE RESPONSE WITH THE LIST.
     teamUsers = dummyTeamUsers;
     _resetFormState();
@@ -361,7 +363,7 @@ class LeaveViewModel extends BaseViewModel {
         ? ApplyLeaveRequestModel(
             userId: _selectedUser!.id,
             requestedBy: userId,
-            type: _getLeaveType(),
+            type: selectedLeaveType?.toUpperCase() ?? 'LEAVE',
             fromDate: adjustedRange['from']!.toUtc().toIso8601String(),
             toDate: adjustedRange['to']!.toUtc().toIso8601String(),
             reason: reasonController.text.trim(),
@@ -372,7 +374,7 @@ class LeaveViewModel extends BaseViewModel {
           )
         : ApplyLeaveRequestModel(
             userId: userId,
-            type: _getLeaveType(),
+            type: selectedLeaveType?.toUpperCase() ?? 'LEAVE',
             fromDate: adjustedRange['from']!.toUtc().toIso8601String(),
             toDate: adjustedRange['to']!.toUtc().toIso8601String(),
             reason: reasonController.text.trim(),
@@ -651,19 +653,6 @@ class LeaveViewModel extends BaseViewModel {
     } finally {
       isProcessEscalatedLeaveLoading = false;
       notifyListeners();
-    }
-  }
-
-  String _getLeaveType() {
-    switch (currentFormType) {
-      case LeaveFormType.leave:
-        return 'LEAVE';
-      case LeaveFormType.extra:
-        return 'EXTRA';
-      case LeaveFormType.workFromHome:
-        return 'WFH';
-      default:
-        return 'LEAVE';
     }
   }
 

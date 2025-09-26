@@ -1,3 +1,4 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
@@ -47,7 +48,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
         context,
         listen: false,
       );
-      leaveViewModel.initializeForm(LeaveFormType.leave);
+      leaveViewModel.initializeForm();
     });
   }
 
@@ -65,6 +66,14 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
         leaveViewModel.hasCompOffPlans ||
         leaveViewModel.selectedCompOffDates.isNotEmpty;
   }
+
+  final List<String> leaveTypes = [
+    'Casual Leave',
+    'Sick Leave',
+    'Earned Leave',
+    'Maternity Leave',
+    'Unpaid Leave',
+  ];
 
   // MARK: - SHOW CONFIRMATION DIALOG
   Future<bool> _showConfirmationDialog() async {
@@ -297,6 +306,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final HomeViewModel homeViewModel = context.watch<HomeViewModel>();
 
     return PopScope(
       canPop: false,
@@ -336,12 +346,20 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                                 isDark,
                               ),
                               const SizedBox(height: 24),
+                              _buildLeaveTypeSection(isDark, leaveViewModel),
+                              const SizedBox(height: 24),
                               _buildReasonSection(leaveViewModel, isDark),
                               const SizedBox(height: 24),
                               _buildDocumentsSection(leaveViewModel, isDark),
                               const SizedBox(height: 24),
-                              _buildRequestedForToggle(leaveViewModel, isDark),
-                              const SizedBox(height: 100), // space for button
+                              if (homeViewModel.userRole.toLowerCase() !=
+                                  'employee') ...[
+                                _buildRequestedForToggle(
+                                  leaveViewModel,
+                                  isDark,
+                                ),
+                                const SizedBox(height: 100),
+                              ],
                             ],
                           ),
                         ),
@@ -467,6 +485,91 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLeaveTypeSection(bool isDark, LeaveViewModel leaveViewModel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(
+          "Leave Type",
+          isDark,
+          icon: Icons.event_note,
+          iconColor: Colors.teal,
+        ),
+        const SizedBox(height: 12),
+
+        Container(
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(
+              197,
+              253,
+              253,
+              253,
+            ), // background of the box
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15), // shadow color
+                blurRadius: 4, // soften the shadow
+                offset: const Offset(0, 4), // move shadow down
+              ),
+            ],
+          ),
+          child: DropdownButtonFormField2<String>(
+            isExpanded: true,
+            decoration: const InputDecoration(
+              border: InputBorder.none, // remove default border
+              contentPadding: EdgeInsets.symmetric(
+                vertical: 16,
+                horizontal: 12,
+              ),
+            ),
+            hint: const Text(
+              'Select Leave Type',
+              style: TextStyle(fontSize: 14),
+            ),
+            items: leaveTypes
+                .map(
+                  (item) => DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(item, style: const TextStyle(fontSize: 14)),
+                  ),
+                )
+                .toList(),
+            validator: (value) {
+              if (value == null) {
+                return 'Please select leave type.';
+              }
+              return null;
+            },
+            onChanged: (value) {
+              setState(() {
+                leaveViewModel.selectedLeaveType = value;
+              });
+            },
+            onSaved: (value) {
+              leaveViewModel.selectedLeaveType = value;
+            },
+            buttonStyleData: const ButtonStyleData(
+              padding: EdgeInsets.only(right: 8),
+            ),
+            iconStyleData: const IconStyleData(
+              icon: Icon(Icons.arrow_drop_down, color: Colors.black45),
+              iconSize: 24,
+            ),
+            dropdownStyleData: DropdownStyleData(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+            menuItemStyleData: const MenuItemStyleData(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

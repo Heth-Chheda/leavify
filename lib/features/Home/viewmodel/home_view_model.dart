@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/dummydata/announcement/announcement.dart';
 import 'package:leavify/dummydata/users/balance_leaves.dart';
+import 'package:leavify/dummydata/users/employer.dart';
 import 'package:leavify/dummydata/users/manager.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
@@ -62,6 +63,7 @@ class HomeViewModel extends ChangeNotifier {
       // final userId = await AppStorage.getString("USER_ID") ?? "";
       // final response = await _authenticationRepository.getUserSummary(userId);
       final response = dummyManagerData;
+      // final response = dummyEmployeeData;
 
       _homeData = response;
       await AppStorage.saveObject("user_details", response.toJson());
