@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
           break;
         case 1:
           // Analytics - navigate to new screen
-          // Navigator.pushNamed(context, '/pending');
+          Navigator.pushNamed(context, '/pending');
           break;
         case 2:
           // Add Leave - navigate to new screen

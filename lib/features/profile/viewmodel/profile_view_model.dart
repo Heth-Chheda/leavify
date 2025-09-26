@@ -4,17 +4,13 @@ import 'package:leavify/features/Leave/models/general/leave_document.dart';
 import 'package:leavify/features/Leave/models/general/my_leaves.dart';
 import 'package:leavify/features/Profile/data/profile_repository.dart';
 
-enum ProfileViewState { loading, success, error }
-
 class ProfileViewModel extends BaseViewModel {
   final LeaveRepository _repository = LeaveRepository();
   final ProfileRepository _userRepository = ProfileRepository();
 
-  ProfileViewState _state = ProfileViewState.loading;
   LeaveData? _leaveData;
   bool _isEditMode = false;
   bool get isEditMode => _isEditMode;
-  ProfileViewState get state => _state;
   LeaveData? get leaveData => _leaveData;
 
   void toggleEditMode() {
@@ -25,20 +21,11 @@ class ProfileViewModel extends BaseViewModel {
 
   // MARK: LOAD USER LEAVES
   Future<void> loadUserLeaves(String userId) async {
-    _setState(ProfileViewState.loading);
-
     try {
       _leaveData = await _repository.getUserLeaves(userId);
-      _setState(ProfileViewState.success);
     } catch (e) {
       update(errorMessage: e.toString());
-      _setState(ProfileViewState.error);
     }
-  }
-
-  void _setState(ProfileViewState newState) {
-    _state = newState;
-    notifyListeners();
   }
 
   void retry(String userId) {

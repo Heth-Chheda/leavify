@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/router/routes/authenticaion_router.dart';
 import 'package:leavify/router/routes/leave_router.dart';
+import 'package:leavify/router/routes/profile_router.dart';
 
 // Import flow routers
 
@@ -20,8 +21,8 @@ class AppRouter {
     if (leaveRoute != null) return leaveRoute;
 
     // 3️⃣ Try Profile flow
-    // final profileRoute = ProfileRouter.onGenerateRoute(settings);
-    // if (profileRoute != null) return profileRoute;
+    final profileRoute = ProfileRouter.onGenerateRoute(settings);
+    if (profileRoute != null) return profileRoute;
 
     // 4️⃣ Fallback: unknown route
     return _errorRoute(settings.name);

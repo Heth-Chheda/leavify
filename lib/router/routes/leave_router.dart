@@ -1,8 +1,8 @@
 // lib/routing/routers/leave_router.dart
 
 import 'package:flutter/material.dart';
-import 'package:leavify/features/Profile/screens/profile_screen.dart';
-import 'package:leavify/features/Profile/viewmodel/profile_view_model.dart';
+// import 'package:leavify/features/Profile/screens/profile_screen.dart';
+// import 'package:leavify/features/Profile/viewmodel/profile_view_model.dart';
 import 'package:provider/provider.dart';
 import 'package:leavify/router/route_names.dart';
 
@@ -23,10 +23,7 @@ class LeaveRouter {
     if (screen == null) return null;
     return MaterialPageRoute(
       builder: (_) => MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => LeaveViewModel()),
-          ChangeNotifierProvider(create: (_) => ProfileViewModel()),
-        ],
+        providers: [ChangeNotifierProvider(create: (_) => LeaveViewModel())],
         child: screen,
       ),
       settings: settings,
@@ -37,17 +34,14 @@ class LeaveRouter {
   static Widget? _buildLeaveFlow(RouteSettings settings) {
     switch (settings.name) {
       case RouteNames.applyLeave:
-        return _withAppBar(const ApplyLeaveScreen(), "Apply Leave");
-
-      case RouteNames.profile:
-        return _withAppBar(const ProfileScreen(), 'My Profile');
+        return withAppBar(const ApplyLeaveScreen(), "Apply Leave");
 
       case RouteNames.leaveDetail:
         final args = settings.arguments as Map<String, dynamic>?;
         if (args != null &&
             args['leaveId'] is String &&
             args['userId'] is String) {
-          return _withAppBar(
+          return withAppBar(
             LeaveDetailScreen(
               leaveId: args['leaveId'] as String,
               userId: args['userId'] as String,
@@ -61,12 +55,12 @@ class LeaveRouter {
         );
 
       case RouteNames.pendingRequests:
-        return _withAppBar(const PendingRequestsScreen(), "Pending Requests");
+        return withAppBar(const PendingRequestsScreen(), "Pending Requests");
 
       case RouteNames.pendingRequestDetail:
         final args = settings.arguments as Map<String, dynamic>?;
         if (args != null && args['leaveId'] is String) {
-          return _withAppBar(
+          return withAppBar(
             PendingRequestDetailScreen(leaveId: args['leaveId'] as String),
             "Request Detail",
           );
@@ -82,7 +76,7 @@ class LeaveRouter {
   }
 
   /// Wraps a screen with a Scaffold and AppBar
-  static Widget _withAppBar(Widget child, String title) {
+  static Widget withAppBar(Widget child, String title) {
     return Scaffold(
       appBar: AppBar(
         title: Text(title, textAlign: TextAlign.center),

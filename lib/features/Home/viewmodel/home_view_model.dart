@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/dummydata/announcement/announcement.dart';
+import 'package:leavify/dummydata/leave/dummy_my_leaves.dart';
 import 'package:leavify/dummydata/users/balance_leaves.dart';
-import 'package:leavify/dummydata/users/employer.dart';
+// import 'package:leavify/dummydata/users/employer.dart';
 import 'package:leavify/dummydata/users/manager.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
+import 'package:leavify/features/Leave/data/leave_repository.dart';
+import 'package:leavify/features/Leave/models/general/my_leaves.dart';
 import 'package:leavify/features/Leave/models/response/get_announcements_response.dart';
+
+enum ProfileViewState { loading, success, error }
 
 class HomeViewModel extends ChangeNotifier {
   final AuthenticationRepository _authenticationRepository =
       AuthenticationRepository();
+  final LeaveRepository _leaveRepository = LeaveRepository();
 
   GetUserSummaryResponse? _homeData;
   bool _isLoading = true;
   String? _error;
+  LeaveData? _leaveData;
 
   // Getters
   GetUserSummaryResponse? get homeData => _homeData;
@@ -23,6 +30,8 @@ class HomeViewModel extends ChangeNotifier {
   String? get error => _error;
   List<GetAnnouncementsResponse> _announcements = [];
   List<GetAnnouncementsResponse> get announcements => _announcements;
+
+  ProfileViewState _state = ProfileViewState.loading;
 
   // User-specific getters
   String get userName => _homeData?.currentUser?.firstName ?? 'User';
@@ -38,6 +47,11 @@ class HomeViewModel extends ChangeNotifier {
   bool get canSendAnnouncement =>
       _homeData?.currentUser?.canSendAnnouncement ?? false;
   String get designation => _homeData?.currentUser?.designation ?? '';
+  String get userId => _homeData?.currentUser?.id ?? '';
+  ProfileViewState get state => _state;
+
+  // leave data of the user
+  LeaveData? get leaveData => _leaveData;
 
   // working days
   int _leaveBalance = 0;
@@ -51,6 +65,30 @@ class HomeViewModel extends ChangeNotifier {
     await _loadUserSummaryFromApi();
     await _fetchAnnouncements();
     await _getLeaveBalance();
+  }
+
+  void _setState(ProfileViewState newState) {
+    _state = newState;
+    notifyListeners();
+  }
+
+  Future<void> loadUserLeaves(String userId) async {
+    _isLoading = true;
+    _setState(ProfileViewState.loading);
+    try {
+      // _leaveData = await _leaveRepository.getUserLeaves(userId);
+      _leaveData = dummyLeaveData;
+      _isLoading = false;
+      _setState(ProfileViewState.success);
+    } catch (e) {
+      _isLoading = false;
+      _error = e.toString();
+      _setState(ProfileViewState.error);
+    }
+  }
+
+  void retry(String userId) {
+    loadUserLeaves(userId);
   }
 
   Future<void> _loadUserSummaryFromApi() async {

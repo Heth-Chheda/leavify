@@ -4,6 +4,7 @@ import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/domain/models/user.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
+import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Profile/components/info_card.dart';
 import 'package:leavify/features/Profile/components/profile_avatar.dart';
 import 'package:leavify/features/Profile/components/section_header.dart';
@@ -42,11 +43,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
 
         if (mounted) {
-          final viewModel = Provider.of<ProfileViewModel?>(
-            context,
-            listen: false,
-          );
-          viewModel?.loadUserLeaves(user!.id);
+          debugPrint('IN HERE BROOOOO..');
+          final viewModel = Provider.of<HomeViewModel>(context, listen: false);
+          viewModel.loadUserLeaves(user!.id);
         }
       } else {
         setState(() {
@@ -240,12 +239,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SectionHeader(title: 'My Leaves'),
                       const SizedBox(height: 16),
 
-                      _buildLeaveSection(
-                        Provider.of<ProfileViewModel>(
-                          context,
-                        ), // 👈 direct access
-                        theme,
-                      ),
+                      _buildLeaveSection(theme),
 
                       const SizedBox(height: 20),
                     ],
@@ -272,8 +266,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // MARK: LEAVE SECTION WITH HORIZONTAL SCROLL
-  Widget _buildLeaveSection(ProfileViewModel viewModel, ThemeData theme) {
-    switch (viewModel.state) {
+  Widget _buildLeaveSection(ThemeData theme) {
+    final HomeViewModel homeViewModel = context.watch<HomeViewModel>();
+    switch (homeViewModel.state) {
       case ProfileViewState.loading:
         return Center(
           child: Padding(
@@ -297,7 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 8),
               ElevatedButton(
-                onPressed: () => viewModel.retry(user!.id),
+                onPressed: () => homeViewModel.retry(user!.id),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.primary,
                   foregroundColor: theme.colorScheme.onPrimary,
@@ -309,7 +304,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
 
       case ProfileViewState.success:
-        final leaveData = viewModel.leaveData!;
+        final leaveData = homeViewModel.leaveData!;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
