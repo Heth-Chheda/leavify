@@ -1,7 +1,9 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Leave/models/response/reportee_response.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -46,7 +48,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
         context,
         listen: false,
       );
-      leaveViewModel.initializeForm(LeaveFormType.leave);
+      leaveViewModel.initializeForm();
     });
   }
 
@@ -64,6 +66,14 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
         leaveViewModel.hasCompOffPlans ||
         leaveViewModel.selectedCompOffDates.isNotEmpty;
   }
+
+  final List<String> leaveTypes = [
+    'Casual Leave',
+    'Sick Leave',
+    'Earned Leave',
+    'Maternity Leave',
+    'Unpaid Leave',
+  ];
 
   // MARK: - SHOW CONFIRMATION DIALOG
   Future<bool> _showConfirmationDialog() async {
@@ -296,6 +306,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final HomeViewModel homeViewModel = context.watch<HomeViewModel>();
 
     return PopScope(
       canPop: false,
@@ -335,10 +346,20 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                                 isDark,
                               ),
                               const SizedBox(height: 24),
+                              _buildLeaveTypeSection(isDark, leaveViewModel),
+                              const SizedBox(height: 24),
                               _buildReasonSection(leaveViewModel, isDark),
                               const SizedBox(height: 24),
                               _buildDocumentsSection(leaveViewModel, isDark),
-                              const SizedBox(height: 100), // space for button
+                              const SizedBox(height: 24),
+                              if (homeViewModel.userRole.toLowerCase() !=
+                                  'employee') ...[
+                                _buildRequestedForToggle(
+                                  leaveViewModel,
+                                  isDark,
+                                ),
+                                const SizedBox(height: 100),
+                              ],
                             ],
                           ),
                         ),
@@ -442,7 +463,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                 Text(
                   '$title : ',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: isDark
                         ? Colors.white70
                         : Colors.black.withOpacity(0.6),
@@ -464,6 +485,91 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLeaveTypeSection(bool isDark, LeaveViewModel leaveViewModel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(
+          "Leave Type",
+          isDark,
+          icon: Icons.event_note,
+          iconColor: Colors.teal,
+        ),
+        const SizedBox(height: 12),
+
+        Container(
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(
+              197,
+              253,
+              253,
+              253,
+            ), // background of the box
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15), // shadow color
+                blurRadius: 4, // soften the shadow
+                offset: const Offset(0, 4), // move shadow down
+              ),
+            ],
+          ),
+          child: DropdownButtonFormField2<String>(
+            isExpanded: true,
+            decoration: const InputDecoration(
+              border: InputBorder.none, // remove default border
+              contentPadding: EdgeInsets.symmetric(
+                vertical: 16,
+                horizontal: 12,
+              ),
+            ),
+            hint: const Text(
+              'Select Leave Type',
+              style: TextStyle(fontSize: 14),
+            ),
+            items: leaveTypes
+                .map(
+                  (item) => DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(item, style: const TextStyle(fontSize: 14)),
+                  ),
+                )
+                .toList(),
+            validator: (value) {
+              if (value == null) {
+                return 'Please select leave type.';
+              }
+              return null;
+            },
+            onChanged: (value) {
+              setState(() {
+                leaveViewModel.selectedLeaveType = value;
+              });
+            },
+            onSaved: (value) {
+              leaveViewModel.selectedLeaveType = value;
+            },
+            buttonStyleData: const ButtonStyleData(
+              padding: EdgeInsets.only(right: 8),
+            ),
+            iconStyleData: const IconStyleData(
+              icon: Icon(Icons.arrow_drop_down, color: Colors.black45),
+              iconSize: 24,
+            ),
+            dropdownStyleData: DropdownStyleData(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+            menuItemStyleData: const MenuItemStyleData(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -562,6 +668,96 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showUserPicker(
+    BuildContext context,
+    List<Reportee> users,
+    LeaveViewModel leaveViewModel,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return ListView.separated(
+          shrinkWrap: true,
+          itemCount: users.length,
+          separatorBuilder: (context, index) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Container(height: 1, color: Colors.grey),
+          ),
+          itemBuilder: (context, index) {
+            final user = users[index];
+            return ListTile(
+              title: Text('${user.fName} ${user.lName}'),
+              onTap: () {
+                Navigator.pop(context);
+                // TODO: HERE WE HAVE SELECT THE NAME OF THE EMPLOYEE WHICH THE MANAGER WANTS TO APPLY THE LEAVE FOR.
+                // TODO: TASKS TO BE COMPLETED:
+                /*
+                1. THE SHOULD REFLECT ON THE BUTTON
+                2. ON SELECTING THE NAME, AND WHEN WE APPLY THE FORM
+                WE WOULD NEED THE USERID TO BE SENT IN THE REQUEST.
+                3. WHAT WE NEED TO DO IS THAT IN THE REQUESTEDBY WE WILL HAVE THE MANAGER'S USER ID AND IN THE USER ID WE WILL HAVE THE USER'S ID FOR WHOM WE NEED TO APPLY LEAVE FOR.
+                */
+                // do something with selected user
+                leaveViewModel.selectedUser = user;
+                debugPrint("Selected: ${user.fName} ${user.lName}");
+                debugPrint(
+                  "Selected: ${leaveViewModel.selectedUser?.fName} ${leaveViewModel.selectedUser?.lName}",
+                );
+                // maybe call _navigateNext(user);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRequestedForToggle(LeaveViewModel leaveViewModel, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(
+          'Leave on behalf',
+          isDark,
+          iconColor: AppColors.highlightTeal,
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () {
+              _showUserPicker(
+                context,
+                leaveViewModel.teamUsers,
+                leaveViewModel,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: const Color.fromARGB(255, 243, 13, 116),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
+            ),
+            child: Text(
+              leaveViewModel.selectedUser != null
+                  ? 'Requested for ${leaveViewModel.selectedUser!.fName} ${leaveViewModel.selectedUser!.lName}'
+                  : 'Request For',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ),
@@ -691,7 +887,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
         _buildSectionTitle(
           'Documents',
           isDark,
-          iconColor: AppColors.highlightGreen,
+          iconColor: const Color.fromARGB(255, 217, 0, 255),
         ),
         const SizedBox(height: 8),
         GestureDetector(
@@ -728,7 +924,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.highlightGreen,
+                    color: const Color.fromARGB(255, 201, 9, 253),
                   ),
                 ),
                 Text(

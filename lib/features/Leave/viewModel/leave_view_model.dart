@@ -7,11 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/dummydata/leave/dummy_team_users.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/custom_calendar_component.dart';
 import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
+import 'package:leavify/features/Leave/models/response/reportee_response.dart';
 import 'package:leavify/features/Leave/models/response/send_reminder_response.dart';
 import 'package:leavify/models/general_response.dart';
 
@@ -75,10 +77,25 @@ class LeaveViewModel extends BaseViewModel {
 
   GeneralResponse? cancelLeaveResponse;
 
+  // MARK: REQEUSTED FOR
+  bool isReqeustedFor = false;
+  List<Reportee> teamUsers = []; // TODO: WE WILL BE GETTING THIS FROM THE API.
+  Reportee? _selectedUser;
+  Reportee? get selectedUser => _selectedUser;
+
+  // MARK: LEAVE TYPE
+  String? selectedLeaveType;
+
   // MARK: - INITIALIZATION
-  void initializeForm(LeaveFormType formType) {
-    currentFormType = formType;
+  void initializeForm() {
+    // TODO: FOR NOW INITIALISING THE TEAM USERS WITH DUMMY DATA, BUT AFTER THE API CALL FFED THE RESPONSE WITH THE LIST.
+    teamUsers = dummyTeamUsers;
     _resetFormState();
+  }
+
+  set selectedUser(Reportee? user) {
+    _selectedUser = user;
+    notifyListeners(); // <-- tells the UI to rebuild
   }
 
   void _resetFormState() {
@@ -342,17 +359,31 @@ class LeaveViewModel extends BaseViewModel {
       }
     }
 
-    final request = ApplyLeaveRequestModel(
-      userId: userId,
-      type: _getLeaveType(),
-      fromDate: adjustedRange['from']!.toUtc().toIso8601String(),
-      toDate: adjustedRange['to']!.toUtc().toIso8601String(),
-      reason: reasonController.text.trim(),
-      isCompOff: hasCompOffPlans,
-      isHalfDay: isLeaveHalfDay,
-      compDates: compOffDateStrings,
-      documents: documents, // Now using LeaveDocument objects
-    );
+    final request = selectedUser != null
+        ? ApplyLeaveRequestModel(
+            userId: _selectedUser!.id,
+            requestedBy: userId,
+            type: selectedLeaveType?.toUpperCase() ?? 'LEAVE',
+            fromDate: adjustedRange['from']!.toUtc().toIso8601String(),
+            toDate: adjustedRange['to']!.toUtc().toIso8601String(),
+            reason: reasonController.text.trim(),
+            isCompOff: hasCompOffPlans,
+            isHalfDay: isLeaveHalfDay,
+            compDates: compOffDateStrings,
+            documents: documents,
+          )
+        : ApplyLeaveRequestModel(
+            userId: userId,
+            type: selectedLeaveType?.toUpperCase() ?? 'LEAVE',
+            fromDate: adjustedRange['from']!.toUtc().toIso8601String(),
+            toDate: adjustedRange['to']!.toUtc().toIso8601String(),
+            reason: reasonController.text.trim(),
+            isCompOff: hasCompOffPlans,
+            isHalfDay: isLeaveHalfDay,
+            compDates: compOffDateStrings,
+            documents: documents,
+          );
+
     debugPrint("Created Leave Request: ${request.toJson()}");
     return request;
   }
@@ -625,19 +656,6 @@ class LeaveViewModel extends BaseViewModel {
     }
   }
 
-  String _getLeaveType() {
-    switch (currentFormType) {
-      case LeaveFormType.leave:
-        return 'LEAVE';
-      case LeaveFormType.extra:
-        return 'EXTRA';
-      case LeaveFormType.workFromHome:
-        return 'WFH';
-      default:
-        return 'LEAVE';
-    }
-  }
-
   String formatDateRange() {
     if (selectedStartDate == null) {
       return 'Select dates';
@@ -727,6 +745,7 @@ class LeaveViewModel extends BaseViewModel {
     reasonController.clear();
     update(errorMessage: null);
     successLeaveId = null;
+    _selectedUser = null;
     notifyListeners();
   }
 

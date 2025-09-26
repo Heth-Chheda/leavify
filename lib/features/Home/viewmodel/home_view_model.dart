@@ -63,6 +63,7 @@ class HomeViewModel extends ChangeNotifier {
       // final userId = await AppStorage.getString("USER_ID") ?? "";
       // final response = await _authenticationRepository.getUserSummary(userId);
       final response = dummyManagerData;
+      // final response = dummyEmployeeData;
 
       _homeData = response;
       await AppStorage.saveObject("user_details", response.toJson());

@@ -1,4 +1,5 @@
 class ApplyLeaveRequestModel {
+  final String? requestedBy;
   final String userId;
   final String type;
   final String fromDate;
@@ -10,6 +11,7 @@ class ApplyLeaveRequestModel {
   final List<LeaveDocument> documents;
 
   ApplyLeaveRequestModel({
+    this.requestedBy,
     required this.userId,
     required this.type,
     required this.fromDate,
@@ -31,6 +33,9 @@ class ApplyLeaveRequestModel {
     "isHalfDay": isHalfDay,
     "compDates": compDates,
     "documents": documents.map((doc) => doc.toJson()).toList(),
+    if (requestedBy != null)
+      "requestedBy":
+          requestedBy, // TODO: this should be chnaged to requested for since the user id will be of the manager only.
   };
 }
 
