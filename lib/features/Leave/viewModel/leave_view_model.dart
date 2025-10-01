@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/dummydata/leave/dummy_leave_detail.dart';
+import 'package:leavify/dummydata/leave/dummy_pending_request_user.dart';
 import 'package:leavify/dummydata/leave/dummy_team_users.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
@@ -468,12 +470,10 @@ class LeaveViewModel extends BaseViewModel {
   Future<void> fetchPendingLeaves() async {
     update(isLoading: true, errorMessage: null);
     notifyListeners();
-    final userId = await _loadUserId();
     try {
-      if (userId != null) {
-        final leaves = await _repository.getPendingLeaves(userId: userId);
-        _getAllPendingLeaves = leaves;
-      }
+      // final leaves = await _repository.getPendingLeaves(userId: userId ?? '');
+      final leaves = dummyGetAllData;
+      _getAllPendingLeaves = leaves;
     } catch (e) {
       update(errorMessage: e.toString());
     } finally {
@@ -541,12 +541,12 @@ class LeaveViewModel extends BaseViewModel {
         notifyListeners();
       });
 
-      final userId = await _loadUserId();
+      // final result = await _repository.getLeaveById(
+      //   userId: userId ?? '',
+      //   leaveId: leaveId,
+      // );
 
-      final result = await _repository.getLeaveById(
-        userId: userId ?? '',
-        leaveId: leaveId,
-      );
+      final result = dummyLeaveByIdData;
 
       selectedLeaveById = result;
     } catch (e) {

@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:leavify/base/base_view_model.dart';
+import 'package:leavify/dummydata/leave/dummy_user_leaves.dart';
 import 'package:leavify/features/Leave/data/leave_repository.dart';
 import 'package:leavify/features/Leave/models/general/leave_document.dart';
 import 'package:leavify/features/Leave/models/general/my_leaves.dart';
@@ -10,11 +12,9 @@ class ProfileViewModel extends BaseViewModel {
   final LeaveRepository _repository = LeaveRepository();
   final ProfileRepository _userRepository = ProfileRepository();
 
-  ProfileViewState _state = ProfileViewState.loading;
   LeaveData? _leaveData;
   bool _isEditMode = false;
   bool get isEditMode => _isEditMode;
-  ProfileViewState get state => _state;
   LeaveData? get leaveData => _leaveData;
 
   void toggleEditMode() {
@@ -25,20 +25,18 @@ class ProfileViewModel extends BaseViewModel {
 
   // MARK: LOAD USER LEAVES
   Future<void> loadUserLeaves(String userId) async {
-    _setState(ProfileViewState.loading);
-
     try {
-      _leaveData = await _repository.getUserLeaves(userId);
-      _setState(ProfileViewState.success);
+      update(isLoading: true, errorMessage: null);
+      notifyListeners();
+      // _leaveData = await _repository.getUserLeaves(userId);
+      _leaveData = dummyLeaveData;
+      update(isLoading: false);
+      notifyListeners();
     } catch (e) {
-      update(errorMessage: e.toString());
-      _setState(ProfileViewState.error);
+      debugPrint('Hello kaay chaale che ${e.toString()}');
+      update(errorMessage: e.toString(), isLoading: false);
+      notifyListeners();
     }
-  }
-
-  void _setState(ProfileViewState newState) {
-    _state = newState;
-    notifyListeners();
   }
 
   void retry(String userId) {

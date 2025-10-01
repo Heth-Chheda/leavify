@@ -1,30 +1,143 @@
-// lib/routing/app_router.dart
-
 import 'package:flutter/material.dart';
-import 'package:leavify/router/routes/authenticaion_router.dart';
-import 'package:leavify/router/routes/leave_router.dart';
+import 'package:provider/provider.dart';
 
-// Import flow routers
+// Screens
+import 'package:leavify/features/Profile/screens/profile_screen.dart';
+import 'package:leavify/features/Leave/screen/ApplyLeave/apply_leave_screen.dart';
+import 'package:leavify/features/Leave/components/manager/pending_request_detail_screen.dart';
+import 'package:leavify/features/Leave/screen/manager/PendingRequests/pending_requests_screen.dart';
+import 'package:leavify/features/Profile/components/leave_detail_screeen.dart';
+import 'package:leavify/features/Home/screens/home_screen.dart';
+import 'package:leavify/features/Authentication/view/login_view.dart';
 
-/// AppRouter delegates routing to each flow router.
-/// Each flow router returns a Route if it can handle it,
-/// otherwise returns null so the next router can try.
+// ViewModels
+import 'package:leavify/features/Profile/viewmodel/profile_view_model.dart';
+import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
+import 'package:leavify/features/Authentication/viewmodel/login_view_model.dart';
+
+import 'package:leavify/router/route_names.dart';
+
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
-    // 1️⃣ Try Authentication flow
-    final authRoute = AuthenticationRouter.onGenerateRoute(settings);
-    if (authRoute != null) return authRoute;
+    switch (settings.name) {
+      // ----------------- AUTH ROUTES -----------------
+      case RouteNames.login:
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => LoginViewModel(),
+            child: const LoginPage(),
+          ),
+          settings: settings,
+        );
 
-    // 2️⃣ Try Leave flow
-    final leaveRoute = LeaveRouter.onGenerateRoute(settings);
-    if (leaveRoute != null) return leaveRoute;
+      case RouteNames.home:
+        return MaterialPageRoute(
+          builder: (_) => const HomeScreen(),
+          settings: settings,
+        );
 
-    // 3️⃣ Try Profile flow
-    // final profileRoute = ProfileRouter.onGenerateRoute(settings);
-    // if (profileRoute != null) return profileRoute;
+      // ----------------- LEAVE ROUTES -----------------
+      case RouteNames.applyLeave:
+        return MaterialPageRoute(
+          builder: (_) => MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => LeaveViewModel()),
+            ],
+            child: _withAppBar(const ApplyLeaveScreen(), 'Apply leave'),
+          ),
+          settings: settings,
+        );
 
-    // 4️⃣ Fallback: unknown route
-    return _errorRoute(settings.name);
+      case RouteNames.pendingRequests:
+        return MaterialPageRoute(
+          builder: (_) => MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => LeaveViewModel()),
+            ],
+            child: _withAppBar(
+              const PendingRequestsScreen(),
+              'Pending Requests',
+            ),
+          ),
+          settings: settings,
+        );
+
+      case RouteNames.pendingRequestDetail:
+        final args = settings.arguments as Map<String, dynamic>?;
+        if (args != null && args['leaveId'] is String) {
+          return MaterialPageRoute(
+            builder: (_) => ChangeNotifierProvider(
+              create: (_) => LeaveViewModel(),
+              child: _withAppBar(
+                PendingRequestDetailScreen(leaveId: args['leaveId'] as String),
+                'Leave Request Details',
+              ),
+            ),
+            settings: settings,
+          );
+        }
+        return _invalidArgsRoute(
+          settings,
+          "Invalid arguments for Pending Request Detail",
+        );
+
+      case RouteNames.leaveDetail:
+        final args = settings.arguments as Map<String, dynamic>?;
+        if (args != null &&
+            args['leaveId'] is String &&
+            args['userId'] is String) {
+          return MaterialPageRoute(
+            builder: (_) => ChangeNotifierProvider(
+              create: (_) => LeaveViewModel(),
+              child: _withAppBar(
+                LeaveDetailScreen(
+                  leaveId: args['leaveId'] as String,
+                  userId: args['userId'] as String,
+                ),
+                'Leave Details',
+              ),
+            ),
+            settings: settings,
+          );
+        }
+        return _invalidArgsRoute(
+          settings,
+          "Invalid arguments for Leave Detail",
+        );
+
+      // ----------------- PROFILE ROUTE -----------------
+      case RouteNames.profile:
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => ProfileViewModel(),
+            child: const ProfileScreen(),
+          ),
+          settings: settings,
+        );
+
+      // ----------------- FALLBACK -----------------
+      default:
+        return _errorRoute(settings.name);
+    }
+  }
+
+  static MaterialPageRoute _invalidArgsRoute(
+    RouteSettings settings,
+    String message,
+  ) {
+    return MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Error')),
+        body: Center(
+          child: Text(
+            '❌ $message\nRoute: ${settings.name}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.red, fontSize: 16),
+          ),
+        ),
+      ),
+      settings: settings,
+    );
   }
 
   static MaterialPageRoute _errorRoute(String? routeName) {
@@ -39,6 +152,17 @@ class AppRouter {
           ),
         ),
       ),
+    );
+  }
+
+  static Widget _withAppBar(Widget child, String title) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title, textAlign: TextAlign.center),
+        centerTitle: true,
+        leading: const BackButton(),
+      ),
+      body: child,
     );
   }
 }

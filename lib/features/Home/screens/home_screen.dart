@@ -62,6 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
         case 1:
           // Analytics - navigate to new screen
           // Navigator.pushNamed(context, '/pending');
+          AppNavigator.navigateTo(RouteNames.pendingRequests);
           break;
         case 2:
           // Add Leave - navigate to new screen
@@ -69,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
           AppNavigator.navigateTo(RouteNames.applyLeave);
           break;
         case 3:
-          Navigator.pushNamed(context, '/analytics');
+          AppNavigator.navigateTo(RouteNames.analytics);
           break;
         case 4:
           // Pending - navigate to new screen

@@ -4,6 +4,8 @@ import 'package:leavify/features/Authentication/domain/response/get_all_response
 import 'package:leavify/features/Leave/components/manager/pending_request_card.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
+import 'package:leavify/router/app_navigator.dart';
+import 'package:leavify/router/route_names.dart';
 import 'package:provider/provider.dart';
 
 enum LeaveStatus { pending, approved, rejected, escalated }
@@ -102,9 +104,8 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   }
 
   void _navigateToDetail(GetAllResponse request) {
-    Navigator.pushNamed(
-      context,
-      '/pending-leave-detail',
+    AppNavigator.navigateTo(
+      RouteNames.pendingRequestDetail,
       arguments: {'leaveId': request.leaveId},
     );
   }
