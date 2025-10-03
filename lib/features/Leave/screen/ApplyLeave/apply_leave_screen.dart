@@ -48,7 +48,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
         context,
         listen: false,
       );
-      leaveViewModel.initializeForm();
+      final homeViewModel = context.read<HomeViewModel>();
+      leaveViewModel.initializeForm(homeViewModel: homeViewModel);
     });
   }
 
@@ -67,13 +68,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
         leaveViewModel.selectedCompOffDates.isNotEmpty;
   }
 
-  final List<String> leaveTypes = [
-    'Casual Leave',
-    'Sick Leave',
-    'Earned Leave',
-    'Maternity Leave',
-    'Unpaid Leave',
-  ];
+  final List<String> leaveTypes = ['Casual', 'Sick', 'Emergency'];
 
   // MARK: - SHOW CONFIRMATION DIALOG
   Future<bool> _showConfirmationDialog() async {
@@ -709,9 +704,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                 */
                 // do something with selected user
                 leaveViewModel.selectedUser = user;
-                debugPrint("Selected: ${user.fName} ${user.lName}");
                 debugPrint(
-                  "Selected: ${leaveViewModel.selectedUser?.fName} ${leaveViewModel.selectedUser?.lName}",
+                  "Selected: ${leaveViewModel.selectedUser?.fName} ${leaveViewModel.selectedUser?.lName} ${leaveViewModel.selectedUser?.id}",
                 );
                 // maybe call _navigateNext(user);
               },

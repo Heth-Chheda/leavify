@@ -103,11 +103,16 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     setState(() => _selectedFilter = filter);
   }
 
-  void _navigateToDetail(GetAllResponse request) {
-    AppNavigator.navigateTo(
+  void _navigateToDetail(GetAllResponse request) async {
+    await AppNavigator.navigateTo(
       RouteNames.pendingRequestDetail,
       arguments: {'leaveId': request.leaveId},
     );
+
+    // Refresh leaves when returning
+    if (mounted) {
+      context.read<LeaveViewModel>().fetchPendingLeaves();
+    }
   }
 
   Future<void> _onRefresh() async {

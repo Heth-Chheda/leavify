@@ -4,6 +4,7 @@ import 'package:leavify/app/app.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/config/app_environment.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/features/Home/viewmodel/announcements_view_model.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/profile/viewmodel/profile_view_model.dart';
 import 'package:leavify/services/fcm_service.dart';
@@ -23,6 +24,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => BaseViewModel()),
         ChangeNotifierProvider(create: (_) => HomeViewModel()..initialize()),
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
+        ChangeNotifierProvider(create: (_) => AnnouncementViewModel()),
       ],
       child: const MyApp(),
     ),

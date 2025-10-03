@@ -40,27 +40,23 @@ class AuthenticationRepository extends BaseRepository {
 
   // MARK: - GET ANNOUNCEMENTS
   Future<List<GetAnnouncementsResponse>> getAnnouncements() async {
-    return await performRequest<List<GetAnnouncementsResponse>>(
+    return await performListRequest<GetAnnouncementsResponse>(
       url: ApiEndpoints.getAnnouncements,
       method: HttpMethod.get,
-      fromJson: (json) {
-        final list = json as List<dynamic>;
-        return list
-            .map(
-              (e) =>
-                  GetAnnouncementsResponse.fromJson(e as Map<String, dynamic>),
-            )
-            .toList();
-      },
+      fromJson: (json) => GetAnnouncementsResponse.fromJson(json),
     );
   }
 
   // MARK: - GET BALANCE
-  Future<BalanceResponse> getLeaveBalance({required String userId}) async {
+  Future<BalanceResponse> getLeaveBalance({
+    required String userId,
+    required String accessToken,
+  }) async {
     return await performRequest(
       url: ApiEndpoints.getLeaveBalance,
       method: HttpMethod.post,
       body: {'userId': userId},
+      accessToken: accessToken,
       fromJson: BalanceResponse.fromJson,
     );
   }

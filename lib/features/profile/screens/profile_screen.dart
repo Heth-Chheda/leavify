@@ -281,7 +281,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     // Show error
-    if (viewModel.errorMessage != null) {
+    if (viewModel.loadUserLeavesError != null) {
       return Center(
         child: Column(
           children: [

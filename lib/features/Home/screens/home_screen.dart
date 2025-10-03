@@ -392,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildEmptyAnnouncementState(ThemeData theme) {
     return Container(
       width: double.infinity,
-      height: 160,
+      height: 161,
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(

@@ -4,6 +4,8 @@ import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Home/viewmodel/announcements_view_model.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
+import 'package:leavify/router/app_navigator.dart';
+import 'package:leavify/router/route_names.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -287,7 +289,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
       // Navigate immediately after clearing data
       if (context.mounted) {
-        Navigator.pushNamed(context, '/login');
+        // Navigator.pushNamed(context, '/login');
+        AppNavigator.setRootView(RouteNames.login);
       }
     } catch (e) {
       // If provider access fails during logout, proceed anyway

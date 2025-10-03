@@ -5,6 +5,7 @@ class ApplyLeaveRequestModel {
   final String fromDate;
   final String toDate;
   final String reason;
+  final String subType;
   final bool isCompOff;
   final bool isHalfDay;
   final List<String> compDates;
@@ -17,6 +18,7 @@ class ApplyLeaveRequestModel {
     required this.fromDate,
     required this.toDate,
     required this.reason,
+    required this.subType,
     this.isCompOff = false,
     this.isHalfDay = false,
     this.compDates = const [],
@@ -29,13 +31,12 @@ class ApplyLeaveRequestModel {
     "fromDate": fromDate,
     "toDate": toDate,
     "reason": reason,
+    "subType": subType,
     "isCompOff": isCompOff,
     "isHalfDay": isHalfDay,
     "compDates": compDates,
     "documents": documents.map((doc) => doc.toJson()).toList(),
-    if (requestedBy != null)
-      "requestedBy":
-          requestedBy, // TODO: this should be chnaged to requested for since the user id will be of the manager only.
+    if (requestedBy != null) "requestedBy": requestedBy,
   };
 }
 

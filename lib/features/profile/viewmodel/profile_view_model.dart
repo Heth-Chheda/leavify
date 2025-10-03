@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/base/base_view_model.dart';
-import 'package:leavify/dummydata/leave/dummy_user_leaves.dart';
+import 'package:leavify/core/storage/app_storage.dart';
+// import 'package:leavify/dummydata/leave/dummy_user_leaves.dart';
 import 'package:leavify/features/Leave/data/leave_repository.dart';
 import 'package:leavify/features/Leave/models/general/leave_document.dart';
 import 'package:leavify/features/Leave/models/general/my_leaves.dart';
@@ -16,6 +17,8 @@ class ProfileViewModel extends BaseViewModel {
   bool _isEditMode = false;
   bool get isEditMode => _isEditMode;
   LeaveData? get leaveData => _leaveData;
+  String? _loadUserLeavesError;
+  String? get loadUserLeavesError => _loadUserLeavesError;
 
   void toggleEditMode() {
     _isEditMode = !_isEditMode;
@@ -27,14 +30,17 @@ class ProfileViewModel extends BaseViewModel {
   Future<void> loadUserLeaves(String userId) async {
     try {
       update(isLoading: true, errorMessage: null);
+      _loadUserLeavesError = null;
       notifyListeners();
-      // _leaveData = await _repository.getUserLeaves(userId);
-      _leaveData = dummyLeaveData;
+      final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
+      _leaveData = await _repository.getUserLeaves(userId, accessToken);
+      // _leaveData = dummyLeaveData;
       update(isLoading: false);
       notifyListeners();
     } catch (e) {
       debugPrint('Hello kaay chaale che ${e.toString()}');
       update(errorMessage: e.toString(), isLoading: false);
+      _loadUserLeavesError = e.toString();
       notifyListeners();
     }
   }
@@ -103,7 +109,9 @@ class ProfileViewModel extends BaseViewModel {
         return false;
       }
 
-      final success = await _repository.editUserLeave(updateData);
+      final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
+
+      final success = await _repository.editUserLeave(updateData, accessToken);
 
       if (success.success == true) {
         _isEditMode = false;

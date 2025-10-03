@@ -40,6 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
     final isLoggedIn =
         await AppStorage.getBoolean('USER_IS_ALREADY_LOGGED_IN') ?? false;
+    debugPrint('User logged in: $isLoggedIn');
     final routeName = isLoggedIn ? RouteNames.home : RouteNames.login;
     AppNavigator.setRootView(routeName);
   }

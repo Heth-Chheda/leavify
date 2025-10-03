@@ -31,6 +31,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   late bool _isCompOff;
   late List<DateTime> _compDates;
   GetLeaveByIdResponse? _leave;
+  late String _status;
 
   @override
   void initState() {
@@ -116,6 +117,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         _isHalfDay = leave.leaveDetails.isHalfDay;
         _isCompOff = leave.leaveDetails.isCompOff;
         _compDates = leave.leaveDetails.compDates.map(DateTime.parse).toList();
+        _status = leave.leaveDetails.status;
       });
     }
   }
@@ -150,8 +152,10 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Status Badge with gradient
-                        _buildStatusSection(isDark),
-                        const SizedBox(height: 24),
+                        if (_status.toLowerCase() != 'cancelled') ...[
+                          _buildStatusSection(isDark),
+                          const SizedBox(height: 24),
+                        ],
 
                         // Leave Duration Card with glassmorphism effect
                         _buildLeaveCard(viewModel, isDark),

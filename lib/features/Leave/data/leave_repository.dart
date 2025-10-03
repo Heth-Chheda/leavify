@@ -1,3 +1,4 @@
+// import 'package:flutter/material.dart';
 import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
@@ -12,20 +13,24 @@ import 'package:leavify/models/general_response.dart';
 class LeaveRepository extends BaseRepository {
   Future<ApplyLeaveResponseModel> applyLeave(
     ApplyLeaveRequestModel request,
+    String accessToken,
   ) async {
     return await performRequest(
       url: ApiEndpoints.applyLeave,
       method: HttpMethod.post,
       body: request.toJson(),
+      accessToken: accessToken,
       fromJson: ApplyLeaveResponseModel.fromJson,
     );
   }
 
   // MARK: GET USER LEAVES
-  Future<LeaveData> getUserLeaves(String userId) async {
+  Future<LeaveData> getUserLeaves(String userId, String accessToken) async {
     return await performRequest(
       url: ApiEndpoints.getMyLeaves,
       method: HttpMethod.post,
+      accessToken: accessToken,
+      body: {'userId': userId},
       fromJson: LeaveData.fromJson,
     );
   }
@@ -33,11 +38,13 @@ class LeaveRepository extends BaseRepository {
   // MARK: EDIT LEAVE
   Future<GeneralResponse> editUserLeave(
     Map<String, dynamic> requestBody,
+    String accessToken,
   ) async {
     return await performRequest(
       url: ApiEndpoints.editMyLeave,
       method: HttpMethod.post,
       body: requestBody,
+      accessToken: accessToken,
       fromJson: (json) => GeneralResponse.fromJson(json),
     );
   }
@@ -46,10 +53,12 @@ class LeaveRepository extends BaseRepository {
   Future<SendReminderResponse> sendReminderForLeave({
     required String userId,
     required String leaveId,
+    required String accessToken,
   }) async {
     return await performRequest(
       url: ApiEndpoints.sendReminderForLeave,
       method: HttpMethod.post,
+      accessToken: accessToken,
       body: {'userId': userId, 'leaveId': leaveId},
       fromJson: SendReminderResponse.fromJson,
     );
@@ -59,10 +68,12 @@ class LeaveRepository extends BaseRepository {
   Future<GeneralResponse> cancelLeave({
     required String leaveId,
     required String userId,
+    required String accessToken,
   }) async {
     return await performRequest(
       url: ApiEndpoints.cancelLeave,
       method: HttpMethod.post,
+      accessToken: accessToken,
       body: {'userId': userId, 'leaveId': leaveId},
       fromJson: (json) => GeneralResponse.fromJson(json),
     );
@@ -72,10 +83,12 @@ class LeaveRepository extends BaseRepository {
   Future<GeneralResponse> escalateLeave({
     required String leaveId,
     required String userId,
+    required String accessToken,
   }) async {
     return await performRequest(
       url: ApiEndpoints.escalateLeave,
       method: HttpMethod.post,
+      accessToken: accessToken,
       body: {'userId': userId, 'leaveId': leaveId},
       fromJson: (json) => GeneralResponse.fromJson(json),
     );
@@ -88,6 +101,7 @@ class LeaveRepository extends BaseRepository {
     required String status,
     required String actionTakenBy,
     required String comment,
+    required String accessToken,
   }) async {
     return await performRequest(
       url: ApiEndpoints.processLeave,
@@ -98,6 +112,7 @@ class LeaveRepository extends BaseRepository {
         'actionTakenBy': actionTakenBy,
         'comment': comment,
       },
+      accessToken: accessToken,
       fromJson: (json) => GeneralResponse.fromJson(json),
     );
   }
@@ -105,23 +120,30 @@ class LeaveRepository extends BaseRepository {
   // MARK: GET PENDING LEAVES
   Future<List<GetAllResponse>> getPendingLeaves({
     required String userId,
+    required String accessToken,
   }) async {
     return await performRequest(
       url: ApiEndpoints.getPendingLeaves,
       method: HttpMethod.post,
       body: {'userId': userId},
+      accessToken: accessToken,
       fromJson: (json) {
-        final List<dynamic> data = json['leaves'] ?? [];
+        final List<dynamic> data = json['result'] ?? [];
         return data.map((e) => GetAllResponse.fromJson(e)).toList();
       },
     );
   }
 
   // MARK: GET REPORTEES
-  Future<ReporteesResponse> getReprtees({required String userId}) async {
+  Future<ReporteesResponse> getReprtees({
+    required String userId,
+    required String accessToken,
+  }) async {
     return await performRequest(
       url: ApiEndpoints.getReportees,
       method: HttpMethod.post,
+      accessToken: accessToken,
+      body: {'userId': userId},
       fromJson: ReporteesResponse.fromJson,
     );
   }
@@ -130,11 +152,13 @@ class LeaveRepository extends BaseRepository {
   Future<GetLeaveByIdResponse> getLeaveById({
     required String userId,
     required String leaveId,
+    required String accessToken,
   }) async {
     return await performRequest(
       url: ApiEndpoints.getLeaveById,
       method: HttpMethod.post,
       body: {'userId': userId, 'leaveId': leaveId},
+      accessToken: accessToken,
       fromJson: GetLeaveByIdResponse.fromJson,
     );
   }

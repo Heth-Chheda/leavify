@@ -47,28 +47,35 @@ class LeaveCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             child: Row(
               children: [
                 // Profile Picture or Initials
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Colors.grey[300],
-                  foregroundImage: fullImageUrl != null
-                      ? NetworkImage(fullImageUrl)
-                      : null,
-                  child: fullImageUrl == null
-                      ? Text(
-                          leave.employeeName.isNotEmpty
-                              ? leave.employeeName[0].toUpperCase()
-                              : 'A',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16), // corner radius
+                  child: fullImageUrl != null
+                      ? Image.network(
+                          fullImageUrl,
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
                         )
-                      : null,
+                      : Container(
+                          width: 48,
+                          height: 48,
+                          color: Colors.grey[300],
+                          alignment: Alignment.center,
+                          child: Text(
+                            leave.employeeName.isNotEmpty
+                                ? leave.employeeName[0].toUpperCase()
+                                : 'A',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                 ),
 
                 const SizedBox(width: 16),

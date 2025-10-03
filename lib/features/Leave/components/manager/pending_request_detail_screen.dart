@@ -10,6 +10,8 @@ import 'package:leavify/features/Leave/models/general/leave_document.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
+import 'package:leavify/router/app_navigator.dart';
+import 'package:leavify/router/route_names.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
@@ -217,7 +219,8 @@ class _PendingRequestDetailScreenState
     );
 
     if (success && mounted) {
-      Navigator.pop(context);
+      // Navigator.pop(context);
+      AppNavigator.goBack(true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Request approved successfully'),
@@ -255,7 +258,8 @@ class _PendingRequestDetailScreenState
     );
 
     if (success && mounted) {
-      Navigator.pop(context);
+      // Navigator.pop(context);
+      AppNavigator.navigateTo(RouteNames.pendingRequests);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Request rejected successfully'),
@@ -295,7 +299,8 @@ class _PendingRequestDetailScreenState
     );
 
     if (success && mounted) {
-      Navigator.pop(context);
+      // Navigator.pop(context);
+      AppNavigator.goBack(true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Request rejected successfully'),
