@@ -4,19 +4,21 @@ class GetLeaveByIdResponse {
   final String userId;
   final String leaveId;
   final String employeeName;
-  final bool willComplete20Days;
+  final int workingDaysCount;
   final int balanceLeaves;
   final LeaveDetails leaveDetails;
   final CurrentUserAction? currentUserAction;
+  final List<TeamConflictingLeave> teamConflictingLeaves;
 
   GetLeaveByIdResponse({
     required this.userId,
     required this.leaveId,
     required this.employeeName,
-    required this.willComplete20Days,
+    required this.workingDaysCount,
     required this.balanceLeaves,
     required this.leaveDetails,
     this.currentUserAction,
+    required this.teamConflictingLeaves,
   });
 
   factory GetLeaveByIdResponse.fromJson(Map<String, dynamic> json) {
@@ -24,12 +26,17 @@ class GetLeaveByIdResponse {
       userId: json['userId'],
       leaveId: json['leaveId'],
       employeeName: json['employeeName'],
-      willComplete20Days: json['willComplete20Days'],
+      workingDaysCount: json['workingDaysCount'],
       balanceLeaves: json['balanceLeaves'],
       leaveDetails: LeaveDetails.fromJson(json['leaveDetails']),
       currentUserAction: json['currentUserAction'] != null
           ? CurrentUserAction.fromJson(json['currentUserAction'])
           : null,
+      teamConflictingLeaves:
+          (json['teamConflictingLeaves'] as List?)
+              ?.map((e) => TeamConflictingLeave.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 }
@@ -192,6 +199,35 @@ class ReminderDetails {
     return ReminderDetails(
       reminderSentAt: DateTime.parse(json['reminderSentAt']),
       reminderCount: json['reminderCount'],
+    );
+  }
+}
+
+class TeamConflictingLeave {
+  final String fName;
+  final String lName;
+  final String profileImagePath;
+  final DateTime fromDate;
+  final DateTime toDate;
+  final String reason;
+
+  TeamConflictingLeave({
+    required this.fName,
+    required this.lName,
+    required this.profileImagePath,
+    required this.fromDate,
+    required this.toDate,
+    required this.reason,
+  });
+
+  factory TeamConflictingLeave.fromJson(Map<String, dynamic> json) {
+    return TeamConflictingLeave(
+      fName: json['fName'] ?? '',
+      lName: json['lName'] ?? '',
+      profileImagePath: json['profileImagePath'] ?? '',
+      fromDate: DateTime.parse(json['fromDate']),
+      toDate: DateTime.parse(json['toDate']),
+      reason: json['reson'] ?? json['reason'] ?? '',
     );
   }
 }

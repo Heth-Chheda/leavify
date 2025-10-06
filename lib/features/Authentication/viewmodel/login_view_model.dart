@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
-import 'package:leavify/dummydata/login/dummy_login_response.dart';
+// import 'package:leavify/dummydata/login/dummy_login_response.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
-// import 'package:leavify/features/Authentication/domain/request/login_request.dart';
+import 'package:leavify/features/Authentication/domain/request/login_request.dart';
 import 'package:leavify/router/app_navigator.dart';
 import 'package:leavify/router/route_names.dart';
 import 'package:provider/provider.dart';
 
 class LoginViewModel extends BaseViewModel {
-  final usernameController = TextEditingController(text: 'N');
-  final passwordController = TextEditingController(text: '1234');
+  final usernameController = TextEditingController(text: '');
+  final passwordController = TextEditingController(text: '');
 
   final AuthenticationRepository _authenticationRepository =
       AuthenticationRepository();
 
   Future<void> login(BuildContext context) async {
-    // final password = passwordController.text.trim();
-    // final username = usernameController.text.trim();
+    final password = passwordController.text.trim();
+    final username = usernameController.text.trim();
 
     // Validation of email.
     // final usernameValidation = ValidationUtils.validateUsernameAsEmailOrPhone(
@@ -55,16 +55,16 @@ class LoginViewModel extends BaseViewModel {
         return;
       }
 
-      // final loginRequest = LoginRequest(
-      //   username: username,
-      //   password: password,
-      //   loginType: 'EMAIL',
-      //   fcmToken: fcmToken,
-      // );
+      final loginRequest = LoginRequest(
+        username: username,
+        password: password,
+        loginType: 'EMAIL',
+        fcmToken: fcmToken,
+      );
       // showInfo(context, '$loginRequest');
       // logins only
-      // final result = await _authenticationRepository.login(loginRequest);
-      final result = dummyLoginData;
+      final result = await _authenticationRepository.login(loginRequest);
+      // final result = dummyLoginData;
 
       if (result.success) {
         // Initialize home viewModel and then navigate to home screen.

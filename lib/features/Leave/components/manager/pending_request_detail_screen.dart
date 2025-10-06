@@ -39,6 +39,9 @@ class _PendingRequestDetailScreenState
 
   Future<void> _initializeLeaveDetails() async {
     final viewModel = Provider.of<LeaveViewModel>(context, listen: false);
+    // Clear any cached data first
+    viewModel.clearSelectedLeave();
+    // Then fetch fresh data
     await viewModel.getLeaveById(leaveId: widget.leaveId);
   }
 
@@ -91,12 +94,6 @@ class _PendingRequestDetailScreenState
             _ReasonCard(reason: leaveData.leaveDetails.reason),
           if (leaveData.leaveDetails.reason.isNotEmpty)
             const SizedBox(height: 16),
-          if (leaveData.leaveDetails.isCompOff &&
-              leaveData.leaveDetails.compDates.isNotEmpty)
-            _CompOffDatesCard(compOffDates: leaveData.leaveDetails.compDates),
-          if (leaveData.leaveDetails.isCompOff &&
-              leaveData.leaveDetails.compDates.isNotEmpty)
-            const SizedBox(height: 16),
           if (leaveData.leaveDetails.documents.isNotEmpty)
             DocumentsCard(documents: leaveData.leaveDetails.documents),
           if (leaveData.leaveDetails.documents.isNotEmpty)
@@ -112,6 +109,10 @@ class _PendingRequestDetailScreenState
             const SizedBox(height: 16),
           _CommentsCard(commentsController: _commentsController),
           const SizedBox(height: 24),
+          _TeamConflictingLeavesList(
+            teamLeaves: leaveData.teamConflictingLeaves,
+          ),
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -133,32 +134,48 @@ class _PendingRequestDetailScreenState
 
         // If HR → only Resolve button
         if (userRole == 'hr') {
-          buttons = Expanded(
-            child: _ResolveButton(
-              onPressed: leaveViewModel.isLoading
-                  ? null
-                  : _handleProcessEscalated,
-              isLoading: leaveViewModel.isProcessEscalatedLeaveLoading,
-            ),
+          buttons = Row(
+            children: [
+              Expanded(
+                child: _ResolveButton(
+                  onPressed: leaveViewModel.isLoading
+                      ? null
+                      : _handleProcessEscalated,
+                  isLoading: leaveViewModel.isProcessEscalatedLeaveLoading,
+                ),
+              ),
+            ],
           );
         } else {
           // Existing logic for managers
           switch (latestStatus) {
             case 'approved':
-              buttons = Expanded(
-                child: _RejectButton(
-                  onPressed: leaveViewModel.isLoading ? null : _handleReject,
-                  isLoading: leaveViewModel.isRejectLoading,
-                ),
+              buttons = Row(
+                children: [
+                  Expanded(
+                    child: _RejectButton(
+                      onPressed: leaveViewModel.isLoading
+                          ? null
+                          : _handleReject,
+                      isLoading: leaveViewModel.isRejectLoading,
+                    ),
+                  ),
+                ],
               );
               break;
 
             case 'rejected':
-              buttons = Expanded(
-                child: _ApproveButton(
-                  onPressed: leaveViewModel.isLoading ? null : _handleApprove,
-                  isLoading: leaveViewModel.isApproveLoading,
-                ),
+              buttons = Row(
+                children: [
+                  Expanded(
+                    child: _ApproveButton(
+                      onPressed: leaveViewModel.isLoading
+                          ? null
+                          : _handleApprove,
+                      isLoading: leaveViewModel.isApproveLoading,
+                    ),
+                  ),
+                ],
               );
               break;
 
@@ -398,20 +415,42 @@ class _EmployeeHeaderCard extends StatelessWidget {
   }
 
   Widget _buildBalanceInfo() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        'Balance Leaves: ${leaveData.balanceLeaves}',
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: Colors.blue.shade700,
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            'Balance Leaves: ${leaveData.balanceLeaves}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue.shade700,
+            ),
+          ),
         ),
-      ),
+
+        const SizedBox(width: 16),
+
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            'Working Days: ${leaveData.workingDaysCount}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.red.shade700,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -462,13 +501,6 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
           label: 'Last Updated',
           value: _formatDateTime(leaveData.leaveDetails.updatedAt),
         ),
-        if (leaveData.willComplete20Days)
-          _InfoRow(
-            icon: Icons.warning_amber_outlined,
-            label: 'Will Complete 20 Days',
-            value: 'Yes',
-            valueColor: Colors.orange,
-          ),
       ],
     );
   }
@@ -521,52 +553,6 @@ class _ReasonCard extends StatelessWidget {
             ),
           ),
         ),
-      ],
-    );
-  }
-}
-
-// MARK: - Comp Off Dates Card
-class _CompOffDatesCard extends StatelessWidget {
-  final List<String> compOffDates;
-
-  const _CompOffDatesCard({required this.compOffDates});
-
-  @override
-  Widget build(BuildContext context) {
-    return _InfoCard(
-      title: 'Compensation Off Dates',
-      children: [
-        ...compOffDates.map((dateStr) {
-          final date = DateTime.parse(dateStr);
-          return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.event_available,
-                  size: 16,
-                  color: Colors.green.shade700,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  DateFormat('dd MMM yyyy').format(date),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.green.shade700,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
       ],
     );
   }
@@ -1354,13 +1340,11 @@ class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final Color? valueColor;
 
   const _InfoRow({
     required this.icon,
     required this.label,
     required this.value,
-    this.valueColor,
   });
 
   @override
@@ -1392,7 +1376,7 @@ class _InfoRow extends StatelessWidget {
                   value,
                   style: TextStyle(
                     fontSize: 15,
-                    color: valueColor ?? colorScheme.onSurface,
+                    color: colorScheme.onSurface,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1488,6 +1472,105 @@ class _ApproveButton extends StatelessWidget {
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
+
+class _TeamConflictingLeavesList extends StatelessWidget {
+  final List<TeamConflictingLeave> teamLeaves;
+
+  const _TeamConflictingLeavesList({required this.teamLeaves});
+
+  @override
+  Widget build(BuildContext context) {
+    if (teamLeaves.isEmpty) {
+      return const SizedBox.shrink(); // don't show anything if empty
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: colorScheme.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Team Conflicting Leaves",
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: teamLeaves.length,
+              separatorBuilder: (_, __) => const Divider(height: 16),
+              itemBuilder: (context, index) {
+                final leave = teamLeaves[index];
+                final imageUrl =
+                    "${ApiEndpoints.baseUrl}/${leave.profileImagePath}";
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Profile Image
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: Image.network(
+                        imageUrl,
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.account_circle, size: 50),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${leave.fName} ${leave.lName}",
+                            style: textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "${DateFormat('dd MMM yyyy').format(leave.fromDate)} → ${DateFormat('dd MMM yyyy').format(leave.toDate)}",
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            leave.reason.isNotEmpty
+                                ? leave.reason
+                                : "No reason provided",
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

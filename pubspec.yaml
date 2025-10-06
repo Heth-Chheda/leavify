@@ -82,6 +82,9 @@ dependencies:
   # TOAST
   flutter_sliding_toast: ^1.5.2
 
+  #NOTIFICATIONS
+  flutter_local_notifications: ^19.4.2
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8

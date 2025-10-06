@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
+import 'package:leavify/features/Leave/models/response/reportee_response.dart';
 
 class ModernUserPicker extends StatefulWidget {
   final List<dynamic> users;
@@ -223,9 +225,18 @@ class _ModernUserPickerState extends State<ModernUserPicker> {
     );
   }
 
-  Widget _buildUserTile(dynamic user, ThemeData theme, bool isDarkMode) {
+  Widget _buildUserTile(Reportee user, ThemeData theme, bool isDarkMode) {
     final initials = '${user.fName[0]}${user.lName[0]}'.toUpperCase();
+    final imagePath = user.profileImagePath;
     final gradientColors = _getGradientForIndex(user.id.hashCode);
+
+    // Debug prints
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    print('User: ${user.fName} ${user.lName}');
+    print('Profile Image Path: "$imagePath"');
+    print('Is Empty: ${imagePath.isEmpty}');
+    print('Full URL: ${ApiEndpoints.baseUrl}$imagePath');
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     return Material(
       color: Colors.transparent,
@@ -243,11 +254,13 @@ class _ModernUserPickerState extends State<ModernUserPicker> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: gradientColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: imagePath.isEmpty
+                      ? LinearGradient(
+                          colors: gradientColors,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -257,15 +270,52 @@ class _ModernUserPickerState extends State<ModernUserPicker> {
                     ),
                   ],
                 ),
-                child: Center(
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: imagePath.isNotEmpty
+                      ? Image.network(
+                          '${ApiEndpoints.baseUrl}/$imagePath',
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) {
+                              print(
+                                '✅ Image loaded successfully for ${user.fName}',
+                              );
+                              return child;
+                            }
+                            print('⏳ Loading image for ${user.fName}...');
+                            return Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: gradientColors,
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white.withOpacity(0.5),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            print('❌ Image failed to load for ${user.fName}');
+                            print('Error: $error');
+                            return _buildInitialsContainer(
+                              initials,
+                              gradientColors,
+                            );
+                          },
+                        )
+                      : _buildInitialsContainer(initials, gradientColors),
                 ),
               ),
               const SizedBox(width: 16),
@@ -296,13 +346,35 @@ class _ModernUserPickerState extends State<ModernUserPicker> {
                 ),
               ),
 
-              // Arrow icon
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 16,
                 color: theme.colorScheme.onSurface.withOpacity(0.3),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInitialsContainer(String initials, List<Color> gradientColors) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
       ),

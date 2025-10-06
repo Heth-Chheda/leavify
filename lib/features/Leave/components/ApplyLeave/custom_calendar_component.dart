@@ -518,15 +518,16 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
   void _handleDateTap(DateTime date) {
     if (widget.enableRangeSelection) {
       setState(() {
-        if (rangeStartDate == null) {
-          // First tap - set both start and end date to the same date
+        if (rangeStartDate == null ||
+            (!isSelectingEndDate && rangeEndDate != null)) {
+          // Reset range if no start date or a previous range already exists
           rangeStartDate = date;
           rangeEndDate = date;
           isSelectingEndDate = true;
-        } else {
-          // Second tap onwards - update the end date
+        } else if (isSelectingEndDate) {
+          // Second tap: set end date
           if (date.isBefore(rangeStartDate!)) {
-            // If selected date is before start date, swap them
+            // Swap if end date is before start date
             rangeEndDate = rangeStartDate;
             rangeStartDate = date;
           } else {

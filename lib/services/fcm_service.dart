@@ -1,12 +1,18 @@
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 
 class FCMService {
+  // 🔸 Step 1: Add a local notifications instance
+  static final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
   static Future<void> initialize() async {
     final messaging = FirebaseMessaging.instance;
 
+    await _initializeLocalNotifications();
     await _requestPermissions(messaging);
 
     if (Platform.isIOS) {
@@ -15,10 +21,79 @@ class FCMService {
 
     await _saveFCMToken(messaging);
 
+    // 🔸 Step 2: Listen for foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint(
+        '📩 Foreground message received: ${message.notification?.title}',
+      );
+      _showLocalNotification(message);
+    });
+
+    // 🔸 Step 3: When user taps a notification and opens the app
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      debugPrint('📲 Notification clicked: ${message.data}');
+    });
+
+    // 🔸 Step 4: Handle token refresh
     messaging.onTokenRefresh.listen((newToken) {
       AppStorage.saveString("USER_FCM_TOKEN", newToken);
       debugPrint('🔄 FCM Token Refreshed: $newToken');
     });
+  }
+
+  // 🔸 Step 5: Initialize flutter_local_notifications
+  static Future<void> _initializeLocalNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    // iOS / macOS settings
+    const DarwinInitializationSettings initializationSettingsIOS =
+        DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        );
+
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS,
+        );
+
+    await _localNotifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (details) {
+        // Optional: handle notification tap
+        debugPrint('📲 Notification tapped: ${details.payload}');
+      },
+    );
+  }
+
+  // 🔸 Step 6: Show local notification manually for foreground messages
+  static Future<void> _showLocalNotification(RemoteMessage message) async {
+    final notification = message.notification;
+    if (notification == null) return;
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'default_channel_id',
+          'General Notifications',
+          channelDescription: 'Used for showing important notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+          showWhen: true,
+        );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+    );
+
+    await _localNotifications.show(
+      notification.hashCode,
+      notification.title,
+      notification.body,
+      notificationDetails,
+    );
   }
 
   static Future<void> _requestPermissions(FirebaseMessaging messaging) async {
