@@ -1,4 +1,4 @@
-package com.ritetechnologies.leavify.leavify
+package com.ritetechnologies.leavify
 
 import io.flutter.embedding.android.FlutterActivity
 

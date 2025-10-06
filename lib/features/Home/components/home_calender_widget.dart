@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/Leave/components/calendar/week_calendar_view.dart';
+import 'package:leavify/features/Leave/components/calendar/month_calendar_view.dart';
 
 class HomeCalendarWidget extends StatefulWidget {
   final Function(DateTime?)? onDateSelected;
@@ -25,19 +26,21 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
   late DateTime _currentDate;
   DateTime? _selectedDate;
   late PageController _weekPageController;
-  final int _initialWeekPage =
-      52; // Start from middle to allow backward scrolling
+  late PageController _monthPageController;
+  final int _initialWeekPage = 52;
+  final int _initialMonthPage = 60;
+  bool _isWeekView = true;
 
   // Modern color palette for different users using your highlight colors
   final List<Color> _userColors = [
-    const Color(0xFFFF3E6C), // highlightPink
-    const Color(0xFF61BFC2), // highlightTeal
-    const Color(0xFFFFA200), // highlightOrange
-    const Color(0xFF51DC8E), // highlightGreen
-    const Color(0xFF10B981), // Emerald
-    const Color(0xFFEF4444), // Red
-    const Color(0xFF06B6D4), // Cyan
-    const Color(0xFFF97316), // Orange
+    const Color(0xFFFF3E6C),
+    const Color(0xFF61BFC2),
+    const Color(0xFFFFA200),
+    const Color(0xFF51DC8E),
+    const Color(0xFF10B981),
+    const Color(0xFFEF4444),
+    const Color(0xFF06B6D4),
+    const Color(0xFFF97316),
   ];
 
   final Map<String, Color> _userColorMap = {};
@@ -48,6 +51,7 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
     _currentDate = DateTime.now();
     _selectedDate = widget.selectedDate ?? DateTime.now();
     _weekPageController = PageController(initialPage: _initialWeekPage);
+    _monthPageController = PageController(initialPage: _initialMonthPage);
     _generateUserColorMap();
   }
 
@@ -64,6 +68,7 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
   @override
   void dispose() {
     _weekPageController.dispose();
+    _monthPageController.dispose();
     super.dispose();
   }
 
@@ -153,12 +158,22 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
                   widget.onDateSelected?.call(_selectedDate);
                 },
               ),
-              Icon(
-                Icons.calendar_today_rounded,
-                size: 20,
-                color: isDark
-                    ? Colors.white.withOpacity(0.7)
-                    : Colors.black.withOpacity(0.6),
+              IconButton(
+                tooltip: _isWeekView
+                    ? 'Switch to month view'
+                    : 'Switch to week view',
+                icon: Icon(
+                  Icons.calendar_month_rounded,
+                  size: 20,
+                  color: isDark
+                      ? Colors.white.withOpacity(0.7)
+                      : Colors.black.withOpacity(0.6),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isWeekView = !_isWeekView;
+                  });
+                },
               ),
             ],
           ),
@@ -196,33 +211,53 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
             ),
           );
         },
-        child: WeekCalendarView(
-          key: const ValueKey('week'),
-          currentDate: _currentDate,
-          selectedDate: _selectedDate,
-          onDateSelected: _onDateSelected,
-          pageController: _weekPageController,
-          initialPage: _initialWeekPage,
-          onWeekChanged: (date) {
-            setState(() {
-              _currentDate = date;
-            });
-          },
-          userLeaves: widget.userLeaves,
-          userColorMap: _userColorMap,
-        ),
+        child: _isWeekView
+            ? WeekCalendarView(
+                key: const ValueKey('week'),
+                currentDate: _currentDate,
+                selectedDate: _selectedDate,
+                onDateSelected: _onDateSelected,
+                pageController: _weekPageController,
+                initialPage: _initialWeekPage,
+                onWeekChanged: (date) {
+                  setState(() {
+                    _currentDate = date;
+                  });
+                },
+                userLeaves: widget.userLeaves,
+                userColorMap: _userColorMap,
+              )
+            : MonthCalendarView(
+                key: const ValueKey('month'),
+                currentDate: _currentDate,
+                selectedDate: _selectedDate,
+                onDateSelected: _onDateSelected,
+                pageController: _monthPageController,
+                initialPage: _initialMonthPage,
+                onMonthChanged: (date) {
+                  setState(() {
+                    _currentDate = date;
+                  });
+                },
+                userLeaves: widget.userLeaves,
+                userColorMap: _userColorMap,
+              ),
       ),
     );
   }
 
   String _getHeaderTitle() {
-    final weekStart = _getWeekStart(_currentDate);
-    final weekEnd = weekStart.add(const Duration(days: 6));
+    if (_isWeekView) {
+      final weekStart = _getWeekStart(_currentDate);
+      final weekEnd = weekStart.add(const Duration(days: 6));
 
-    if (weekStart.month == weekEnd.month) {
-      return '${_getMonthName(weekStart.month)} ${weekStart.year}';
+      if (weekStart.month == weekEnd.month) {
+        return '${_getMonthName(weekStart.month)} ${weekStart.year}';
+      } else {
+        return '${_getMonthName(weekStart.month)} - ${_getMonthName(weekEnd.month)} ${weekStart.year}';
+      }
     } else {
-      return '${_getMonthName(weekStart.month)} - ${_getMonthName(weekEnd.month)} ${weekStart.year}';
+      return '${_getMonthName(_currentDate.month)} ${_currentDate.year}';
     }
   }
 

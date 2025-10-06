@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Leave/components/ApplyLeave/reportee_picker.dart';
 import 'package:leavify/features/Leave/models/response/reportee_response.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:provider/provider.dart';
@@ -675,43 +676,32 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     List<Reportee> users,
     LeaveViewModel leaveViewModel,
   ) {
-    showModalBottomSheet(
+    ModernUserPicker.show(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return ListView.separated(
-          shrinkWrap: true,
-          itemCount: users.length,
-          separatorBuilder: (context, index) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Container(height: 1, color: Colors.grey),
-          ),
-          itemBuilder: (context, index) {
-            final user = users[index];
-            return ListTile(
-              title: Text('${user.fName} ${user.lName}'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: HERE WE HAVE SELECT THE NAME OF THE EMPLOYEE WHICH THE MANAGER WANTS TO APPLY THE LEAVE FOR.
-                // TODO: TASKS TO BE COMPLETED:
-                /*
-                1. THE SHOULD REFLECT ON THE BUTTON
-                2. ON SELECTING THE NAME, AND WHEN WE APPLY THE FORM
-                WE WOULD NEED THE USERID TO BE SENT IN THE REQUEST.
-                3. WHAT WE NEED TO DO IS THAT IN THE REQUESTEDBY WE WILL HAVE THE MANAGER'S USER ID AND IN THE USER ID WE WILL HAVE THE USER'S ID FOR WHOM WE NEED TO APPLY LEAVE FOR.
-                */
-                // do something with selected user
-                leaveViewModel.selectedUser = user;
-                debugPrint(
-                  "Selected: ${leaveViewModel.selectedUser?.fName} ${leaveViewModel.selectedUser?.lName} ${leaveViewModel.selectedUser?.id}",
-                );
-                // maybe call _navigateNext(user);
-              },
-            );
-          },
+      users: users,
+      title: 'Select Employee',
+      onUserSelected: (user) {
+        // 1. THE SHOULD REFLECT ON THE BUTTON
+        // 2. ON SELECTING THE NAME, AND WHEN WE APPLY THE FORM
+        // WE WOULD NEED THE USERID TO BE SENT IN THE REQUEST.
+        // 3. WHAT WE NEED TO DO IS THAT IN THE REQUESTEDBY WE WILL HAVE
+        // THE MANAGER'S USER ID AND IN THE USER ID WE WILL HAVE THE
+        // USER'S ID FOR WHOM WE NEED TO APPLY LEAVE FOR.
+
+        leaveViewModel.selectedUser = user;
+
+        // This will trigger a rebuild and update the button text
+        if (mounted) {
+          setState(() {});
+        }
+
+        debugPrint(
+          "Selected: ${leaveViewModel.selectedUser?.fName} "
+          "${leaveViewModel.selectedUser?.lName} "
+          "${leaveViewModel.selectedUser?.id}",
         );
+
+        // maybe call _navigateNext(user);
       },
     );
   }

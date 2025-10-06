@@ -415,123 +415,221 @@ class _AnnouncementBottomSheetContentState
       decoration: BoxDecoration(
         color: widget.theme.colorScheme.surface,
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
       ),
       child: Column(
         children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: widget.theme.colorScheme.onSurface.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.campaign_rounded,
-                  color: widget.theme.colorScheme.primary,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Create Announcement',
-                  style: TextStyle(
-                    color: widget.theme.colorScheme.onSurface,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: Icon(
-                    Icons.close,
-                    color: widget.theme.colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
-          // Content
+          _buildHandleBar(),
+          _buildHeader(),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
+                  _buildModernTextField(
                     controller: _titleController,
-                    decoration: InputDecoration(
-                      labelText: "Title",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      labelStyle: TextStyle(
-                        color: widget.theme.colorScheme.onSurface.withOpacity(
-                          0.7,
-                        ),
-                      ),
-                    ),
-                    style: TextStyle(color: widget.theme.colorScheme.onSurface),
+                    label: "Title",
+                    hint: "Enter announcement title",
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
+                  const SizedBox(height: 20),
+                  _buildModernTextField(
                     controller: _bodyController,
-                    maxLines: 4,
-                    decoration: InputDecoration(
-                      labelText: "Body",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      labelStyle: TextStyle(
-                        color: widget.theme.colorScheme.onSurface.withOpacity(
-                          0.7,
-                        ),
-                      ),
-                      alignLabelWithHint: true,
-                    ),
-                    style: TextStyle(color: widget.theme.colorScheme.onSurface),
+                    label: "Body",
+                    hint: "Enter announcement details",
+                    maxLines: 6,
                   ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      icon: viewModel.isLoading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.send),
-                      label: const Text("Send Announcement"),
-                      onPressed: viewModel.isLoading ? null : _sendAnnouncement,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: widget.theme.colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 32),
+                  _buildSendButton(viewModel.isLoading),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHandleBar() {
+    return Container(
+      margin: const EdgeInsets.only(top: 12, bottom: 8),
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: widget.theme.colorScheme.onSurface.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 16, 20),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: widget.theme.colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.campaign_rounded,
+              color: widget.theme.colorScheme.primary,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              'Create Announcement',
+              style: TextStyle(
+                color: widget.theme.colorScheme.onSurface,
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(
+              Icons.close_rounded,
+              color: widget.theme.colorScheme.onSurface.withOpacity(0.6),
+            ),
+            style: IconButton.styleFrom(
+              backgroundColor: widget.theme.colorScheme.onSurface.withOpacity(
+                0.05,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: widget.theme.colorScheme.onSurface.withOpacity(0.8),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: widget.theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: widget.theme.colorScheme.onSurface.withOpacity(0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: widget.theme.colorScheme.onSurface.withOpacity(0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: controller,
+            maxLines: maxLines,
+            style: TextStyle(
+              color: widget.theme.colorScheme.onSurface,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(
+                color: widget.theme.colorScheme.onSurface.withOpacity(0.4),
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 18,
+              ),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSendButton(bool isLoading) {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: isLoading
+            ? []
+            : [
+                BoxShadow(
+                  color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+      ),
+      child: ElevatedButton(
+        onPressed: isLoading ? null : _sendAnnouncement,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: widget.theme.colorScheme.primary,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: widget.theme.colorScheme.primary.withOpacity(
+            0.6,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Colors.white,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.send_rounded, size: 20),
+                  const SizedBox(width: 10),
+                  Text(
+                    "Send Announcement",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }

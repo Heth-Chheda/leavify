@@ -115,142 +115,147 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("My Profile", textAlign: TextAlign.center),
-        centerTitle: true,
-        leading: const BackButton(),
-      ),
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header Section with Gradient Background
-            SizedBox(
-              height: 280,
-              width: double.infinity,
-              child: SafeArea(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Profile Avatar
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 15,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
+    return SafeArea(
+      top: false,
+      bottom: true,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("My Profile", textAlign: TextAlign.center),
+          centerTitle: true,
+          leading: const BackButton(),
+        ),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Header Section with Gradient Background
+              SizedBox(
+                height: 280,
+                width: double.infinity,
+                child: SafeArea(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Profile Avatar
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ProfileAvatar(
+                          initials: '${user!.firstName[0]}${user!.lastName[0]}',
+                          size: 100,
+                          baseUrl: ApiEndpoints.baseUrl, // Your base URL
+                          imagePath:
+                              (user?.profileImageUrl?.isNotEmpty ?? false)
+                              ? user!.profileImageUrl
+                              : null, // Pass null if empty or null, // Path from backend, e.g. "profilepics/abc.png"
+                        ),
                       ),
-                      child: ProfileAvatar(
-                        initials: '${user!.firstName[0]}${user!.lastName[0]}',
-                        size: 100,
-                        baseUrl: ApiEndpoints.baseUrl, // Your base URL
-                        imagePath: (user?.profileImageUrl?.isNotEmpty ?? false)
-                            ? user!.profileImageUrl
-                            : null, // Pass null if empty or null, // Path from backend, e.g. "profilepics/abc.png"
-                      ),
-                    ),
 
-                    const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                    // User Name and Role
-                    Text(
-                      '${user!.firstName} ${user!.lastName}'.trim(),
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
+                      // User Name and Role
+                      Text(
+                        '${user!.firstName} ${user!.lastName}'.trim(),
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      user!.designation ?? 'Unknown',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 4),
+                      Text(
+                        user!.designation ?? 'Unknown',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Content Section
-            Container(
-              width: double.infinity,
-              color: theme.scaffoldBackgroundColor,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Personal Information Section
-                    const SectionHeader(title: 'Personal Information'),
-                    const SizedBox(height: 16),
+              // Content Section
+              Container(
+                width: double.infinity,
+                color: theme.scaffoldBackgroundColor,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Personal Information Section
+                      const SectionHeader(title: 'Personal Information'),
+                      const SizedBox(height: 16),
 
-                    InfoCard(
-                      icon: Icons.email_outlined,
-                      title: 'Email Address',
-                      value: user!.email,
-                      iconColor: Colors.blue[600],
-                    ),
-                    const SizedBox(height: 12),
-
-                    InfoCard(
-                      icon: Icons.phone_outlined,
-                      title: 'Mobile Number',
-                      value: user!.mobile,
-                      iconColor: Colors.green[600],
-                    ),
-                    const SizedBox(height: 12),
-
-                    InfoCard(
-                      icon: Icons.calendar_today_outlined,
-                      title: 'Joining Date',
-                      value: _formatJoiningDate(user!.joiningDate),
-                      iconColor: Colors.purple[600],
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // Work Information Section
-                    const SectionHeader(title: 'Work Information'),
-                    const SizedBox(height: 16),
-
-                    if (user!.reportingTo.isNotEmpty) ...[
                       InfoCard(
-                        icon: Icons.supervisor_account_outlined,
-                        title: 'Reporting To',
-                        value: user!.reportingTo.join(', '),
-                        iconColor: Colors.orange[600],
+                        icon: Icons.email_outlined,
+                        title: 'Email Address',
+                        value: user!.email,
+                        iconColor: Colors.blue[600],
                       ),
                       const SizedBox(height: 12),
-                    ],
 
-                    if (user!.projectList.isNotEmpty) ...[
                       InfoCard(
-                        icon: Icons.work_outline,
-                        title: 'Projects',
-                        value: user!.projectList.join(', '),
-                        iconColor: Colors.teal[600],
+                        icon: Icons.phone_outlined,
+                        title: 'Mobile Number',
+                        value: user!.mobile,
+                        iconColor: Colors.green[600],
                       ),
+                      const SizedBox(height: 12),
+
+                      InfoCard(
+                        icon: Icons.calendar_today_outlined,
+                        title: 'Joining Date',
+                        value: _formatJoiningDate(user!.joiningDate),
+                        iconColor: Colors.purple[600],
+                      ),
+
                       const SizedBox(height: 30),
+
+                      // Work Information Section
+                      const SectionHeader(title: 'Work Information'),
+                      const SizedBox(height: 16),
+
+                      if (user!.reportingTo.isNotEmpty) ...[
+                        InfoCard(
+                          icon: Icons.supervisor_account_outlined,
+                          title: 'Reporting To',
+                          value: user!.reportingTo.join(', '),
+                          iconColor: Colors.orange[600],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      if (user!.projectList.isNotEmpty) ...[
+                        InfoCard(
+                          icon: Icons.work_outline,
+                          title: 'Projects',
+                          value: user!.projectList.join(', '),
+                          iconColor: Colors.teal[600],
+                        ),
+                        const SizedBox(height: 30),
+                      ],
+
+                      // Leave Information Section
+                      const SectionHeader(title: 'My Leaves'),
+                      const SizedBox(height: 16),
+
+                      _buildLeaveSection(viewModel, theme),
+                      const SizedBox(height: 20),
                     ],
-
-                    // Leave Information Section
-                    const SectionHeader(title: 'My Leaves'),
-                    const SizedBox(height: 16),
-
-                    _buildLeaveSection(viewModel, theme),
-                    const SizedBox(height: 20),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

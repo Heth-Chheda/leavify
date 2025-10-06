@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/dummydata/login/dummy_login_response.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
-import 'package:leavify/features/Authentication/domain/request/login_request.dart';
+// import 'package:leavify/features/Authentication/domain/request/login_request.dart';
 import 'package:leavify/router/app_navigator.dart';
 import 'package:leavify/router/route_names.dart';
 import 'package:provider/provider.dart';
@@ -16,8 +17,8 @@ class LoginViewModel extends BaseViewModel {
       AuthenticationRepository();
 
   Future<void> login(BuildContext context) async {
-    final password = passwordController.text.trim();
-    final username = usernameController.text.trim();
+    // final password = passwordController.text.trim();
+    // final username = usernameController.text.trim();
 
     // Validation of email.
     // final usernameValidation = ValidationUtils.validateUsernameAsEmailOrPhone(
@@ -54,26 +55,31 @@ class LoginViewModel extends BaseViewModel {
         return;
       }
 
-      final loginRequest = LoginRequest(
-        username: username,
-        password: password,
-        loginType: 'EMAIL',
-        fcmToken: fcmToken,
-      );
+      // final loginRequest = LoginRequest(
+      //   username: username,
+      //   password: password,
+      //   loginType: 'EMAIL',
+      //   fcmToken: fcmToken,
+      // );
       // showInfo(context, '$loginRequest');
       // logins only
-      await _authenticationRepository.login(loginRequest);
+      // final result = await _authenticationRepository.login(loginRequest);
+      final result = dummyLoginData;
 
-      // Initialize home viewModel and then navigate to home screen.
-      // this is important to load because home screen is dependent on this data.
-      final homeViewModel = context.read<HomeViewModel>();
-      await homeViewModel.initialize();
-      await AppStorage.saveBoolean('USER_IS_ALREADY_LOGGED_IN', true);
+      if (result.success) {
+        // Initialize home viewModel and then navigate to home screen.
+        // this is important to load because home screen is dependent on this data.
+        final homeViewModel = context.read<HomeViewModel>();
+        await homeViewModel.initialize();
+        await AppStorage.saveBoolean('USER_IS_ALREADY_LOGGED_IN', true);
 
-      // await Future.delayed(const Duration(milliseconds: 500));
-      if (!context.mounted) return;
-      AppNavigator.setRootView(RouteNames.home);
-      showSuccess(context, "Login successful");
+        // await Future.delayed(const Duration(milliseconds: 500));
+        if (!context.mounted) return;
+        AppNavigator.setRootView(RouteNames.home);
+        showSuccess(context, "Login successful");
+      } else {
+        showError(context, 'Please try again later.');
+      }
     } catch (e) {
       debugPrint("Login error: $e");
       showError(context, 'Login error: $e');

@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // MARK: - BOTTOM TAB SELECTION
-  void _onTabSelected(int index) {
+  void _onTabSelected(int index) async {
     final role = _viewModel.userRole.toLowerCase();
     final bool isManagerOrHR = role != 'employee';
 
@@ -62,7 +62,8 @@ class _HomeScreenState extends State<HomeScreen> {
         case 1:
           // Analytics - navigate to new screen
           // Navigator.pushNamed(context, '/pending');
-          AppNavigator.navigateTo(RouteNames.pendingRequests);
+          await AppNavigator.navigateTo(RouteNames.pendingRequests);
+          _viewModel.refresh();
           break;
         case 2:
           // Add Leave - navigate to new screen

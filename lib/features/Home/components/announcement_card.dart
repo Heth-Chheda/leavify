@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
+import 'package:leavify/features/Home/components/announcement_detail_dialog.dart';
 
 class AnnouncementCard extends StatelessWidget {
   final String title;
@@ -74,19 +75,32 @@ class AnnouncementCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = _selectedColorScheme;
 
-    return Container(
-      margin: _cardMargin,
-      height: _cardHeight,
-      decoration: _buildCardDecoration(scheme),
-      child: Padding(
-        padding: _cardPadding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 10),
-            _buildMessage(),
-          ],
+    return GestureDetector(
+      onTap: () {
+        AnnouncementDetailDialog.show(
+          context: context,
+          title: title,
+          message: message,
+          timeAgo: timeAgo ?? 'Recently',
+          profileImage: profileImage,
+          senderName: senderName,
+          colorIndex: colorIndex ?? title.hashCode.abs() % _colorSchemes.length,
+        );
+      },
+      child: Container(
+        margin: _cardMargin,
+        height: _cardHeight,
+        decoration: _buildCardDecoration(scheme),
+        child: Padding(
+          padding: _cardPadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 10),
+              _buildMessage(),
+            ],
+          ),
         ),
       ),
     );

@@ -258,6 +258,16 @@ class BaseRepository {
     return {"Content-Type": "application/json"};
   }
 
+  void printFullJson(String jsonStr) {
+    const int chunkSize = 800;
+    for (var i = 0; i < jsonStr.length; i += chunkSize) {
+      final end = (i + chunkSize < jsonStr.length)
+          ? i + chunkSize
+          : jsonStr.length;
+      print(jsonStr.substring(i, end));
+    }
+  }
+
   /// Log request details
   void _logRequest({
     required HttpMethod method,
@@ -285,7 +295,16 @@ class BaseRepository {
     debugPrint("----- API RESPONSE -----");
     debugPrint("Status Code: ${response.statusCode}");
     debugPrint("Headers: ${response.headers}");
-    debugPrint("Body: ${response.body}");
+    if (response.body.isNotEmpty) {
+      try {
+        final prettyBody = const JsonEncoder.withIndent(
+          '  ',
+        ).convert(jsonDecode(response.body));
+        printFullJson(prettyBody);
+      } catch (e) {
+        printFullJson(response.body);
+      }
+    }
     debugPrint("------------------------");
   }
 }
