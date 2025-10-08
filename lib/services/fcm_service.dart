@@ -46,12 +46,11 @@ class FCMService {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // iOS / macOS settings
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
-          requestAlertPermission: false,
-          requestBadgePermission: false,
-          requestSoundPermission: false,
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
         );
 
     const InitializationSettings initializationSettings =
@@ -63,10 +62,16 @@ class FCMService {
     await _localNotifications.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (details) {
-        // Optional: handle notification tap
         debugPrint('📲 Notification tapped: ${details.payload}');
       },
     );
+
+    // ✅ Explicitly ask iOS for notification permissions
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >()
+        ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
   // 🔸 Step 6: Show local notification manually for foreground messages
@@ -74,18 +79,28 @@ class FCMService {
     final notification = message.notification;
     if (notification == null) return;
 
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'default_channel_id',
-          'General Notifications',
-          channelDescription: 'Used for showing important notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-          showWhen: true,
-        );
+    final bigTextStyle = BigTextStyleInformation(
+      notification.body ?? '',
+      contentTitle: notification.title,
+      htmlFormatContent: true,
+      htmlFormatContentTitle: true,
+    );
 
-    const NotificationDetails notificationDetails = NotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
+      'default_channel_id',
+      'General Notifications',
+      channelDescription: 'Used for showing important notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: true,
+      styleInformation: bigTextStyle,
+    );
+
+    const iosDetails = DarwinNotificationDetails();
+
+    final notificationDetails = NotificationDetails(
       android: androidDetails,
+      iOS: iosDetails,
     );
 
     await _localNotifications.show(

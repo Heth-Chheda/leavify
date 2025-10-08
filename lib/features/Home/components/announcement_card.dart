@@ -134,6 +134,15 @@ class AnnouncementCard extends StatelessWidget {
         _buildIcon(),
         const SizedBox(width: 12),
         Expanded(child: _buildTitleSection()),
+        if (timeAgo != null)
+          Text(
+            timeAgo!,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.85),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
       ],
     );
   }

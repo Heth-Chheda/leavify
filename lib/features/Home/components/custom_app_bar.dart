@@ -71,65 +71,70 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return Row(
       children: [
         // Profile Avatar
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(38),
-            border: Border.all(color: AppColors.highlightBlue, width: 2.0),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDarkMode
-                  ? [
-                      theme.colorScheme.surface.withOpacity(0.95),
-                      theme.colorScheme.surface.withOpacity(0.85),
-                    ]
-                  : [
-                      Colors.white.withOpacity(0.95),
-                      Colors.white.withOpacity(0.85),
-                    ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.shadowColor.withOpacity(0.1),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
+        GestureDetector(
+          onTap: () {
+            AppNavigator.navigateTo(RouteNames.profile);
+          },
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(38),
+              border: Border.all(color: AppColors.highlightBlue, width: 2.0),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDarkMode
+                    ? [
+                        theme.colorScheme.surface.withOpacity(0.95),
+                        theme.colorScheme.surface.withOpacity(0.85),
+                      ]
+                    : [
+                        Colors.white.withOpacity(0.95),
+                        Colors.white.withOpacity(0.85),
+                      ],
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(38),
-            child: Image.network(
-              (viewModel.profileImageUrl.isNotEmpty)
-                  ? '${ApiEndpoints.baseUrl}/${viewModel.profileImageUrl}'
-                  : 'https://picsum.photos/200',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: isDarkMode
-                          ? [
-                              theme.colorScheme.surface.withOpacity(0.95),
-                              theme.colorScheme.surface.withOpacity(0.85),
-                            ]
-                          : [
-                              Colors.white.withOpacity(0.95),
-                              Colors.white.withOpacity(0.85),
-                            ],
+              boxShadow: [
+                BoxShadow(
+                  color: theme.shadowColor.withOpacity(0.1),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(38),
+              child: Image.network(
+                (viewModel.profileImageUrl.isNotEmpty)
+                    ? '${ApiEndpoints.baseUrl}/${viewModel.profileImageUrl}'
+                    : 'https://picsum.photos/200',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: isDarkMode
+                            ? [
+                                theme.colorScheme.surface.withOpacity(0.95),
+                                theme.colorScheme.surface.withOpacity(0.85),
+                              ]
+                            : [
+                                Colors.white.withOpacity(0.95),
+                                Colors.white.withOpacity(0.85),
+                              ],
+                      ),
                     ),
-                  ),
-                  child: Icon(
-                    Icons.person,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
-                    size: 20,
-                  ),
-                );
-              },
+                    child: Icon(
+                      Icons.person,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      size: 20,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),

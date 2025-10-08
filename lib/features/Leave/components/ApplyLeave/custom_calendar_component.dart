@@ -404,11 +404,7 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
               children: List.generate(7, (dayIndex) {
                 final dayNumber = _getDayNumber(weekIndex, dayIndex);
                 final isCurrentMonth = _isCurrentMonth(weekIndex, dayIndex);
-                final currentDate = DateTime(
-                  currentMonth.year,
-                  currentMonth.month,
-                  dayNumber,
-                );
+                final currentDate = _getDateForCell(weekIndex, dayIndex);
 
                 final isSelected = widget.enableRangeSelection
                     ? _isDateInRange(currentDate, isCurrentMonth)
@@ -417,25 +413,23 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
                 final isRangeStart =
                     widget.enableRangeSelection &&
                     rangeStartDate != null &&
-                    _isSameDay(currentDate, rangeStartDate!) &&
-                    isCurrentMonth;
+                    _isSameDay(currentDate, rangeStartDate!);
 
                 final isRangeEnd =
                     widget.enableRangeSelection &&
                     rangeEndDate != null &&
-                    _isSameDay(currentDate, rangeEndDate!) &&
-                    isCurrentMonth;
+                    _isSameDay(currentDate, rangeEndDate!);
 
                 final isInRange =
                     widget.enableRangeSelection &&
-                    _isDateBetweenRange(currentDate, isCurrentMonth);
+                    _isDateBetweenRange(currentDate);
 
                 final isToday = _isToday(dayNumber, isCurrentMonth);
                 final isDisabled = _isDateDisabled(currentDate, isCurrentMonth);
 
                 return Expanded(
                   child: GestureDetector(
-                    onTap: isCurrentMonth && dayNumber > 0 && !isDisabled
+                    onTap: dayNumber > 0 && !isDisabled
                         ? () => _handleDateTap(currentDate)
                         : null,
                     child: Container(
@@ -583,18 +577,15 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
     bool isCurrentMonth,
     bool isToday,
   ) {
-    if (isDisabled) {
-      return Colors.grey[300]!;
-    } else if (isSelected || isRangeStart || isRangeEnd) {
+    if (isSelected || isRangeStart || isRangeEnd) {
       return Colors.white;
     } else if (isCurrentMonth) {
       return isToday ? const Color(0xFFFF8A4C) : Colors.black87;
     }
-    return Colors.grey[400]!;
+    return Colors.black87;
   }
 
   bool _isDateInRange(DateTime date, bool isCurrentMonth) {
-    if (!isCurrentMonth) return false;
     if (rangeStartDate != null && _isSameDay(date, rangeStartDate!)) {
       return true;
     }
@@ -602,8 +593,8 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
     return false;
   }
 
-  bool _isDateBetweenRange(DateTime date, bool isCurrentMonth) {
-    if (!isCurrentMonth || rangeStartDate == null || rangeEndDate == null) {
+  bool _isDateBetweenRange(DateTime date) {
+    if (rangeStartDate == null || rangeEndDate == null) {
       return false;
     }
     return date.isAfter(rangeStartDate!) && date.isBefore(rangeEndDate!);
@@ -635,6 +626,14 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
     }
   }
 
+  DateTime _getDateForCell(int weekIndex, int dayIndex) {
+    final firstDayOfMonth = DateTime(currentMonth.year, currentMonth.month, 1);
+    final firstWeekday = firstDayOfMonth.weekday % 7;
+    final dayOffset = weekIndex * 7 + dayIndex - firstWeekday;
+
+    return firstDayOfMonth.add(Duration(days: dayOffset));
+  }
+
   bool _isCurrentMonth(int weekIndex, int dayIndex) {
     final firstDayOfMonth = DateTime(currentMonth.year, currentMonth.month, 1);
     final firstWeekday = firstDayOfMonth.weekday % 7;
@@ -663,16 +662,12 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
   }
 
   bool _isDateDisabled(DateTime date, bool isCurrentMonth) {
-    if (!isCurrentMonth) return true;
-
     if (widget.firstDate != null && date.isBefore(widget.firstDate!)) {
       return true;
     }
-
     if (widget.lastDate != null && date.isAfter(widget.lastDate!)) {
       return true;
     }
-
     return false;
   }
 }

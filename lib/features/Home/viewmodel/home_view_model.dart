@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/storage/app_storage.dart';
-// import 'package:leavify/dummydata/announcement/announcement.dart';
-// import 'package:leavify/dummydata/users/balance_leaves.dart';
+import 'package:leavify/dummydata/announcement/announcement.dart';
+import 'package:leavify/dummydata/users/balance_leaves.dart';
+import 'package:leavify/dummydata/users/hr.dart';
 // import 'package:leavify/dummydata/users/employer.dart';
-// import 'package:leavify/dummydata/users/manager.dart';
+import 'package:leavify/dummydata/users/manager.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
@@ -60,10 +61,11 @@ class HomeViewModel extends ChangeNotifier {
       notifyListeners();
 
       // Replace with actual user ID (ideally get from AppStorage or token decoding)
-      final userId = await AppStorage.getString("USER_ID") ?? "";
-      final response = await _authenticationRepository.getUserSummary(userId);
-      // final response = dummyManagerData;
+      // final userId = await AppStorage.getString("USER_ID") ?? "";
+      // final response = await _authenticationRepository.getUserSummary(userId);
+      final response = dummyManagerData;
       // final response = dummyEmployeeData;
+      // final response = dummyHRData;
 
       _homeData = response;
       await AppStorage.saveObject("user_details", response.toJson());
@@ -94,13 +96,13 @@ class HomeViewModel extends ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      final userId = await AppStorage.getString("USER_ID") ?? "";
-      final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
-      final result = await _authenticationRepository.getLeaveBalance(
-        userId: userId,
-        accessToken: accessToken,
-      );
-      // final result = dummyBalanceData;
+      // final userId = await AppStorage.getString("USER_ID") ?? "";
+      // final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
+      // final result = await _authenticationRepository.getLeaveBalance(
+      //   userId: userId,
+      //   accessToken: accessToken,
+      // );
+      final result = dummyBalanceData;
 
       // Update from API response
       _leaveBalance = result.balance ?? 0;
@@ -120,8 +122,8 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _announcements = await _authenticationRepository.getAnnouncements();
-      // _announcements = dummyAnnouncements;
+      // _announcements = await _authenticationRepository.getAnnouncements();
+      _announcements = dummyAnnouncements;
     } catch (e) {
       _error = e.toString();
     } finally {

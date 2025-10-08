@@ -5,11 +5,12 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
-// import 'package:leavify/dummydata/leave/dummy_leave_detail.dart';
-// import 'package:leavify/dummydata/leave/dummy_pending_request_user.dart';
-// import 'package:leavify/dummydata/leave/dummy_team_users.dart';
+import 'package:leavify/dummydata/leave/dummy_leave_detail.dart';
+import 'package:leavify/dummydata/leave/dummy_pending_request_user.dart';
+import 'package:leavify/dummydata/leave/dummy_team_users.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
@@ -94,8 +95,8 @@ class LeaveViewModel extends BaseViewModel {
   // MARK: - INITIALIZATION
   void initializeForm({required HomeViewModel homeViewModel}) async {
     await homeViewModel.getLeaveBalance();
-    await getReportees();
-    // teamUsers = dummyTeamUsers;
+    // await getReportees();
+    teamUsers = dummyTeamUsers;
     _resetFormState();
   }
 
@@ -333,6 +334,15 @@ class LeaveViewModel extends BaseViewModel {
     } catch (e) {
       update(isLoading: false);
       debugPrint("Error in submitLeaveForm: $e");
+
+      String errorMessage;
+      if (e is ApiException) {
+        errorMessage = e.message;
+      } else {
+        errorMessage = e.toString();
+      }
+
+      showError(context, errorMessage);
     }
   }
 
@@ -499,13 +509,13 @@ class LeaveViewModel extends BaseViewModel {
     update(isLoading: true, errorMessage: null);
     notifyListeners();
     try {
-      final userId = await _loadUserId();
-      final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
-      final leaves = await _repository.getPendingLeaves(
-        userId: userId ?? '',
-        accessToken: accessToken,
-      );
-      // final leaves = dummyGetAllData;
+      // final userId = await _loadUserId();
+      // final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
+      // final leaves = await _repository.getPendingLeaves(
+      //   userId: userId ?? '',
+      //   accessToken: accessToken,
+      // );
+      final leaves = dummyGetAllData;
       _getAllPendingLeaves = leaves;
       debugPrint("Fetched ${leaves.length} pending leaves");
       update(isLoading: false);
@@ -580,15 +590,15 @@ class LeaveViewModel extends BaseViewModel {
         notifyListeners();
       });
 
-      final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
+      // final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
 
-      final result = await _repository.getLeaveById(
-        userId: userId ?? '',
-        leaveId: leaveId,
-        accessToken: accessToken,
-      );
+      // final result = await _repository.getLeaveById(
+      //   userId: userId ?? '',
+      //   leaveId: leaveId,
+      //   accessToken: accessToken,
+      // );
 
-      // final result = dummyLeaveByIdData;
+      final result = dummyLeaveByIdData;
 
       selectedLeaveById = result;
     } catch (e) {

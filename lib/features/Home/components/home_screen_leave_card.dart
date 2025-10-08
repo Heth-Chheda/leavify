@@ -26,11 +26,13 @@ class LeaveCard extends StatelessWidget {
         ? '$baseUrl/$profileImagePath'
         : null;
 
+    debugPrint('Full Image URL: $fullImageUrl');
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: isDark
             ? []
             : [
@@ -56,13 +58,13 @@ class LeaveCard extends StatelessWidget {
                   child: fullImageUrl != null
                       ? Image.network(
                           fullImageUrl,
-                          width: 48,
-                          height: 48,
+                          width: 75,
+                          height: 60,
                           fit: BoxFit.cover,
                         )
                       : Container(
-                          width: 48,
-                          height: 48,
+                          width: 75,
+                          height: 60,
                           color: Colors.grey[300],
                           alignment: Alignment.center,
                           child: Text(

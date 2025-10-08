@@ -33,21 +33,12 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   List<GetAllResponse> _getFilteredRequests(List<GetAllResponse> requests) {
     final homeViewModel = context.read<HomeViewModel>();
     final isHR = homeViewModel.userRole.toLowerCase() == 'hr';
+    final filter = _selectedFilter.toLowerCase();
+    final query = _searchQuery.toLowerCase();
 
+    // Step 1: Apply search & filter
     final filtered = requests.where((r) {
-      // For HR → Escalated means escalated flag true
-      // For others → Escalated means status == 'escalated'
-      final isEscalated = isHR
-          ? r.escalated == true
-          : r.status.toLowerCase() == 'escalated';
-
-      // If current filter is NOT "Escalated" and leave is escalated → exclude
-      if (_selectedFilter.toLowerCase() != 'escalated' && isEscalated) {
-        return false;
-      }
-
       // Search filter
-      final query = _searchQuery.toLowerCase();
       final fullName = '${r.firstName} ${r.lastName}'.toLowerCase();
       final matchesSearch =
           query.isEmpty ||
@@ -56,39 +47,53 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
           r.reason.toLowerCase().contains(query);
 
       // Status filter
-      final matchesFilter = switch (_selectedFilter.toLowerCase()) {
-        'pending' => r.status.toLowerCase() == 'pending',
-        'approved' => r.status.toLowerCase() == 'approved',
-        'rejected' || 'denied' =>
-          r.status.toLowerCase() == 'rejected' ||
-              r.status.toLowerCase() == 'denied',
-        'escalated' => isEscalated,
-        _ => true, // "All"
-      };
+      final status = r.status.toLowerCase();
+      bool matchesFilter;
+      switch (filter) {
+        case 'pending':
+          matchesFilter = status == 'pending';
+          break;
+        case 'approved':
+          matchesFilter = status == 'approved';
+          break;
+        case 'rejected':
+        case 'denied':
+          matchesFilter = status == 'rejected' || status == 'denied';
+          break;
+        case 'escalated':
+          matchesFilter = isHR ? r.escalated == true : status == 'escalated';
+          break;
+        default:
+          matchesFilter = true; // All
+      }
 
       return matchesSearch && matchesFilter;
     }).toList();
 
-    // Define status priority for sorting
-    final statusPriority = {
-      'escalated': 0,
-      'pending': 1,
-      'approved': 2,
-      'rejected': 3,
-      'denied': 3, // treat denied same as rejected
-    };
-
-    // Sort the filtered list by status priority
+    // Step 2: Sort by priority (HR: escalated on top)
     filtered.sort((a, b) {
-      final aStatus = isHR && a.escalated == true
-          ? 'escalated'
-          : a.status.toLowerCase();
-      final bStatus = isHR && b.escalated == true
-          ? 'escalated'
-          : b.status.toLowerCase();
+      if (isHR) {
+        // Escalated first
+        final aEsc = a.escalated == true ? 0 : 1;
+        final bEsc = b.escalated == true ? 0 : 1;
+        if (aEsc != bEsc) return aEsc.compareTo(bEsc);
+      }
+
+      // Then normal status order
+      final statusPriority = {
+        'pending': 1,
+        'approved': 2,
+        'rejected': 3,
+        'denied': 3,
+        'escalated': 0, // already handled for HR
+      };
+
+      final aStatus = a.status.toLowerCase();
+      final bStatus = b.status.toLowerCase();
 
       final aPriority = statusPriority[aStatus] ?? 999;
       final bPriority = statusPriority[bStatus] ?? 999;
+
       return aPriority.compareTo(bPriority);
     });
 
@@ -106,7 +111,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   void _navigateToDetail(GetAllResponse request) async {
     await AppNavigator.navigateTo(
       RouteNames.pendingRequestDetail,
-      arguments: {'leaveId': request.leaveId},
+      arguments: {'leaveId': request.leaveId, 'user': request},
     );
 
     // Refresh leaves when returning

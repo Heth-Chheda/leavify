@@ -159,13 +159,13 @@ class BaseRepository {
             request.files.addAll(files);
           }
 
-          _logRequest(
-            method: method,
-            url: url,
-            headers: request.headers,
-            body: requestBody,
-            isMultipart: true,
-          );
+          // _logRequest(
+          //   method: method,
+          //   url: url,
+          //   headers: request.headers,
+          //   body: requestBody,
+          //   isMultipart: true,
+          // );
 
           final streamedResponse = await request.send();
           response = await http.Response.fromStream(streamedResponse);
@@ -185,12 +185,12 @@ class BaseRepository {
             }
           }
 
-          _logRequest(
-            method: method,
-            url: url,
-            headers: headers,
-            body: requestBody,
-          );
+          // _logRequest(
+          //   method: method,
+          //   url: url,
+          //   headers: headers,
+          //   body: requestBody,
+          // );
 
           switch (method) {
             case HttpMethod.get:
@@ -225,10 +225,30 @@ class BaseRepository {
             attempt++;
             continue;
           } else {
-            throw ApiException(
-              response.body.isNotEmpty ? response.body : "Request failed",
-              statusCode: response.statusCode,
-            );
+            // 🆕 Improved error extraction
+            String errorMessage = "Request failed (${response.statusCode})";
+
+            try {
+              if (response.body.isNotEmpty) {
+                final decoded = jsonDecode(response.body);
+
+                if (decoded is Map<String, dynamic>) {
+                  if (decoded['error'] != null) {
+                    errorMessage = decoded['error'].toString();
+                  } else if (decoded['message'] != null) {
+                    errorMessage = decoded['message'].toString();
+                  } else {
+                    errorMessage = response.body;
+                  }
+                } else {
+                  errorMessage = response.body;
+                }
+              }
+            } catch (_) {
+              errorMessage = response.body;
+            }
+
+            throw ApiException(errorMessage, statusCode: response.statusCode);
           }
         }
       } on SocketException {

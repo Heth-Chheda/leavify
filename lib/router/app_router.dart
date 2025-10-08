@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/utils/components/work_in_progress.dart';
+import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:provider/provider.dart';
 
 // Screens
@@ -27,6 +29,13 @@ class AppRouter {
             create: (_) => LoginViewModel(),
             child: const LoginPage(),
           ),
+          settings: settings,
+        );
+
+      case RouteNames.analytics:
+        return MaterialPageRoute(
+          builder: (_) =>
+              _withAppBar(const WorkInProgressScreen(), 'Dashboard'),
           settings: settings,
         );
 
@@ -69,7 +78,10 @@ class AppRouter {
             builder: (_) => ChangeNotifierProvider(
               create: (_) => LeaveViewModel(),
               child: _withAppBar(
-                PendingRequestDetailScreen(leaveId: args['leaveId'] as String),
+                PendingRequestDetailScreen(
+                  leaveId: args['leaveId'] as String,
+                  user: args['user'] as GetAllResponse?,
+                ),
                 'Leave Request Details',
               ),
             ),

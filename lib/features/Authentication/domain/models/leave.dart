@@ -7,6 +7,7 @@ class Leave {
   final String endDate;
   final String reason;
   final String status;
+  final String? profileImageUrl;
 
   Leave({
     required this.userId,
@@ -15,6 +16,7 @@ class Leave {
     required this.endDate,
     required this.reason,
     required this.status,
+    this.profileImageUrl,
   });
 
   factory Leave.fromJson(Map<String, dynamic> json) => Leave(
@@ -24,6 +26,7 @@ class Leave {
     endDate: json['endDate'] ?? '',
     reason: json['reason'] ?? '',
     status: json['status'] ?? '',
+    profileImageUrl: json['profileImageUrl'] ?? '',
   );
 
   Map<String, dynamic> toJson() => {
@@ -33,6 +36,7 @@ class Leave {
     'endDate': endDate,
     'reason': reason,
     'status': status,
+    'profileImageUrl': profileImageUrl,
   };
 
   /// 📅 Returns formatted date range like "12 Jul – 14 Jul"

@@ -534,7 +534,11 @@ class _HomeScreenState extends State<HomeScreen> {
             separatorBuilder: (context, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final leave = teamUpcomingLeaves[index];
-              return LeaveCard(leave: leave, baseUrl: ApiEndpoints.baseUrl);
+              return LeaveCard(
+                leave: leave,
+                baseUrl: ApiEndpoints.baseUrl,
+                profileImagePath: leave.profileImageUrl,
+              );
             },
           ),
 
@@ -551,7 +555,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Text(
         _selectedDate != null
             ? "Leaves for ${_formatDate(_selectedDate!)}"
-            : "Upcoming Leaves",
+            : "Upcoming Team Leaves",
         style: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.w900,

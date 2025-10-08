@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' hide Uint8List;
 import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
+import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Leave/models/general/leave_document.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
@@ -17,8 +18,13 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class PendingRequestDetailScreen extends StatefulWidget {
   final String leaveId;
+  final GetAllResponse? user;
 
-  const PendingRequestDetailScreen({super.key, required this.leaveId});
+  const PendingRequestDetailScreen({
+    super.key,
+    required this.leaveId,
+    this.user,
+  });
 
   @override
   State<PendingRequestDetailScreen> createState() =>
@@ -86,7 +92,11 @@ class _PendingRequestDetailScreenState
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          _EmployeeHeaderCard(leaveData: leaveData),
+          _EmployeeHeaderCard(
+            leaveData: leaveData,
+            designation: widget.user?.designation,
+            profileImagePath: widget.user?.profileImage,
+          ),
           const SizedBox(height: 20),
           _LeaveRequestDetailsCard(leaveData: leaveData),
           const SizedBox(height: 16),
@@ -346,8 +356,14 @@ class _PendingRequestDetailScreenState
 // MARK: - Employee Header Card
 class _EmployeeHeaderCard extends StatelessWidget {
   final GetLeaveByIdResponse leaveData;
+  final String? designation;
+  final String? profileImagePath;
 
-  const _EmployeeHeaderCard({required this.leaveData});
+  const _EmployeeHeaderCard({
+    required this.leaveData,
+    this.designation,
+    this.profileImagePath,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -362,42 +378,80 @@ class _EmployeeHeaderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.onSurface.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: colorScheme.onSurface.withOpacity(0.25),
+            blurRadius: 5,
+            offset: const Offset(0, 0),
           ),
         ],
       ),
       child: Column(
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(40),
-            ),
-            child: Center(
-              child: Text(
-                _getInitials(leaveData.employeeName),
-                style: TextStyle(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 28,
+          Row(
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(40),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(40),
+                  child:
+                      profileImagePath != null && profileImagePath!.isNotEmpty
+                      ? Image.network(
+                          '${ApiEndpoints.baseUrl}/$profileImagePath',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // fallback to initials if image fails to load
+                            return Center(
+                              child: Text(
+                                _getInitials(leaveData.employeeName),
+                                style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 28,
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : Center(
+                          child: Text(
+                            _getInitials(leaveData.employeeName),
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 28,
+                            ),
+                          ),
+                        ),
                 ),
               ),
-            ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    leaveData.employeeName,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    designation ?? 'N/A',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: const Color.fromARGB(255, 54, 54, 54),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           const SizedBox(height: 16),
-          Text(
-            leaveData.employeeName,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 12),
           _buildBalanceInfo(),
         ],
       ),
@@ -466,40 +520,48 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
     return _InfoCard(
       title: 'Leave Request Details',
       children: [
-        _InfoRow(
-          icon: Icons.category_outlined,
-          label: 'Leave Type',
-          value: leaveData.leaveDetails.type,
+        Row(
+          children: [
+            Expanded(
+              child: _InfoRow(
+                icon: Icons.category_outlined,
+                label: 'Leave Type',
+                value: leaveData.leaveDetails.type,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _InfoRow(
+                icon: Icons.calendar_today_outlined,
+                label: 'Duration',
+                value: _calculateDuration(),
+              ),
+            ),
+          ],
         ),
-        _InfoRow(
-          icon: Icons.calendar_today_outlined,
-          label: 'Duration',
-          value: _calculateDuration(),
-        ),
-        _InfoRow(
-          icon: Icons.date_range_outlined,
-          label: 'From Date',
-          value: _formatDate(leaveData.leaveDetails.fromDate),
-        ),
-        _InfoRow(
-          icon: Icons.date_range_outlined,
-          label: 'To Date',
-          value: _formatDate(leaveData.leaveDetails.toDate),
-        ),
-        _InfoRow(
-          icon: Icons.schedule_outlined,
-          label: 'Duration Type',
-          value: leaveData.leaveDetails.isHalfDay ? 'Half Day' : 'Full Day',
+        Row(
+          children: [
+            Expanded(
+              child: _InfoRow(
+                icon: Icons.date_range_outlined,
+                label: 'From Date',
+                value: _formatDate(leaveData.leaveDetails.fromDate),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _InfoRow(
+                icon: Icons.date_range_outlined,
+                label: 'To Date',
+                value: _formatDate(leaveData.leaveDetails.toDate),
+              ),
+            ),
+          ],
         ),
         _InfoRow(
           icon: Icons.access_time_outlined,
           label: 'Applied On',
           value: _formatDateTime(leaveData.leaveDetails.createdAt),
-        ),
-        _InfoRow(
-          icon: Icons.update_outlined,
-          label: 'Last Updated',
-          value: _formatDateTime(leaveData.leaveDetails.updatedAt),
         ),
       ],
     );
@@ -1307,10 +1369,10 @@ class _InfoCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.onSurface.withOpacity(0.08),
+            color: colorScheme.onSurface.withOpacity(0.25),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1354,36 +1416,43 @@ class _InfoRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: colorScheme.onSurface.withOpacity(0.7)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colorScheme.onSurface.withOpacity(0.7),
-                    fontWeight: FontWeight.w500,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: colorScheme.onSurface.withOpacity(0.7)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

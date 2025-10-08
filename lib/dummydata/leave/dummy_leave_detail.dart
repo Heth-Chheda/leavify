@@ -5,7 +5,7 @@ const Map<String, dynamic> dummyLeaveByIdResponse = {
   "userId": "user123",
   "leaveId": "leave456",
   "employeeName": "John Doe",
-  "willComplete20Days": true,
+  "workingDaysCount": 20,
   "balanceLeaves": 12,
   "leaveDetails": {
     "type": "Casual",

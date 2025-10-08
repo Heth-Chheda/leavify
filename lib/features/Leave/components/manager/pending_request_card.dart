@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
+import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
+import 'package:provider/provider.dart';
 
 class PendingRequestCard extends StatelessWidget {
   final GetAllResponse request;
@@ -17,11 +19,12 @@ class PendingRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final homeViewModel = context.read<HomeViewModel>();
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        decoration: _buildCardDecoration(context, isDark),
+        decoration: _buildCardDecoration(context, isDark, homeViewModel),
         child: Container(
           decoration: _buildGradientDecoration(isDark),
           child: Padding(
@@ -43,18 +46,27 @@ class PendingRequestCard extends StatelessWidget {
   }
 
   // MARK: - BUILD CARD DECORATION
-  BoxDecoration _buildCardDecoration(BuildContext context, bool isDark) {
+  BoxDecoration _buildCardDecoration(
+    BuildContext context,
+    bool isDark,
+    HomeViewModel homeViewModel,
+  ) {
+    final shouldSeeRedBorder =
+        homeViewModel.userRole.toLowerCase() != 'manager' &&
+        homeViewModel.userRole.toLowerCase() != 'employee' &&
+        request.escalated;
+
     return BoxDecoration(
       color: isDark ? Colors.black.withOpacity(0.6) : Colors.white,
       borderRadius: BorderRadius.circular(16),
       boxShadow: [
         BoxShadow(
-          color: isDark
-              ? Colors.black.withOpacity(0.3)
+          color: shouldSeeRedBorder
+              ? Colors.red
               : Colors.black.withOpacity(0.2),
-          blurRadius: 12,
-          offset: const Offset(0, 2),
-          spreadRadius: isDark ? 0 : -2,
+          blurRadius: shouldSeeRedBorder ? 2.5 : 12,
+          offset: const Offset(0, 0),
+          spreadRadius: shouldSeeRedBorder ? 0 : -2,
         ),
       ],
     );
