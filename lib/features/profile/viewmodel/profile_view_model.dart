@@ -31,7 +31,7 @@ class ProfileViewModel extends BaseViewModel {
     try {
       update(isLoading: true, errorMessage: null);
       _loadUserLeavesError = null;
-      notifyListeners();
+      // notifyListeners();
       final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
       _leaveData = await _repository.getUserLeaves(userId, accessToken);
       // _leaveData = dummyLeaveData;

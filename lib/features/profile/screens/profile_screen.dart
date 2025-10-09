@@ -125,136 +125,152 @@ class _ProfileScreenState extends State<ProfileScreen> {
           leading: const BackButton(),
         ),
         backgroundColor: theme.scaffoldBackgroundColor,
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Header Section with Gradient Background
-              SizedBox(
-                height: 280,
-                width: double.infinity,
-                child: SafeArea(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Profile Avatar
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            // reload the user data and leaves
+            viewModel.loadUserLeaves(user?.id ?? '');
+          },
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Header Section with Gradient Background
+                SizedBox(
+                  height: 130,
+                  width: double.infinity,
+                  child: SafeArea(
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 20),
+                        // Profile Avatar
+                        Container(
+                          decoration: BoxDecoration(shape: BoxShape.circle),
+                          child: ProfileAvatar(
+                            initials:
+                                '${user!.firstName[0]}${user!.lastName[0]}',
+                            size: 100,
+                            baseUrl: ApiEndpoints.baseUrl, // Your base URL
+                            imagePath:
+                                (user?.profileImageUrl?.isNotEmpty ?? false)
+                                ? user!.profileImageUrl
+                                : null, // Pass null if empty or null, // Path from backend, e.g. "profilepics/abc.png"
+                          ),
+                        ),
+
+                        const SizedBox(width: 20),
+
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${user!.firstName} ${user!.lastName}'.trim(),
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                                softWrap: true,
+                                overflow: TextOverflow.visible,
+                              ),
+                              Text(
+                                user!.designation ?? 'Unknown',
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Content Section
+                Container(
+                  width: double.infinity,
+                  color: theme.scaffoldBackgroundColor,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Personal Information Section
+                        const SectionHeader(title: 'Personal Information'),
+                        const SizedBox(height: 16),
+
+                        InfoCard(
+                          icon: Icons.email_outlined,
+                          title: 'Email Address',
+                          value: user!.email,
+                          iconColor: Colors.blue[600],
+                        ),
+                        const SizedBox(height: 12),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InfoCard(
+                                icon: Icons.phone_outlined,
+                                title: 'Mobile Number',
+                                value: user!.mobile,
+                                iconColor: Colors.green[600],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: InfoCard(
+                                icon: Icons.calendar_today_outlined,
+                                title: 'Joining Date',
+                                value: _formatJoiningDate(user!.joiningDate),
+                                iconColor: Colors.purple[600],
+                              ),
                             ),
                           ],
                         ),
-                        child: ProfileAvatar(
-                          initials: '${user!.firstName[0]}${user!.lastName[0]}',
-                          size: 100,
-                          baseUrl: ApiEndpoints.baseUrl, // Your base URL
-                          imagePath:
-                              (user?.profileImageUrl?.isNotEmpty ?? false)
-                              ? user!.profileImageUrl
-                              : null, // Pass null if empty or null, // Path from backend, e.g. "profilepics/abc.png"
-                        ),
-                      ),
 
-                      const SizedBox(height: 20),
-
-                      // User Name and Role
-                      Text(
-                        '${user!.firstName} ${user!.lastName}'.trim(),
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user!.designation ?? 'Unknown',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Content Section
-              Container(
-                width: double.infinity,
-                color: theme.scaffoldBackgroundColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Personal Information Section
-                      const SectionHeader(title: 'Personal Information'),
-                      const SizedBox(height: 16),
-
-                      InfoCard(
-                        icon: Icons.email_outlined,
-                        title: 'Email Address',
-                        value: user!.email,
-                        iconColor: Colors.blue[600],
-                      ),
-                      const SizedBox(height: 12),
-
-                      InfoCard(
-                        icon: Icons.phone_outlined,
-                        title: 'Mobile Number',
-                        value: user!.mobile,
-                        iconColor: Colors.green[600],
-                      ),
-                      const SizedBox(height: 12),
-
-                      InfoCard(
-                        icon: Icons.calendar_today_outlined,
-                        title: 'Joining Date',
-                        value: _formatJoiningDate(user!.joiningDate),
-                        iconColor: Colors.purple[600],
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      // Work Information Section
-                      const SectionHeader(title: 'Work Information'),
-                      const SizedBox(height: 16),
-
-                      if (user!.reportingTo.isNotEmpty) ...[
-                        InfoCard(
-                          icon: Icons.supervisor_account_outlined,
-                          title: 'Reporting To',
-                          value: user!.reportingTo.join(', '),
-                          iconColor: Colors.orange[600],
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-
-                      if (user!.projectList.isNotEmpty) ...[
-                        InfoCard(
-                          icon: Icons.work_outline,
-                          title: 'Projects',
-                          value: user!.projectList.join(', '),
-                          iconColor: Colors.teal[600],
-                        ),
                         const SizedBox(height: 30),
+
+                        // Work Information Section
+                        if (user!.reportingTo.isNotEmpty ||
+                            user!.projectList.isNotEmpty) ...[
+                          const SectionHeader(title: 'Work Information'),
+                          const SizedBox(height: 16),
+
+                          if (user!.reportingTo.isNotEmpty) ...[
+                            InfoCard(
+                              icon: Icons.supervisor_account_outlined,
+                              title: 'Reporting To',
+                              value: user!.reportingTo.join(', '),
+                              iconColor: Colors.orange[600],
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+
+                          if (user!.projectList.isNotEmpty) ...[
+                            InfoCard(
+                              icon: Icons.work_outline,
+                              title: 'Projects',
+                              value: user!.projectList.join(', '),
+                              iconColor: Colors.teal[600],
+                            ),
+                            const SizedBox(height: 30),
+                          ],
+                        ],
+
+                        // Leave Information Section
+                        const SectionHeader(title: 'My Leaves'),
+                        const SizedBox(height: 16),
+
+                        _buildLeaveSection(viewModel, theme),
+                        const SizedBox(height: 20),
                       ],
-
-                      // Leave Information Section
-                      const SectionHeader(title: 'My Leaves'),
-                      const SizedBox(height: 16),
-
-                      _buildLeaveSection(viewModel, theme),
-                      const SizedBox(height: 20),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -372,11 +388,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 12),
 
-            ...leaveData.allLeaves.map(
-              (leave) => GestureDetector(
-                onTap: () => _navigateToLeaveDetail(leave.id),
-                child: _buildLeaveItemCard(leave, theme),
-              ),
+            Wrap(
+              spacing: 12, // horizontal spacing
+              runSpacing: 12, // vertical spacing
+              children: leaveData.allLeaves.map((leave) {
+                // Calculate width: total screen width minus padding, divided by 2
+                double cardWidth =
+                    (MediaQuery.of(context).size.width - 20 * 2 - 12) / 2;
+
+                return SizedBox(
+                  width: cardWidth,
+                  child: GestureDetector(
+                    onTap: () => _navigateToLeaveDetail(leave.id),
+                    child: _buildLeaveItemCard(leave, theme),
+                  ),
+                );
+              }).toList(),
             ),
           ],
         ],
@@ -388,76 +415,150 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildLeaveItemCard(MyLeaves leave, ThemeData theme) {
+    final String statusLower = leave.status.toLowerCase();
+    final bool isApproved = statusLower == 'approved';
+    final bool isRejected =
+        statusLower == 'rejected' || statusLower == 'denied';
+    final bool isPending = statusLower == 'pending';
+
+    // Check if from and to dates are the same
+    final bool isSingleDay =
+        DateFormat('dd MMM yyyy').format(leave.fromDate) ==
+        DateFormat('dd MMM yyyy').format(leave.toDate);
+
+    // Determine status color and text
+    Color statusColor;
+    String statusText;
+
+    if (isApproved) {
+      statusColor = const Color(0xFF10B981); // Modern green
+      statusText = 'APPROVED';
+    } else if (isRejected) {
+      statusColor = const Color(0xFFEF4444); // Modern red
+      statusText = 'REJECTED';
+    } else if (isPending) {
+      statusColor = const Color(0xFFF59E0B); // Modern amber
+      statusText = 'PENDING';
+    } else {
+      statusColor = theme.colorScheme.onSurface.withOpacity(0.5);
+      statusText = leave.status.toUpperCase();
+    }
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      height: 160,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withOpacity(0.09),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: theme.colorScheme.primary.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
+          // Date display with icon
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '${DateFormat('dd MMM').format(leave.fromDate)} - ${DateFormat('dd MMM yyyy').format(leave.toDate)}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                ),
+              Expanded(
+                child: isSingleDay
+                    ? Text(
+                        DateFormat('dd MMM yyyy').format(leave.fromDate),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface,
+                          letterSpacing: 0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'From: ${DateFormat('dd MMM yyyy').format(leave.fromDate)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
+                              letterSpacing: 0.2,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'To: ${DateFormat('dd MMM yyyy').format(leave.toDate)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
+                              letterSpacing: 0.2,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(leave.status).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Leave reason with subtle background - single line
+          Row(
+            children: [
+              Expanded(
                 child: Text(
-                  leave.status,
-                  style: TextStyle(
-                    color: _getStatusColor(leave.status),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
+                  leave.reason,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.65),
+                    fontSize: 13,
                   ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            leave.reason,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+
+          const Spacer(),
+
+          // Status badge - always shown
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(
+              color: statusColor,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: statusColor.withOpacity(0.3), width: 1),
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (leave.isHalfDay || leave.isCompOff) ...[
-            const SizedBox(height: 8),
-            Row(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (leave.isHalfDay)
-                  _buildLeaveTag('Half Day', Colors.blue, theme),
-                if (leave.isHalfDay && leave.isCompOff)
-                  const SizedBox(width: 8),
-                if (leave.isCompOff)
-                  _buildLeaveTag('Comp Off', Colors.purple, theme),
+                Text(
+                  statusText,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    letterSpacing: 1.2,
+                  ),
+                ),
               ],
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -512,24 +613,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildLeaveTag(String text, Color color, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        text,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
   // MARK: NAVIGATE TO LEAVE DETAIL
   Future<void> _navigateToLeaveDetail(String leaveId) async {
     if (user == null) return;
@@ -542,19 +625,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (result == true && mounted) {
       final viewModel = Provider.of<ProfileViewModel>(context, listen: false);
       viewModel.loadUserLeaves(user!.id);
-    }
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'APPROVED':
-        return Colors.green;
-      case 'PENDING':
-        return Colors.orange;
-      case 'REJECTED':
-        return Colors.red;
-      default:
-        return Colors.grey;
     }
   }
 }

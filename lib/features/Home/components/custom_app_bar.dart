@@ -415,44 +415,47 @@ class _AnnouncementBottomSheetContentState
   Widget build(BuildContext context) {
     final viewModel = context.watch<AnnouncementViewModel>();
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
-      decoration: BoxDecoration(
-        color: widget.theme.colorScheme.surface,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: BoxDecoration(
+          color: widget.theme.colorScheme.surface,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          _buildHandleBar(),
-          _buildHeader(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildModernTextField(
-                    controller: _titleController,
-                    label: "Title",
-                    hint: "Enter announcement title",
-                  ),
-                  const SizedBox(height: 20),
-                  _buildModernTextField(
-                    controller: _bodyController,
-                    label: "Body",
-                    hint: "Enter announcement details",
-                    maxLines: 6,
-                  ),
-                  const SizedBox(height: 32),
-                  _buildSendButton(viewModel.isLoading),
-                ],
+        child: Column(
+          children: [
+            _buildHandleBar(),
+            _buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildModernTextField(
+                      controller: _titleController,
+                      label: "Title",
+                      hint: "Enter announcement title",
+                    ),
+                    const SizedBox(height: 20),
+                    _buildModernTextField(
+                      controller: _bodyController,
+                      label: "Body",
+                      hint: "Enter announcement details",
+                      maxLines: 6,
+                    ),
+                    const SizedBox(height: 32),
+                    _buildSendButton(viewModel.isLoading),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -554,6 +557,7 @@ class _AnnouncementBottomSheetContentState
             ],
           ),
           child: TextField(
+            onEditingComplete: () => FocusScope.of(context).unfocus(),
             controller: controller,
             maxLines: maxLines,
             style: TextStyle(

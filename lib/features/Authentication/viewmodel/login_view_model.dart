@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
-import 'package:leavify/dummydata/login/dummy_login_response.dart';
+// import 'package:leavify/dummydata/login/dummy_login_response.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Authentication/domain/request/login_request.dart';
@@ -63,8 +63,8 @@ class LoginViewModel extends BaseViewModel {
       );
       // showInfo(context, '$loginRequest');
       // logins only
-      // final result = await _authenticationRepository.login(loginRequest);
-      final result = dummyLoginData;
+      final result = await _authenticationRepository.login(loginRequest);
+      // final result = dummyLoginData;
 
       if (result.success) {
         // Initialize home viewModel and then navigate to home screen.

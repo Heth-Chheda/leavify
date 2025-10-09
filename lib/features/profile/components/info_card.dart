@@ -22,30 +22,18 @@ class InfoCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.13),
+            blurRadius: 5,
+            offset: const Offset(0, 0),
           ),
         ],
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: (iconColor ?? theme.colorScheme.primary).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              color: iconColor ?? theme.colorScheme.primary,
-              size: 22,
-            ),
-          ),
+          Icon(icon, color: iconColor ?? theme.colorScheme.primary, size: 24),
           const SizedBox(width: 16),
           Expanded(
             child: Column(

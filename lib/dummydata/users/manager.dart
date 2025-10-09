@@ -19,7 +19,7 @@ const Map<String, dynamic> dummyManagerResponse = {
     "pending": 3,
     "organization": "Leavify Inc.",
     "empId": "MGR001",
-    "joiningDate": "2019-03-01",
+    "joiningDate": "2019-09-01",
     "workingDays": 240,
     "profileImageUrl": "https://example.com/profile/emma_williams.jpg",
     "canSendAnnouncement": true,

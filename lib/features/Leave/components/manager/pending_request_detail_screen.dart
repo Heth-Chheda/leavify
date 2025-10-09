@@ -135,86 +135,40 @@ class _PendingRequestDetailScreenState
     return Consumer<LeaveViewModel>(
       builder: (context, leaveViewModel, child) {
         final homeViewModel = context.read<HomeViewModel>();
-        final leave = leaveViewModel.selectedLeaveById;
-        final latestStatus = leave?.currentUserAction?.latestStatus
-            .toLowerCase();
         final userRole = homeViewModel.userRole.toLowerCase();
 
-        Widget buttons;
-
-        // If HR → only Resolve button
+        // HR → only Resolve button
         if (userRole == 'hr') {
-          buttons = Row(
-            children: [
-              Expanded(
-                child: _ResolveButton(
-                  onPressed: leaveViewModel.isLoading
-                      ? null
-                      : _handleProcessEscalated,
-                  isLoading: leaveViewModel.isProcessEscalatedLeaveLoading,
-                ),
+          return SafeArea(
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.onSurface.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
               ),
-            ],
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _ResolveButton(
+                      onPressed: leaveViewModel.isLoading
+                          ? null
+                          : _handleProcessEscalated,
+                      isLoading: leaveViewModel.isProcessEscalatedLeaveLoading,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           );
-        } else {
-          // Existing logic for managers
-          switch (latestStatus) {
-            case 'approved':
-              buttons = Row(
-                children: [
-                  Expanded(
-                    child: _RejectButton(
-                      onPressed: leaveViewModel.isLoading
-                          ? null
-                          : _handleReject,
-                      isLoading: leaveViewModel.isRejectLoading,
-                    ),
-                  ),
-                ],
-              );
-              break;
-
-            case 'rejected':
-              buttons = Row(
-                children: [
-                  Expanded(
-                    child: _ApproveButton(
-                      onPressed: leaveViewModel.isLoading
-                          ? null
-                          : _handleApprove,
-                      isLoading: leaveViewModel.isApproveLoading,
-                    ),
-                  ),
-                ],
-              );
-              break;
-
-            default:
-              buttons = Row(
-                children: [
-                  Expanded(
-                    child: _RejectButton(
-                      onPressed: leaveViewModel.isLoading
-                          ? null
-                          : _handleReject,
-                      isLoading: leaveViewModel.isRejectLoading,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _ApproveButton(
-                      onPressed: leaveViewModel.isLoading
-                          ? null
-                          : _handleApprove,
-                      isLoading: leaveViewModel.isApproveLoading,
-                    ),
-                  ),
-                ],
-              );
-              break;
-          }
         }
 
+        // Non-HR → always show both Reject and Approve
         return SafeArea(
           child: Container(
             padding: const EdgeInsets.all(20),
@@ -228,7 +182,23 @@ class _PendingRequestDetailScreenState
                 ),
               ],
             ),
-            child: buttons,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _RejectButton(
+                    onPressed: leaveViewModel.isLoading ? null : _handleReject,
+                    isLoading: leaveViewModel.isRejectLoading,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _ApproveButton(
+                    onPressed: leaveViewModel.isLoading ? null : _handleApprove,
+                    isLoading: leaveViewModel.isApproveLoading,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -1503,8 +1473,11 @@ class _ResolveButton extends StatelessWidget {
               height: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : const Icon(Icons.close_rounded),
-      label: Text(isLoading ? 'Processing...' : 'Resolve'),
+          : null,
+      label: Text(
+        isLoading ? 'Processing...' : 'Resolve',
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.blueAccent,
         side: const BorderSide(color: Colors.blueAccent, width: 2),
