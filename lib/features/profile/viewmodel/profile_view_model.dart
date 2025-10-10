@@ -20,6 +20,12 @@ class ProfileViewModel extends BaseViewModel {
   String? _loadUserLeavesError;
   String? get loadUserLeavesError => _loadUserLeavesError;
 
+  void resetEditMode() {
+    _isEditMode = false;
+    update(errorMessage: null);
+    notifyListeners();
+  }
+
   void toggleEditMode() {
     _isEditMode = !_isEditMode;
     update(errorMessage: null);

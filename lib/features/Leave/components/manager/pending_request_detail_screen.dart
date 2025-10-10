@@ -7,6 +7,7 @@ import 'package:flutter/services.dart' hide Uint8List;
 import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
+import 'package:leavify/features/Leave/components/manager/conflict/conflict_dialog.dart';
 import 'package:leavify/features/Leave/models/general/leave_document.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
@@ -49,6 +50,21 @@ class _PendingRequestDetailScreenState
     viewModel.clearSelectedLeave();
     // Then fetch fresh data
     await viewModel.getLeaveById(leaveId: widget.leaveId);
+
+    final leaveDetails = viewModel.selectedLeaveById;
+    if (leaveDetails != null && leaveDetails.teamConflictingLeaves.isNotEmpty) {
+      _showConflictDialog(leaveDetails.teamConflictingLeaves);
+    }
+  }
+
+  void _showConflictDialog(List<TeamConflictingLeave> conflicts) {
+    showDialog(
+      context: context,
+      builder: (context) => ConflictDialog(
+        conflicts: conflicts,
+        illustrationAsset: 'lib/assets/conflict.png', // Your conflict image
+      ),
+    );
   }
 
   @override
@@ -83,7 +99,10 @@ class _PendingRequestDetailScreenState
           return _buildLeaveDetailsContent(leaveViewModel.selectedLeaveById!);
         },
       ),
-      bottomNavigationBar: _buildActionButtons(),
+      bottomNavigationBar: Container(
+        color: Colors.white,
+        child: _buildActionButtons(),
+      ),
     );
   }
 
@@ -100,6 +119,10 @@ class _PendingRequestDetailScreenState
           const SizedBox(height: 20),
           _LeaveRequestDetailsCard(leaveData: leaveData),
           const SizedBox(height: 16),
+          _TeamConflictingLeavesList(
+            teamLeaves: leaveData.teamConflictingLeaves,
+          ),
+          const SizedBox(height: 20),
           if (leaveData.leaveDetails.reason.isNotEmpty)
             _ReasonCard(reason: leaveData.leaveDetails.reason),
           if (leaveData.leaveDetails.reason.isNotEmpty)
@@ -119,10 +142,6 @@ class _PendingRequestDetailScreenState
             const SizedBox(height: 16),
           _CommentsCard(commentsController: _commentsController),
           const SizedBox(height: 24),
-          _TeamConflictingLeavesList(
-            teamLeaves: leaveData.teamConflictingLeaves,
-          ),
-          const SizedBox(height: 20),
         ],
       ),
     );
@@ -142,16 +161,6 @@ class _PendingRequestDetailScreenState
           return SafeArea(
             child: Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.onSurface.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
               child: Row(
                 children: [
                   Expanded(
@@ -344,13 +353,13 @@ class _EmployeeHeaderCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.onSurface.withOpacity(0.25),
+            color: colorScheme.onSurface.withOpacity(0.15),
             blurRadius: 5,
-            offset: const Offset(0, 0),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -363,10 +372,10 @@ class _EmployeeHeaderCard extends StatelessWidget {
                 height: 80,
                 decoration: BoxDecoration(
                   color: colorScheme.primary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(40),
+                  borderRadius: BorderRadius.circular(18),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(40),
+                  borderRadius: BorderRadius.circular(18),
                   child:
                       profileImagePath != null && profileImagePath!.isNotEmpty
                       ? Image.network(
@@ -1289,7 +1298,7 @@ class _CommentsCard extends StatelessWidget {
             hintText: 'Add any comments or feedback for the employee...',
             hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
                 color: colorScheme.onSurface.withOpacity(0.2),
               ),
@@ -1305,7 +1314,7 @@ class _CommentsCard extends StatelessWidget {
               borderSide: BorderSide(color: colorScheme.primary),
             ),
             filled: true,
-            fillColor: colorScheme.onSurface.withOpacity(0.05),
+            fillColor: Colors.white,
           ),
         ),
         const SizedBox(height: 8),
@@ -1338,12 +1347,12 @@ class _InfoCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.onSurface.withOpacity(0.25),
-            blurRadius: 10,
+            color: colorScheme.onSurface.withOpacity(0.15),
+            blurRadius: 5,
             offset: const Offset(0, 2),
           ),
         ],
@@ -1465,22 +1474,29 @@ class _ResolveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
+    return ElevatedButton.icon(
       onPressed: onPressed,
       icon: isLoading
           ? const SizedBox(
               width: 16,
               height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
             )
-          : null,
+          : const Icon(Icons.check, color: Colors.white),
       label: Text(
         isLoading ? 'Processing...' : 'Resolve',
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+          color: Colors.white,
+        ),
       ),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.blueAccent,
-        side: const BorderSide(color: Colors.blueAccent, width: 2),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -1535,8 +1551,8 @@ class _TeamConflictingLeavesList extends StatelessWidget {
 
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -1554,7 +1570,8 @@ class _TeamConflictingLeavesList extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: teamLeaves.length,
-              separatorBuilder: (_, __) => const Divider(height: 16),
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 24, color: Colors.transparent),
               itemBuilder: (context, index) {
                 final leave = teamLeaves[index];
                 final imageUrl =

@@ -1,6 +1,6 @@
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
 
-/// Dummy JSON response for GetLeaveByIdResponse
+/// Dummy JSON response for GetLeaveByIdResponse with team conflicting leaves
 const Map<String, dynamic> dummyLeaveByIdResponse = {
   "userId": "user123",
   "leaveId": "leave456",
@@ -49,6 +49,24 @@ const Map<String, dynamic> dummyLeaveByIdResponse = {
     "isPending": true,
     "isCurrentUser": false,
   },
+  "teamConflictingLeaves": [
+    {
+      "fName": "Alice",
+      "lName": "Smith",
+      "profileImagePath": "https://example.com/profiles/alice.png",
+      "fromDate": "2025-10-11T00:00:00Z",
+      "toDate": "2025-10-13T00:00:00Z",
+      "reason": "Vacation",
+    },
+    {
+      "fName": "Bob",
+      "lName": "Johnson",
+      "profileImagePath": "",
+      "fromDate": "2025-10-10T00:00:00Z",
+      "toDate": "2025-10-11T00:00:00Z",
+      "reason": "Medical leave",
+    },
+  ],
 };
 
 /// Converts dummy JSON into a Dart object

@@ -134,80 +134,81 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   // MARK: - BUILD SECTION
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      body: Consumer<LeaveViewModel>(
-        builder: (context, leaveViewModel, child) {
-          final allRequests = leaveViewModel.getAllPendingLeaves;
-          final filteredRequests = _getFilteredRequests(allRequests);
-          final pendingCount = allRequests
-              .where((r) => r.status.toLowerCase() == 'pending')
-              .length;
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Consumer<LeaveViewModel>(
+          builder: (context, leaveViewModel, child) {
+            final allRequests = leaveViewModel.getAllPendingLeaves;
+            final filteredRequests = _getFilteredRequests(allRequests);
+            final pendingCount = allRequests
+                .where((r) => r.status.toLowerCase() == 'pending')
+                .length;
 
-          if (leaveViewModel.isLoading && allRequests.isEmpty) {
-            return Column(
-              children: [
-                _buildHeader(context, pendingCount),
-                const Expanded(
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ],
-            );
-          }
-
-          if (leaveViewModel.errorMessage != null && allRequests.isEmpty) {
-            return Column(
-              children: [
-                _buildHeader(context, pendingCount),
-                Expanded(child: _buildErrorState(leaveViewModel.errorMessage!)),
-              ],
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: _onRefresh,
-            child: Column(
-              children: [
-                _buildHeader(context, pendingCount),
-                Expanded(
-                  child: SafeArea(
-                    child: filteredRequests.isEmpty
-                        ? _buildEmptyState()
-                        : ListView.separated(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: filteredRequests.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final request = filteredRequests[index];
-                              return PendingRequestCard(
-                                request: request,
-                                onTap: () => _navigateToDetail(request),
-                              );
-                            },
-                          ),
+            if (leaveViewModel.isLoading && allRequests.isEmpty) {
+              return Column(
+                children: [
+                  _buildHeader(context, pendingCount),
+                  const Expanded(
+                    child: Center(child: CircularProgressIndicator()),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
+                ],
+              );
+            }
+
+            if (leaveViewModel.errorMessage != null && allRequests.isEmpty) {
+              return Column(
+                children: [
+                  _buildHeader(context, pendingCount),
+                  Expanded(
+                    child: _buildErrorState(leaveViewModel.errorMessage!),
+                  ),
+                ],
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: Column(
+                children: [
+                  _buildHeader(context, pendingCount),
+                  Expanded(
+                    child: SafeArea(
+                      child: filteredRequests.isEmpty
+                          ? _buildEmptyState()
+                          : ListView.separated(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              itemCount: filteredRequests.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final request = filteredRequests[index];
+                                return PendingRequestCard(
+                                  request: request,
+                                  onTap: () => _navigateToDetail(request),
+                                );
+                              },
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
   // MARK: - HEADER
   Widget _buildHeader(BuildContext context, int pendingCount) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final homeViewModel = context.watch<HomeViewModel>();
 
     return Container(
-      color: colorScheme.surface,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       child: Column(
         children: [
           _buildSearchBar(context),
@@ -222,7 +223,6 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
   Widget _buildSearchBar(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDarkMode = theme.brightness == Brightness.dark;
 
     return TextField(
       onChanged: _onSearchChanged,
@@ -235,21 +235,19 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
           color: colorScheme.onSurface.withOpacity(0.7),
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: colorScheme.onSurface.withOpacity(0.2)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: colorScheme.onSurface.withOpacity(0.2)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: colorScheme.primary),
         ),
         filled: true,
-        fillColor: isDarkMode
-            ? colorScheme.surface
-            : colorScheme.onSurface.withOpacity(0.05),
+        fillColor: Colors.white,
       ),
     );
   }
@@ -259,10 +257,10 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
     final role = userRole.toLowerCase();
     final filters = [
       'All',
+      if (role == 'hr') 'Escalated',
       'Pending',
       'Approved',
       'Rejected',
-      if (role == 'hr') 'Escalated',
     ];
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -279,21 +277,34 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
               label: Text(filter),
               selected: isSelected,
               onSelected: (_) => _onFilterSelected(filter),
-              selectedColor: colorScheme.primary.withOpacity(0.2),
-              backgroundColor: colorScheme.surface,
-              checkmarkColor: colorScheme.primary,
-              side: BorderSide(
-                color: isSelected
-                    ? colorScheme.primary
-                    : colorScheme.onSurface.withOpacity(0.2),
-                width: 1,
+              showCheckmark: false,
+              selectedColor: colorScheme.primary.withOpacity(0),
+              backgroundColor: Colors.white,
+              elevation: 0,
+              pressElevation: 0,
+              color: WidgetStateProperty.resolveWith<Color?>((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return colorScheme.primary.withOpacity(0);
+                }
+                return colorScheme.surface;
+              }),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: BorderSide(
+                  color: isSelected
+                      ? colorScheme.primary
+                      : colorScheme.outline.withOpacity(0.15),
+                  width: isSelected ? 1.5 : 1,
+                ),
               ),
               labelStyle: TextStyle(
                 color: isSelected
-                    ? colorScheme.primary
-                    : colorScheme.onSurface.withOpacity(0.8),
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ? Colors.black
+                    : colorScheme.onSurface.withOpacity(0.7),
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontSize: 14,
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             ),
           );
         }).toList(),

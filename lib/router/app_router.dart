@@ -103,10 +103,20 @@ class AppRouter {
               create: (_) => LeaveViewModel(),
               child: _withAppBar(
                 LeaveDetailScreen(
+                  key: leaveDetailKey,
                   leaveId: args['leaveId'] as String,
                   userId: args['userId'] as String,
                 ),
                 'Leave Details',
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () {
+                      final state = leaveDetailKey.currentState;
+                      state?.toggleStatusSection();
+                    },
+                  ),
+                ],
               ),
             ),
             settings: settings,
@@ -167,12 +177,18 @@ class AppRouter {
     );
   }
 
-  static Widget _withAppBar(Widget child, String title) {
+  static Widget _withAppBar(
+    Widget child,
+    String title, {
+    List<Widget>? actions,
+  }) {
     return Scaffold(
       appBar: AppBar(
         title: Text(title, textAlign: TextAlign.center),
         centerTitle: true,
         leading: const BackButton(),
+        // Only add actions if provided
+        actions: actions != null ? actions : null,
       ),
       body: child,
     );

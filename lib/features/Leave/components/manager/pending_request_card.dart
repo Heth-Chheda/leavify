@@ -28,7 +28,7 @@ class PendingRequestCard extends StatelessWidget {
         child: Container(
           decoration: _buildGradientDecoration(isDark),
           child: Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -57,24 +57,17 @@ class PendingRequestCard extends StatelessWidget {
         request.escalated;
 
     return BoxDecoration(
-      color: isDark ? Colors.black.withOpacity(0.6) : Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: shouldSeeRedBorder
-              ? Colors.red
-              : Colors.black.withOpacity(0.2),
-          blurRadius: shouldSeeRedBorder ? 2.5 : 12,
-          offset: const Offset(0, 0),
-          spreadRadius: shouldSeeRedBorder ? 0 : -2,
-        ),
-      ],
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      border: shouldSeeRedBorder
+          ? Border.all(color: Colors.red, width: 1)
+          : Border.all(color: Colors.black.withOpacity(0.13), width: 1.5),
     );
   }
 
   BoxDecoration _buildGradientDecoration(bool isDark) {
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       gradient: isDark
           ? LinearGradient(
               begin: Alignment.topLeft,
@@ -118,13 +111,13 @@ Widget _employeeAvatar({required GetAllResponse request}) {
       }
 
       return Container(
-        width: 52,
-        height: 52,
+        width: 60,
+        height: 60,
         decoration: BoxDecoration(
           color: Theme.of(
             context,
           ).primaryColor.withOpacity(isDark ? 0.15 : 0.08),
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: Theme.of(
               context,

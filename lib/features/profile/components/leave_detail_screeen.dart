@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/custom_calendar_component.dart';
 import 'package:leavify/features/Leave/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:leavify/features/profile/viewmodel/profile_view_model.dart';
 import 'package:provider/provider.dart';
+
+final GlobalKey<_LeaveDetailScreenState> leaveDetailKey = GlobalKey();
 
 class LeaveDetailScreen extends StatefulWidget {
   final String leaveId;
@@ -32,6 +35,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   late List<DateTime> _compDates;
   GetLeaveByIdResponse? _leave;
   late String _status;
+  bool _showStatusSection = false;
 
   @override
   void initState() {
@@ -59,6 +63,12 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         ),
       );
     }
+  }
+
+  void toggleStatusSection() {
+    setState(() {
+      _showStatusSection = !_showStatusSection;
+    });
   }
 
   void onEscalatePressed() async {
@@ -104,6 +114,9 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
   void _initializeData() async {
     final leaveVM = Provider.of<LeaveViewModel>(context, listen: false);
+    final profileVM = context.read<ProfileViewModel>();
+
+    profileVM.resetEditMode();
 
     await leaveVM.getLeaveById(leaveId: widget.leaveId);
 
@@ -152,7 +165,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Status Badge with gradient
-                        if (_status.toLowerCase() != 'cancelled') ...[
+                        if (_status.toLowerCase() != 'cancelled' &&
+                            _showStatusSection) ...[
                           _buildStatusSection(isDark),
                           const SizedBox(height: 24),
                         ],
@@ -228,7 +242,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Remind and Escalate Buttons
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -236,25 +249,81 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
               'Remind',
               Icons.notifications_active,
               Colors.orange,
-              onRemindPressed,
+              () => _showConfirmationDialog(
+                title: 'Send Reminder',
+                body:
+                    'Are you sure you want to send a reminder for this leave?',
+                confirmButtonText: 'Send',
+                onConfirm: () {
+                  // Your remind logic here
+                  onRemindPressed();
+                  print('Reminder sent');
+                },
+                illustrationAsset: 'lib/assets/reminder.png',
+                illustrationHeight: 180,
+              ),
             ),
             const SizedBox(width: 16),
             _buildActionButton(
               'Escalate',
               Icons.warning_amber,
               Colors.red,
-              onEscalatePressed,
+              () => _showConfirmationDialog(
+                title: 'Escalate Leave',
+                body: 'Are you sure you want to escalate this leave request?',
+                confirmButtonText: 'Escalate',
+                onConfirm: () {
+                  // Your escalate logic here
+                  onEscalatePressed();
+                  print('Leave escalated');
+                },
+                illustrationAsset: 'lib/assets/escalate.png',
+              ),
             ),
             const SizedBox(width: 16),
             _buildActionButton(
               'Cancel',
               Icons.cancel,
               Colors.grey,
-              onCancelPressed,
+              () => _showConfirmationDialog(
+                title: 'Cancel Leave',
+                body: 'Are you sure you want to cancel this leave?',
+                confirmButtonText: 'Cancel',
+                onConfirm: () {
+                  // Your cancel logic here
+                  onCancelPressed();
+                  print('Leave cancelled');
+                },
+                illustrationAsset: 'lib/assets/cancel.png',
+              ),
             ),
           ],
         ),
       ],
+    );
+  }
+
+  void _showConfirmationDialog({
+    required String title,
+    required String body,
+    required String confirmButtonText,
+    required VoidCallback onConfirm,
+    String? illustrationAsset,
+    double? illustrationHeight,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => ConfirmationDialog(
+        title: title,
+        body: body,
+        illustrationAsset: illustrationAsset,
+        illustrationHeight: illustrationHeight,
+        confirmButtonText: confirmButtonText,
+        onConfirm: () {
+          onConfirm();
+          Navigator.pop(context); // Close the dialog after action
+        },
+      ),
     );
   }
 
@@ -715,22 +784,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
   Widget _buildBottomActionBar(ProfileViewModel viewModel, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.4)
-                : Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
-        border: isDark
-            ? Border(top: BorderSide(color: Colors.white.withOpacity(0.1)))
-            : null,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 24),
       child: SafeArea(
         child: Row(
           children: [
@@ -752,7 +806,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                             setState(() {
                               _initializeData();
                             });
-                            viewModel.toggleEditMode();
+                            viewModel.resetEditMode();
                           },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -927,6 +981,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                 onDateSelected(selectedDate);
                 Navigator.of(context).pop();
               },
+              onClose: () => Navigator.of(context).pop(),
             ),
           ),
         );

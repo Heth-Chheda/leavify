@@ -185,12 +185,12 @@ class BaseRepository {
             }
           }
 
-          // _logRequest(
-          //   method: method,
-          //   url: url,
-          //   headers: headers,
-          //   body: requestBody,
-          // );
+          _logRequest(
+            method: method,
+            url: url,
+            headers: headers,
+            body: requestBody,
+          );
 
           switch (method) {
             case HttpMethod.get:
