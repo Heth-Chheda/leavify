@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/models/leave_info.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
+import 'package:leavify/features/Authentication/domain/response/get_holiday_list_response.dart';
 
 class MonthCalendarView extends StatefulWidget {
   final DateTime currentDate;
@@ -11,6 +12,8 @@ class MonthCalendarView extends StatefulWidget {
   final Function(DateTime) onMonthChanged;
   final List<Leave> userLeaves;
   final Map<String, Color> userColorMap;
+  final Map<String, HolidayDate> holidayMap; // NEW
+  final Map<String, List<HolidayDate>> groupedHolidays; // NEW
 
   const MonthCalendarView({
     super.key,
@@ -22,6 +25,8 @@ class MonthCalendarView extends StatefulWidget {
     required this.onMonthChanged,
     required this.userLeaves,
     required this.userColorMap,
+    required this.holidayMap,
+    required this.groupedHolidays,
   });
 
   @override
@@ -102,15 +107,11 @@ class _MonthCalendarViewState extends State<MonthCalendarView> {
     final isDark = theme.brightness == Brightness.dark;
     final today = DateTime.now();
 
-    // Get first day of month and calculate offset
     final firstDayOfMonth = DateTime(monthDate.year, monthDate.month, 1);
     final lastDayOfMonth = DateTime(monthDate.year, monthDate.month + 1, 0);
     final daysInMonth = lastDayOfMonth.day;
 
-    // Calculate how many days from previous month to show
     int startOffset = firstDayOfMonth.weekday - 1; // Monday = 0
-
-    // Calculate total cells needed
     final totalCells = startOffset + daysInMonth;
     final rows = (totalCells / 7).ceil();
 
@@ -123,7 +124,6 @@ class _MonthCalendarViewState extends State<MonthCalendarView> {
               final cellIndex = weekIndex * 7 + dayIndex;
               final dayNumber = cellIndex - startOffset + 1;
 
-              // Check if this cell should show a date
               if (cellIndex < startOffset || dayNumber > daysInMonth) {
                 return Expanded(child: Container());
               }
@@ -135,6 +135,8 @@ class _MonthCalendarViewState extends State<MonthCalendarView> {
                 widget.selectedDate ?? DateTime.now(),
               );
               final leaveInfo = _getLeaveInfoForDate(date);
+              final holiday = _getHolidayForDate(date);
+              final hasGroupedHoliday = _hasGroupedHoliday(holiday);
 
               return Expanded(
                 child: GestureDetector(
@@ -147,6 +149,17 @@ class _MonthCalendarViewState extends State<MonthCalendarView> {
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
+                        // Holiday background
+                        if (holiday != null)
+                          Positioned.fill(
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFED4E).withOpacity(0.4),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
                           curve: Curves.easeOutCubic,
@@ -170,24 +183,41 @@ class _MonthCalendarViewState extends State<MonthCalendarView> {
                                 : null,
                           ),
                           child: Center(
-                            child: Text(
-                              '$dayNumber',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: isToday || isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w600,
-                                color: isSelected
-                                    ? theme.colorScheme.onPrimary
-                                    : isToday
-                                    ? theme.colorScheme.primary
-                                    : (isDark ? Colors.white : Colors.black),
-                                letterSpacing: -0.5,
-                              ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '$dayNumber',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: isToday || isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: isSelected
+                                        ? theme.colorScheme.onPrimary
+                                        : isToday
+                                        ? theme.colorScheme.primary
+                                        : (isDark
+                                              ? Colors.white
+                                              : Colors.black),
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                // Underline for grouped holidays
+                                if (hasGroupedHoliday)
+                                  Container(
+                                    width: 20,
+                                    height: 2,
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary,
+                                      borderRadius: BorderRadius.circular(1),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ),
-                        // Modern overlapping leave indicators
+                        // Leave indicators
                         if (leaveInfo.isNotEmpty)
                           Positioned(
                             bottom: 4,
@@ -203,6 +233,21 @@ class _MonthCalendarViewState extends State<MonthCalendarView> {
         );
       }),
     );
+  }
+
+  HolidayDate? _getHolidayForDate(DateTime date) {
+    final dateStr = _formatDateForLookup(date);
+    return widget.holidayMap[dateStr];
+  }
+
+  bool _hasGroupedHoliday(HolidayDate? holiday) {
+    return holiday != null &&
+        holiday.groupCode != null &&
+        holiday.groupCode!.isNotEmpty;
+  }
+
+  String _formatDateForLookup(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   Widget _buildModernLeaveIndicators(List<LeaveInfo> leaveInfo) {
@@ -223,13 +268,9 @@ class _MonthCalendarViewState extends State<MonthCalendarView> {
               (isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280));
           final totalDots = leaveInfo.length;
 
-          // Calculate position for overlapping effect
-          double leftOffset = 0;
-          if (totalDots > 1) {
-            leftOffset = (index * 6.0).clamp(0.0, 16.0);
-          } else {
-            leftOffset = 8.0; // Center single dot
-          }
+          double leftOffset = totalDots > 1
+              ? (index * 6.0).clamp(0.0, 16.0)
+              : 8.0;
 
           return Positioned(
             left: leftOffset,
@@ -261,7 +302,6 @@ class _MonthCalendarViewState extends State<MonthCalendarView> {
         final startDate = DateTime.parse(leave.startDate);
         final endDate = DateTime.parse(leave.endDate);
 
-        // Check if date falls within leave period
         if (_isSameDay(date, startDate) ||
             _isSameDay(date, endDate) ||
             (date.isAfter(startDate) && date.isBefore(endDate))) {
@@ -276,7 +316,6 @@ class _MonthCalendarViewState extends State<MonthCalendarView> {
           );
         }
       } catch (e) {
-        // Handle date parsing errors
         continue;
       }
     }

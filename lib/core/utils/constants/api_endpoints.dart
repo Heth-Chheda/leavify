@@ -14,6 +14,12 @@ class ApiEndpoints {
   static final String getWorkingDays = '$baseUrl/employee/workingdays';
   static final String getLeaveBalance = '$baseUrl/employee/workingdays';
 
+  // category
+  static final String getCategory = '$baseUrl/request/getCategories';
+
+  // holidays
+  static final String getHolidayList = '$baseUrl/request/getHolidays';
+
   // Announcements
   static final String getAnnouncements = '$baseUrl/notifications/get';
   static final String makeAnnouncement = '$baseUrl/notifications/add';

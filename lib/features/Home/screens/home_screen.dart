@@ -458,6 +458,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           showToggle: true,
           userLeaves: _viewModel.teamUpcomingLeaves,
+          holidayListResponse: _viewModel.holidayListResponse,
         ),
       ],
     );

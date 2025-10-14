@@ -299,6 +299,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     );
   }
 
+  // MARK: - BUILD METHOD
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -352,6 +353,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
                                   'employee') ...[
                                 _buildRequestedForToggle(
                                   leaveViewModel,
+                                  isDark,
+                                ),
+                                _buildLeaveTypeDropdownSection(
+                                  leaveViewModel,
+                                  homeViewModel,
                                   isDark,
                                 ),
                                 const SizedBox(height: 100),
@@ -706,6 +712,70 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     );
   }
 
+  Widget _buildLeaveTypeDropdownSection(
+    LeaveViewModel leaveViewModel,
+    HomeViewModel homeViewModel,
+    bool isDark,
+  ) {
+    // Only show if a user is selected
+    if (leaveViewModel.selectedUser == null) return const SizedBox.shrink();
+
+    final Color primaryColor = const Color.fromARGB(255, 243, 13, 116);
+    final Color textColor = isDark ? Colors.white : Colors.black87;
+    final categories = homeViewModel.leaveCategories;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        Text(
+          'Leave Type',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Dropdown Menu
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: primaryColor, width: 1.2),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              dropdownColor: isDark ? Colors.grey[900] : Colors.white,
+              value: leaveViewModel.selectedLeaveCategory,
+              hint: Text(
+                'Select Leave Type',
+                style: TextStyle(color: textColor.withOpacity(0.7)),
+              ),
+              items: categories.map((category) {
+                return DropdownMenuItem<String>(
+                  value: category.name,
+                  child: Text(
+                    category.name,
+                    style: TextStyle(color: textColor),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  leaveViewModel.selectLeaveCategory(value);
+                }
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // MARK: - REQUESTED FOR TOGGLE
   Widget _buildRequestedForToggle(LeaveViewModel leaveViewModel, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

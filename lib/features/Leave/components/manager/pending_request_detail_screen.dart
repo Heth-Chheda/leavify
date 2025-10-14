@@ -13,7 +13,6 @@ import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:leavify/router/app_navigator.dart';
-import 'package:leavify/router/route_names.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
@@ -35,6 +34,7 @@ class PendingRequestDetailScreen extends StatefulWidget {
 class _PendingRequestDetailScreenState
     extends State<PendingRequestDetailScreen> {
   final TextEditingController _commentsController = TextEditingController();
+  final FocusNode _commentsFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -140,7 +140,10 @@ class _PendingRequestDetailScreenState
           if (leaveData.leaveDetails.isEscalated &&
               leaveData.leaveDetails.escalationDet != null)
             const SizedBox(height: 16),
-          _CommentsCard(commentsController: _commentsController),
+          _CommentsCard(
+            commentsController: _commentsController,
+            focusNode: _commentsFocusNode,
+          ),
           const SizedBox(height: 24),
         ],
       ),
@@ -216,6 +219,11 @@ class _PendingRequestDetailScreenState
 
   Future<void> _handleApprove() async {
     final leaveViewModel = context.read<LeaveViewModel>();
+    if (_commentsController.text.trim().isEmpty) {
+      _commentsFocusNode.requestFocus();
+      leaveViewModel.showError(context, 'Provide the reason!');
+      return;
+    }
 
     final success = await leaveViewModel.processLeaveRequest(
       leaveId: widget.leaveId,
@@ -225,38 +233,22 @@ class _PendingRequestDetailScreenState
     );
 
     if (success && mounted) {
-      // Navigator.pop(context);
       AppNavigator.goBack(true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Request approved successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      leaveViewModel.showSuccess(context, 'Request approved!');
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            leaveViewModel.processLeaveError ?? 'Failed to approve request',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      leaveViewModel.showError(
+        context,
+        leaveViewModel.processLeaveError ?? 'Failed to approve request',
       );
     }
   }
 
   Future<void> _handleProcessEscalated() async {
+    final leaveViewModel = context.read<LeaveViewModel>();
     if (_commentsController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please provide a reason for rejection'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      leaveViewModel.showError(context, 'Please provide a reason!');
       return;
     }
-
-    final leaveViewModel = context.read<LeaveViewModel>();
 
     final success = await leaveViewModel.processEscalatedLeaveRequest(
       leaveId: widget.leaveId,
@@ -265,37 +257,22 @@ class _PendingRequestDetailScreenState
 
     if (success && mounted) {
       // Navigator.pop(context);
-      AppNavigator.navigateTo(RouteNames.pendingRequests);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Request rejected successfully'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      AppNavigator.goBack(true);
+      leaveViewModel.showInfo(context, 'Request resolved!');
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            leaveViewModel.processLeaveError ?? 'Failed to reject request',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      leaveViewModel.showError(
+        context,
+        leaveViewModel.processLeaveError ?? 'Failed to resolve request',
       );
     }
   }
 
   Future<void> _handleReject() async {
+    final leaveViewModel = context.read<LeaveViewModel>();
     if (_commentsController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please provide a reason for rejection'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      leaveViewModel.showError(context, 'Please provide a reason!');
       return;
     }
-
-    final leaveViewModel = context.read<LeaveViewModel>();
 
     final success = await leaveViewModel.processLeaveRequest(
       leaveId: widget.leaveId,
@@ -307,20 +284,11 @@ class _PendingRequestDetailScreenState
     if (success && mounted) {
       // Navigator.pop(context);
       AppNavigator.goBack(true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Request rejected successfully'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      leaveViewModel.showSuccess(context, 'Request rejected!');
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            leaveViewModel.processLeaveError ?? 'Failed to reject request',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      leaveViewModel.showError(
+        context,
+        leaveViewModel.processLeaveError ?? 'Failed to reject request',
       );
     }
   }
@@ -451,7 +419,7 @@ class _EmployeeHeaderCard extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             color: Colors.blue.withOpacity(0.15),
             borderRadius: BorderRadius.circular(8),
@@ -505,7 +473,7 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
               child: _InfoRow(
                 icon: Icons.category_outlined,
                 label: 'Leave Type',
-                value: leaveData.leaveDetails.type,
+                value: leaveData.leaveDetails.subType,
               ),
             ),
             const SizedBox(width: 16),
@@ -547,11 +515,7 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
   }
 
   String _calculateDuration() {
-    final days =
-        leaveData.leaveDetails.toDate
-            .difference(leaveData.leaveDetails.fromDate)
-            .inDays +
-        1;
+    final days = leaveData.duration;
     return '$days day${days > 1 ? 's' : ''}';
   }
 
@@ -1279,8 +1243,12 @@ class _TimelineItem extends StatelessWidget {
 // MARK: - Comments Card
 class _CommentsCard extends StatelessWidget {
   final TextEditingController commentsController;
+  final FocusNode focusNode;
 
-  const _CommentsCard({required this.commentsController});
+  const _CommentsCard({
+    required this.commentsController,
+    required this.focusNode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1288,42 +1256,62 @@ class _CommentsCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return _InfoCard(
-      title: 'Add Comments',
+      title: 'Comments',
       children: [
-        TextField(
-          controller: commentsController,
-          maxLines: 4,
-          style: TextStyle(color: colorScheme.onSurface),
-          decoration: InputDecoration(
-            hintText: 'Add any comments or feedback for the employee...',
-            hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.6)),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: colorScheme.onSurface.withOpacity(0.2),
-              ),
+        // Wrap in SingleChildScrollView to scroll when keyboard appears
+        SingleChildScrollView(
+          reverse: true, // ensures bottom content is visible
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color: colorScheme.onSurface.withOpacity(0.2),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: commentsController,
+                  focusNode: focusNode,
+                  maxLines: 4,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                  style: TextStyle(color: colorScheme.onSurface),
+                  decoration: InputDecoration(
+                    hintText:
+                        'Add any comments or feedback for the employee...',
+                    hintStyle: TextStyle(
+                      color: colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: colorScheme.onSurface.withOpacity(0.2),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: colorScheme.onSurface.withOpacity(0.2),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: colorScheme.primary),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Note: Comments are required when rejecting a request',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurface.withOpacity(0.6),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: colorScheme.primary),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Note: Comments are required when rejecting a request',
-          style: TextStyle(
-            fontSize: 12,
-            color: colorScheme.onSurface.withOpacity(0.6),
-            fontStyle: FontStyle.italic,
           ),
         ),
       ],
@@ -1457,8 +1445,9 @@ class _RejectButton extends StatelessWidget {
           : const Icon(Icons.close_rounded),
       label: Text(isLoading ? 'Processing...' : 'Reject'),
       style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.red,
-        side: const BorderSide(color: Colors.red, width: 2),
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.red,
+        side: const BorderSide(color: Colors.transparent, width: 2),
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),

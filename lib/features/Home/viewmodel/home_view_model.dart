@@ -7,6 +7,8 @@ import 'package:leavify/core/storage/app_storage.dart';
 // import 'package:leavify/dummydata/users/manager.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
+import 'package:leavify/features/Authentication/domain/response/get_category_response.dart';
+import 'package:leavify/features/Authentication/domain/response/get_holiday_list_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Leave/models/response/get_announcements_response.dart';
 
@@ -17,6 +19,15 @@ class HomeViewModel extends ChangeNotifier {
   GetUserSummaryResponse? _homeData;
   bool _isLoading = true;
   String? _error;
+
+  // MARK: - New: Leave Categories
+  LeaveCategoryResponse? _leaveCategoryResponse;
+  List<LeaveCategory> _leaveCategories = [];
+  List<LeaveCategory> get leaveCategories => _leaveCategories;
+
+  // MARK: HOLIDAY
+  GetHolidayListResponse? _holidayListResponse;
+  GetHolidayListResponse? get holidayListResponse => _holidayListResponse;
 
   // Getters
   GetUserSummaryResponse? get homeData => _homeData;
@@ -49,6 +60,7 @@ class HomeViewModel extends ChangeNotifier {
   int get workingDays => _workingDays;
 
   Future<void> initialize() async {
+    await _getHolidayList();
     await _loadUserSummaryFromApi();
     await _fetchAnnouncements();
     // await _getLeaveBalance();
@@ -132,10 +144,47 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
+  // MARK: - GET CATEGORY
+  // MANAGER, HR, ADMIN AND SUPER ADMIN FUNCTIONALITY.
+  Future<void> getCategory() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
+      _leaveCategoryResponse = await _authenticationRepository.getCategory(
+        accessToken: accessToken,
+      );
+
+      _leaveCategories = _leaveCategoryResponse?.categories ?? [];
+    } catch (e) {
+      _error = "Failed to fetch leave categories: $e";
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // MARK: - Fetch Holiday List
+  Future<void> _getHolidayList() async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+      _holidayListResponse = await _authenticationRepository.getHolidayList();
+    } catch (e) {
+      _error = "Failed to fetch holiday list: $e";
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // MARK: REFRESH
   Future<void> refresh() async {
     await _loadUserSummaryFromApi();
     await _fetchAnnouncements();
+    await _getHolidayList();
     // await _getLeaveBalance();
   }
 

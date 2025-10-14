@@ -6,6 +6,7 @@ import 'package:leavify/features/Leave/models/general/my_leaves.dart';
 import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
 import 'package:leavify/features/Leave/models/response/apply_leave_response_model.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
+import 'package:leavify/features/Leave/models/response/process_leave_escalation.dart';
 import 'package:leavify/features/Leave/models/response/reportee_response.dart';
 import 'package:leavify/features/Leave/models/response/send_reminder_response.dart';
 import 'package:leavify/models/general_response.dart';
@@ -174,16 +175,18 @@ class LeaveRepository extends BaseRepository {
   }
 
   // MARK: - PROCESS ESCALATED LEAVES
-  Future<GeneralResponse> processEscalatedLeaves({
+  Future<ProcessEscalatedLeaveResponse> processEscalatedLeaves({
     required String userId,
     required String leaveId,
     required String comment,
+    required String accessToken,
   }) async {
     return await performRequest(
       url: ApiEndpoints.processEscalatedLeaves,
       method: HttpMethod.post,
+      accessToken: accessToken,
       body: {'userId': userId, 'leaveId': leaveId, 'comment': comment},
-      fromJson: (json) => GeneralResponse.fromJson(json),
+      fromJson: (json) => ProcessEscalatedLeaveResponse.fromJson(json),
     );
   }
 }

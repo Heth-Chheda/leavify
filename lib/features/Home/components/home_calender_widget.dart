@@ -1,6 +1,7 @@
 // calendar_widget.dart
 import 'package:flutter/material.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
+import 'package:leavify/features/Authentication/domain/response/get_holiday_list_response.dart';
 import 'package:leavify/features/Leave/components/calendar/week_calendar_view.dart';
 import 'package:leavify/features/Leave/components/calendar/month_calendar_view.dart';
 
@@ -9,6 +10,7 @@ class HomeCalendarWidget extends StatefulWidget {
   final DateTime? selectedDate;
   final bool showToggle;
   final List<Leave> userLeaves;
+  final GetHolidayListResponse? holidayListResponse;
 
   const HomeCalendarWidget({
     super.key,
@@ -16,6 +18,7 @@ class HomeCalendarWidget extends StatefulWidget {
     this.selectedDate,
     this.showToggle = true,
     required this.userLeaves,
+    this.holidayListResponse,
   });
 
   @override
@@ -45,6 +48,9 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
 
   final Map<String, Color> _userColorMap = {};
 
+  late Map<String, HolidayDate> _holidayMap;
+  late Map<String, List<HolidayDate>> _groupedHolidays;
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +59,7 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
     _weekPageController = PageController(initialPage: _initialWeekPage);
     _monthPageController = PageController(initialPage: _initialMonthPage);
     _generateUserColorMap();
+    _buildHolidayMaps();
   }
 
   void _generateUserColorMap() {
@@ -62,6 +69,28 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
         .toList();
     for (int i = 0; i < uniqueUsers.length; i++) {
       _userColorMap[uniqueUsers[i]] = _userColors[i % _userColors.length];
+    }
+  }
+
+  void _buildHolidayMaps() {
+    _holidayMap = {};
+    _groupedHolidays = {};
+
+    final holidays =
+        widget.holidayListResponse?.holidayList?.holidayDates ?? [];
+
+    for (final holiday in holidays) {
+      if (holiday.date != null && holiday.date!.isNotEmpty) {
+        _holidayMap[holiday.date!] = holiday;
+
+        // Group holidays by groupCode
+        if (holiday.groupCode != null && holiday.groupCode!.isNotEmpty) {
+          if (!_groupedHolidays.containsKey(holiday.groupCode)) {
+            _groupedHolidays[holiday.groupCode!] = [];
+          }
+          _groupedHolidays[holiday.groupCode!]!.add(holiday);
+        }
+      }
     }
   }
 
@@ -172,6 +201,7 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
                 onPressed: () {
                   setState(() {
                     _isWeekView = !_isWeekView;
+                    _currentDate = DateTime.now();
                   });
                 },
               ),
@@ -226,6 +256,8 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
                 },
                 userLeaves: widget.userLeaves,
                 userColorMap: _userColorMap,
+                holidayMap: _holidayMap,
+                groupedHolidays: _groupedHolidays,
               )
             : MonthCalendarView(
                 key: const ValueKey('month'),
@@ -241,6 +273,8 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
                 },
                 userLeaves: widget.userLeaves,
                 userColorMap: _userColorMap,
+                holidayMap: _holidayMap,
+                groupedHolidays: _groupedHolidays,
               ),
       ),
     );
@@ -262,11 +296,36 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
   }
 
   void _onDateSelected(DateTime date) {
+    final dateStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final holiday = _holidayMap[dateStr];
+
+    if (holiday != null) {
+      _showHolidayDialog(holiday);
+    }
     setState(() {
       _selectedDate = date;
       _currentDate = date;
     });
     widget.onDateSelected?.call(date);
+  }
+
+  void _showHolidayDialog(HolidayDate holiday) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Holiday', style: TextStyle(fontWeight: FontWeight.w700)),
+          content: Text(holiday.description ?? 'No description available'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   DateTime _getWeekStart(DateTime date) {

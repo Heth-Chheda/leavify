@@ -10,6 +10,7 @@ class ApplyLeaveRequestModel {
   final bool isHalfDay;
   final List<String> compDates;
   final List<LeaveDocument> documents;
+  final String? category;
 
   ApplyLeaveRequestModel({
     this.requestedBy,
@@ -23,6 +24,7 @@ class ApplyLeaveRequestModel {
     this.isHalfDay = false,
     this.compDates = const [],
     this.documents = const [],
+    this.category,
   });
 
   Map<String, dynamic> toJson() => {
@@ -37,6 +39,7 @@ class ApplyLeaveRequestModel {
     "compDates": compDates,
     "documents": documents.map((doc) => doc.toJson()).toList(),
     if (requestedBy != null) "requestedBy": requestedBy,
+    if (category != null) "category": category,
   };
 }
 

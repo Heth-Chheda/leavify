@@ -7,8 +7,9 @@ const Map<String, dynamic> dummyLeaveByIdResponse = {
   "employeeName": "John Doe",
   "workingDaysCount": 20,
   "balanceLeaves": 12,
+  "duration": 10,
   "leaveDetails": {
-    "type": "Casual",
+    "type": "LEAVE",
     "createdAt": "2025-10-01T10:00:00Z",
     "fromDate": "2025-10-10T00:00:00Z",
     "toDate": "2025-10-12T00:00:00Z",
@@ -39,6 +40,7 @@ const Map<String, dynamic> dummyLeaveByIdResponse = {
       "reminderSentAt": "2025-10-01T11:00:00Z",
       "reminderCount": 1,
     },
+    "subType": "Sick",
   },
   "currentUserAction": {
     "managerId": "mgr789",

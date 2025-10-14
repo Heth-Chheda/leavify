@@ -391,19 +391,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Wrap(
               spacing: 12, // horizontal spacing
               runSpacing: 12, // vertical spacing
-              children: leaveData.allLeaves.map((leave) {
-                // Calculate width: total screen width minus padding, divided by 2
-                double cardWidth =
-                    (MediaQuery.of(context).size.width - 20 * 2 - 12) / 2;
-
-                return SizedBox(
-                  width: cardWidth,
-                  child: GestureDetector(
-                    onTap: () => _navigateToLeaveDetail(leave.id),
-                    child: _buildLeaveItemCard(leave, theme),
+              children: [
+                for (var leave
+                    in List.from(leaveData.allLeaves)..sort((a, b) {
+                      // Sort by fromDate descending; if equal, use toDate
+                      int fromCompare = b.fromDate.compareTo(a.fromDate);
+                      return fromCompare != 0
+                          ? fromCompare
+                          : b.toDate.compareTo(a.toDate);
+                    }))
+                  SizedBox(
+                    width:
+                        (MediaQuery.of(context).size.width - 20 * 2 - 12) / 2,
+                    child: GestureDetector(
+                      onTap: () => _navigateToLeaveDetail(leave.id),
+                      child: _buildLeaveItemCard(leave, theme),
+                    ),
                   ),
-                );
-              }).toList(),
+              ],
             ),
           ],
         ],

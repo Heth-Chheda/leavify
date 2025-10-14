@@ -6,6 +6,7 @@ class GetLeaveByIdResponse {
   final String employeeName;
   final int workingDaysCount;
   final int balanceLeaves;
+  final int duration;
   final LeaveDetails leaveDetails;
   final CurrentUserAction? currentUserAction;
   final List<TeamConflictingLeave> teamConflictingLeaves;
@@ -15,6 +16,7 @@ class GetLeaveByIdResponse {
     required this.leaveId,
     required this.employeeName,
     required this.workingDaysCount,
+    required this.duration,
     required this.balanceLeaves,
     required this.leaveDetails,
     this.currentUserAction,
@@ -28,6 +30,7 @@ class GetLeaveByIdResponse {
       employeeName: json['employeeName'],
       workingDaysCount: json['workingDaysCount'],
       balanceLeaves: json['balanceLeaves'],
+      duration: json['duration'],
       leaveDetails: LeaveDetails.fromJson(json['leaveDetails']),
       currentUserAction: json['currentUserAction'] != null
           ? CurrentUserAction.fromJson(json['currentUserAction'])
@@ -89,6 +92,7 @@ class LeaveDetails {
   final EscalationDet? escalationDet;
   final DateTime updatedAt;
   final ReminderDetails reminderDetails;
+  final String subType;
 
   LeaveDetails({
     required this.type,
@@ -106,6 +110,7 @@ class LeaveDetails {
     this.escalationDet,
     required this.updatedAt,
     required this.reminderDetails,
+    required this.subType,
   });
 
   factory LeaveDetails.fromJson(Map<String, dynamic> json) {
@@ -135,6 +140,7 @@ class LeaveDetails {
           : null,
       updatedAt: DateTime.parse(json['updatedAt']),
       reminderDetails: ReminderDetails.fromJson(json['reminderDetails']),
+      subType: json['subType'],
     );
   }
 }

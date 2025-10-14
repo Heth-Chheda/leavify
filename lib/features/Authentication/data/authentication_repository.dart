@@ -1,6 +1,8 @@
 import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/features/Authentication/domain/response/get_category_response.dart';
+import 'package:leavify/features/Authentication/domain/response/get_holiday_list_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Authentication/domain/response/login_response.dart';
 import 'package:leavify/features/Leave/models/response/get_announcements_response.dart';
@@ -58,6 +60,27 @@ class AuthenticationRepository extends BaseRepository {
       body: {'userId': userId},
       accessToken: accessToken,
       fromJson: BalanceResponse.fromJson,
+    );
+  }
+
+  // MARK: GET CATEGORY
+  Future<LeaveCategoryResponse> getCategory({
+    required String accessToken,
+  }) async {
+    return await performRequest(
+      url: ApiEndpoints.getCategory,
+      method: HttpMethod.get,
+      accessToken: accessToken,
+      fromJson: LeaveCategoryResponse.fromJson,
+    );
+  }
+
+  // MARK: HOLIDAYS LIST
+  Future<GetHolidayListResponse> getHolidayList() async {
+    return await performRequest(
+      url: ApiEndpoints.getHolidayList,
+      method: HttpMethod.get,
+      fromJson: GetHolidayListResponse.fromJson,
     );
   }
 }

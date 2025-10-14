@@ -92,12 +92,22 @@ class LeaveViewModel extends BaseViewModel {
   // MARK: LEAVE TYPE
   String? selectedLeaveType;
 
+  // MARK: CATEGORY
+  String? _selectedLeaveCategory;
+  String? get selectedLeaveCategory => _selectedLeaveCategory;
+
   // MARK: - INITIALIZATION
   void initializeForm({required HomeViewModel homeViewModel}) async {
     await homeViewModel.getLeaveBalance();
     await getReportees();
+    await homeViewModel.getCategory();
     // teamUsers = dummyTeamUsers;
     _resetFormState();
+  }
+
+  void selectLeaveCategory(String categoryName) {
+    _selectedLeaveCategory = categoryName;
+    notifyListeners();
   }
 
   set selectedUser(Reportee? user) {
@@ -329,10 +339,12 @@ class LeaveViewModel extends BaseViewModel {
 
       if (success) {
         resetForm();
+        showSuccess(context, 'Leave applied!');
         AppNavigator.setRootView(RouteNames.home);
       }
     } catch (e) {
       update(isLoading: false);
+      showError(context, 'Error submitting leave.');
       debugPrint("Error in submitLeaveForm: $e");
 
       String errorMessage;
@@ -378,9 +390,6 @@ class LeaveViewModel extends BaseViewModel {
       return adjustedDate.toUtc().toIso8601String();
     }).toList();
 
-    debugPrint('adjustedRange: ${adjustedRange['from']}');
-    debugPrint('adjustedRange: ${adjustedRange['to']}');
-
     // Convert documents to LeaveDocument objects with base64
     List<LeaveDocument> documents = [];
     if (selectedDocuments.isNotEmpty) {
@@ -409,6 +418,7 @@ class LeaveViewModel extends BaseViewModel {
             isHalfDay: isLeaveHalfDay,
             compDates: compOffDateStrings,
             documents: documents,
+            category: _selectedLeaveCategory,
           )
         : ApplyLeaveRequestModel(
             userId: userId,
@@ -692,18 +702,23 @@ class LeaveViewModel extends BaseViewModel {
   }) async {
     isProcessEscalatedLeaveLoading = true;
     notifyListeners();
+
     final userId = await _loadUserId();
+    final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
 
     try {
       final response = await _repository.processEscalatedLeaves(
         userId: userId ?? '',
         leaveId: leaveId,
         comment: comment,
+        accessToken: accessToken,
       );
-
       if (response.success == true) {
+        await fetchPendingLeaves();
         return true;
       } else {
+        debugPrint("Error processing escalated leave: ${response.message}");
+        processLeaveError = response.message;
         return false;
       }
     } catch (e) {
@@ -804,6 +819,8 @@ class LeaveViewModel extends BaseViewModel {
     update(errorMessage: null);
     successLeaveId = null;
     _selectedUser = null;
+    selectedLeaveType = null;
+    _selectedLeaveCategory = null;
     notifyListeners();
   }
 
