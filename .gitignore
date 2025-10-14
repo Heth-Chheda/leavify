@@ -45,7 +45,6 @@ app.*.map.json
 /android/app/release
 
 # iOS/macOS - Xcode
-ios/Runner.xcodeproj/
 ios/Runner.xcworkspace/
 ios/Pods/
 ios/Podfile.lock
