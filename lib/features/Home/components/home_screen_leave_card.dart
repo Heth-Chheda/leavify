@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/utils/formatters/date_formatter.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 
 class LeaveCard extends StatelessWidget {
-  final Leave leave;
+  final LeaveDetailsWithoutLeaveId leave;
   final VoidCallback? onTap;
 
   // Add these to get profile image info
@@ -101,7 +102,10 @@ class LeaveCard extends StatelessWidget {
 
                       // Date Range
                       Text(
-                        "${_formatDateShort(leave.startDate)} to ${_formatDateShort(leave.endDate)}",
+                        DateFormatter.formatDateRange(
+                          leave.startDate,
+                          leave.endDate,
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           color: isDark ? Colors.white60 : Colors.grey[600],
@@ -117,29 +121,5 @@ class LeaveCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatDateShort(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      final months = [
-        '',
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      return '${date.day} ${months[date.month]}';
-    } catch (e) {
-      return dateString;
-    }
   }
 }

@@ -9,7 +9,7 @@ class HomeCalendarWidget extends StatefulWidget {
   final Function(DateTime?)? onDateSelected;
   final DateTime? selectedDate;
   final bool showToggle;
-  final List<Leave> userLeaves;
+  final List<LeaveDetailsWithoutLeaveId> userLeaves;
   final GetHolidayListResponse? holidayListResponse;
 
   const HomeCalendarWidget({

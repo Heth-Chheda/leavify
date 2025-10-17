@@ -10,7 +10,7 @@ class MonthCalendarView extends StatefulWidget {
   final PageController pageController;
   final int initialPage;
   final Function(DateTime) onMonthChanged;
-  final List<Leave> userLeaves;
+  final List<LeaveDetailsWithoutLeaveId> userLeaves;
   final Map<String, Color> userColorMap;
   final Map<String, HolidayDate> holidayMap; // NEW
   final Map<String, List<HolidayDate>> groupedHolidays; // NEW

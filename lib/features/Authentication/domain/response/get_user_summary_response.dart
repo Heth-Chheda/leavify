@@ -3,8 +3,8 @@ import 'package:leavify/features/Authentication/domain/models/user.dart';
 
 class GetUserSummaryResponse {
   final User? currentUser;
-  final List<Leave>? myUpcomingLeaves;
-  final List<Leave>? teamUpcomingLeaves;
+  final List<LeaveDetailsWithoutLeaveId>? myUpcomingLeaves;
+  final List<LeaveDetailsWithoutLeaveId>? teamUpcomingLeaves;
 
   GetUserSummaryResponse({
     this.currentUser,
@@ -18,10 +18,10 @@ class GetUserSummaryResponse {
           ? User.fromJson(json['currentUser'])
           : null,
       myUpcomingLeaves: (json['myUpcomingLeaves'] as List<dynamic>?)
-          ?.map((e) => Leave.fromJson(e))
+          ?.map((e) => LeaveDetailsWithoutLeaveId.fromJson(e))
           .toList(),
       teamUpcomingLeaves: (json['teamUpcomingLeaves'] as List<dynamic>?)
-          ?.map((e) => Leave.fromJson(e))
+          ?.map((e) => LeaveDetailsWithoutLeaveId.fromJson(e))
           .toList(),
     );
   }

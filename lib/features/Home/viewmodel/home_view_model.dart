@@ -188,11 +188,13 @@ class HomeViewModel extends ChangeNotifier {
     // await _getLeaveBalance();
   }
 
-  List<Leave> get myUpcomingLeaves => _homeData?.myUpcomingLeaves ?? [];
-  List<Leave> get teamUpcomingLeaves => _homeData?.teamUpcomingLeaves ?? [];
+  List<LeaveDetailsWithoutLeaveId> get myUpcomingLeaves =>
+      _homeData?.myUpcomingLeaves ?? [];
+  List<LeaveDetailsWithoutLeaveId> get teamUpcomingLeaves =>
+      _homeData?.teamUpcomingLeaves ?? [];
 
-  List<Leave> get allUpcomingLeaves {
-    final all = <Leave>[];
+  List<LeaveDetailsWithoutLeaveId> get allUpcomingLeaves {
+    final all = <LeaveDetailsWithoutLeaveId>[];
     all.addAll(myUpcomingLeaves);
     all.addAll(teamUpcomingLeaves);
     return all;

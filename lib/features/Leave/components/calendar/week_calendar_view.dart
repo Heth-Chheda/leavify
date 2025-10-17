@@ -10,7 +10,7 @@ class WeekCalendarView extends StatefulWidget {
   final PageController pageController;
   final int initialPage;
   final Function(DateTime) onWeekChanged;
-  final List<Leave> userLeaves;
+  final List<LeaveDetailsWithoutLeaveId> userLeaves;
   final Map<String, Color> userColorMap;
   final Map<String, HolidayDate> holidayMap;
   final Map<String, List<HolidayDate>> groupedHolidays;

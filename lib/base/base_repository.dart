@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 
 /// Enum for supported HTTP methods
 enum HttpMethod { get, post, put, delete }
@@ -22,6 +23,35 @@ class ApiException implements Exception {
 /// Base repository to perform requests
 class BaseRepository {
   final int _maxRetries = 2;
+
+  // ⚠️ DEVELOPMENT ONLY: Flag to enable/disable SSL certificate verification bypass
+  // TODO: Remove this before deploying to production!
+  static const bool _bypassSSLCertificate = true;
+
+  // ⚠️ DEVELOPMENT ONLY: Custom HTTP client that bypasses SSL certificate verification
+  // This is INSECURE and should NEVER be used in production!
+  // TODO: Remove this method and use default http client in production
+  http.Client _getHttpClient() {
+    if (_bypassSSLCertificate) {
+      // Create an HTTP client that accepts all certificates (INSECURE!)
+      final ioClient = HttpClient()
+        ..badCertificateCallback =
+            (X509Certificate cert, String host, int port) {
+              debugPrint(
+                "⚠️ WARNING: Accepting invalid certificate from $host:$port",
+              );
+              debugPrint(
+                "⚠️ This is insecure and should only be used in development!",
+              );
+              return true; // Accept all certificates
+            };
+
+      return IOClient(ioClient);
+    } else {
+      // Use default secure client
+      return http.Client();
+    }
+  }
 
   /// Perform a request that returns a single object
   Future<T> performRequest<T>({
@@ -61,7 +91,7 @@ class BaseRepository {
     }
   }
 
-  /// 🆕 Perform a request that returns a list of objects
+  /// Perform a request that returns a list of objects
   Future<List<T>> performListRequest<T>({
     required String url,
     required HttpMethod method,
@@ -117,6 +147,9 @@ class BaseRepository {
   }) async {
     final uri = Uri.parse(url);
 
+    // ⚠️ Get custom HTTP client (with or without SSL bypass)
+    final client = _getHttpClient();
+
     // Default headers
     final headers = _headers();
     if (extraHeaders != null) {
@@ -159,15 +192,8 @@ class BaseRepository {
             request.files.addAll(files);
           }
 
-          // _logRequest(
-          //   method: method,
-          //   url: url,
-          //   headers: request.headers,
-          //   body: requestBody,
-          //   isMultipart: true,
-          // );
-
-          final streamedResponse = await request.send();
+          // ⚠️ Use custom client for multipart requests
+          final streamedResponse = await client.send(request);
           response = await http.Response.fromStream(streamedResponse);
         } else {
           // Regular requests
@@ -192,31 +218,35 @@ class BaseRepository {
             body: requestBody,
           );
 
+          // ⚠️ Use custom client for all requests
           switch (method) {
             case HttpMethod.get:
-              response = await http.get(uri, headers: headers);
+              response = await client.get(uri, headers: headers);
               break;
             case HttpMethod.post:
-              response = await http.post(
+              response = await client.post(
                 uri,
                 headers: headers,
                 body: encodedBody,
               );
               break;
             case HttpMethod.put:
-              response = await http.put(
+              response = await client.put(
                 uri,
                 headers: headers,
                 body: encodedBody,
               );
               break;
             case HttpMethod.delete:
-              response = await http.delete(uri, headers: headers);
+              response = await client.delete(uri, headers: headers);
               break;
           }
         }
 
         _logResponse(response);
+
+        // ⚠️ Clean up: Close the client after use
+        client.close();
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
           return response;
@@ -225,7 +255,7 @@ class BaseRepository {
             attempt++;
             continue;
           } else {
-            // 🆕 Improved error extraction
+            // Improved error extraction
             String errorMessage = "Request failed (${response.statusCode})";
 
             try {
@@ -252,6 +282,7 @@ class BaseRepository {
           }
         }
       } on SocketException {
+        client.close();
         if (attempt < _maxRetries) {
           attempt++;
           continue;
@@ -259,6 +290,7 @@ class BaseRepository {
           throw ApiException("No Internet connection");
         }
       } catch (e) {
+        client.close();
         if (e is ApiException) rethrow;
 
         if (attempt < _maxRetries) {
