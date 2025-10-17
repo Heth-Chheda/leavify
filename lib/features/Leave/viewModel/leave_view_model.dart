@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/core/utils/formatters/date_formatter.dart';
 // import 'package:leavify/dummydata/leave/dummy_leave_detail.dart';
 // import 'package:leavify/dummydata/leave/dummy_pending_request_user.dart';
 // import 'package:leavify/dummydata/leave/dummy_team_users.dart';
@@ -103,6 +104,12 @@ class LeaveViewModel extends BaseViewModel {
     await homeViewModel.getCategory();
     // teamUsers = dummyTeamUsers;
     _resetFormState();
+  }
+
+  void updateDates(DateTime? start, DateTime? end) {
+    selectedStartDate = start;
+    selectedEndDate = end;
+    notifyListeners();
   }
 
   void selectLeaveCategory(String categoryName) {
@@ -257,7 +264,7 @@ class LeaveViewModel extends BaseViewModel {
   }
 
   // MARK: - DOCUMENT HANDLING METHODS
-  Future<void> pickDocuments(Function(String, Color) showSnackBar) async {
+  Future<void> pickDocuments(BuildContext context) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
@@ -276,7 +283,7 @@ class LeaveViewModel extends BaseViewModel {
           if (!fileExists) {
             newFiles.add(file);
           } else {
-            showSnackBar('File "${file.name}" already selected', Colors.orange);
+            showInfo(context, 'File "${file.name}" already selected');
           }
         }
 
@@ -286,7 +293,7 @@ class LeaveViewModel extends BaseViewModel {
         }
       }
     } catch (e) {
-      showSnackBar('Error picking files: $e', Colors.red);
+      showError(context, 'Error picking files: $e');
     }
   }
 
@@ -298,21 +305,23 @@ class LeaveViewModel extends BaseViewModel {
   }
 
   // MARK: - FORM VALIDATION METHODS
-  bool validateForm() {
+  bool validateForm(BuildContext context) {
     if (selectedStartDate == null) {
+      showError(context, 'Please select the date.');
       return false;
     }
-
-    if (hasCompOffPlans && selectedCompOffDates.isEmpty) {
+    if (selectedLeaveType == '' || selectedLeaveType == null) {
+      showError(context, 'Leave type is necessary!');
       return false;
     }
-
     return true;
   }
 
   // MARK: - SUBMIT LEAVE FORM METHOD
   Future<void> submitLeaveForm(BuildContext context) async {
-    if (!validateForm()) return;
+    if (!validateForm(context)) {
+      return;
+    }
 
     update(isLoading: true, errorMessage: null);
 
@@ -734,15 +743,13 @@ class LeaveViewModel extends BaseViewModel {
       return 'Select dates';
     }
 
-    if (selectedEndDate == null) {
-      return 'From ${formatDate(selectedStartDate!)} - Select end date';
-    }
-
     if (isSameDay(selectedStartDate!, selectedEndDate!)) {
-      return formatDate(selectedStartDate!);
+      return DateFormatter.formatMonthDayYear(
+        selectedStartDate!.toIso8601String(),
+      );
     }
 
-    return '${formatDate(selectedStartDate!)} - ${formatDate(selectedEndDate!)}';
+    return '${DateFormatter.formatMonthDayYear(selectedStartDate!.toIso8601String())} - ${DateFormatter.formatMonthDayYear(selectedEndDate!.toIso8601String())}';
   }
 
   Map<String, DateTime> getAdjustedDateRange() {

@@ -4,15 +4,16 @@ enum MyButtonType { elevated, outlined, text }
 
 class MyAppButton extends StatelessWidget {
   final String label;
-  final VoidCallback onPressed;
+  final dynamic onPressed;
   final bool isLoading;
   final Widget? icon;
   final Color? backgroundColor;
+  final Gradient? gradient;
   final Color? foregroundColor;
   final EdgeInsetsGeometry? padding;
   final double borderRadius;
-  final BoxDecoration? decoration;
   final MyButtonType type;
+  final MainAxisAlignment mainAxisAlignment;
 
   const MyAppButton({
     super.key,
@@ -21,18 +22,25 @@ class MyAppButton extends StatelessWidget {
     this.isLoading = false,
     this.icon,
     this.backgroundColor,
+    this.gradient,
     this.foregroundColor,
     this.padding,
     this.borderRadius = 10,
-    this.decoration,
     this.type = MyButtonType.elevated,
+    this.mainAxisAlignment = MainAxisAlignment.center,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveOnPressed = (onPressed == null || isLoading)
+        ? null
+        : () async {
+            final result = onPressed();
+            if (result is Future) await result;
+          };
+
     final child = Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: mainAxisAlignment,
       children: [
         if (isLoading)
           const SizedBox(
@@ -56,56 +64,87 @@ class MyAppButton extends StatelessWidget {
       ],
     );
 
-    final buttonStyle = ButtonStyle(
-      backgroundColor: MaterialStateProperty.all(
-        backgroundColor ?? Colors.blueAccent,
-      ),
-      foregroundColor: MaterialStateProperty.all(
-        foregroundColor ?? Colors.white,
-      ),
-      padding: MaterialStateProperty.all(
-        padding ?? const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      ),
-      shape: MaterialStateProperty.all(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-        ),
-      ),
-    );
+    Widget buttonContent;
 
-    Widget button;
     switch (type) {
       case MyButtonType.outlined:
-        button = OutlinedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: buttonStyle.copyWith(
-            side: MaterialStateProperty.all(
-              BorderSide(color: backgroundColor ?? Colors.blueAccent, width: 2),
+        buttonContent = OutlinedButton(
+          onPressed: effectiveOnPressed,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: foregroundColor ?? Colors.blueAccent,
+            backgroundColor: Colors.transparent,
+            padding:
+                padding ??
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+            ),
+            side: BorderSide(
+              color: backgroundColor ?? Colors.blueAccent,
+              width: 2,
             ),
           ),
           child: child,
         );
         break;
       case MyButtonType.text:
-        button = TextButton(
-          onPressed: isLoading ? null : onPressed,
-          style: buttonStyle,
+        buttonContent = TextButton(
+          onPressed: effectiveOnPressed,
+          style: TextButton.styleFrom(
+            foregroundColor: foregroundColor ?? Colors.blueAccent,
+            padding:
+                padding ??
+                const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+            ),
+          ),
           child: child,
         );
         break;
       default:
-        button = ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: buttonStyle,
-          child: child,
-        );
+        // Elevated / gradient button
+        if (gradient != null) {
+          // Use Container with gradient
+          buttonContent = Container(
+            decoration: BoxDecoration(
+              gradient: gradient,
+              borderRadius: BorderRadius.circular(borderRadius),
+            ),
+            child: ElevatedButton(
+              onPressed: effectiveOnPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding:
+                    padding ??
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(borderRadius),
+                ),
+              ),
+              child: child,
+            ),
+          );
+        } else {
+          // Normal elevated button
+          buttonContent = ElevatedButton(
+            onPressed: effectiveOnPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: backgroundColor ?? Colors.blueAccent,
+              foregroundColor: foregroundColor ?? Colors.white,
+              padding:
+                  padding ??
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(borderRadius),
+              ),
+            ),
+            child: child,
+          );
+        }
     }
 
-    // Allow wrapping with custom decoration (like gradient backgrounds)
-    if (decoration != null) {
-      return Container(decoration: decoration, child: button);
-    }
-
-    return button;
+    return buttonContent;
   }
 }

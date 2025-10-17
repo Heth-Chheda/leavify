@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' hide Uint8List;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' hide Uint8List;
 import 'package:intl/intl.dart';
+import 'package:leavify/core/utils/components/button/my_app_button.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Leave/components/manager/conflict/conflict_dialog.dart';
@@ -99,10 +100,6 @@ class _PendingRequestDetailScreenState
           return _buildLeaveDetailsContent(leaveViewModel.selectedLeaveById!);
         },
       ),
-      bottomNavigationBar: Container(
-        color: Colors.white,
-        child: _buildActionButtons(),
-      ),
     );
   }
 
@@ -145,15 +142,14 @@ class _PendingRequestDetailScreenState
             focusNode: _commentsFocusNode,
           ),
           const SizedBox(height: 24),
+          _buildActionButtons(),
+          const SizedBox(height: 40),
         ],
       ),
     );
   }
 
   Widget _buildActionButtons() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Consumer<LeaveViewModel>(
       builder: (context, leaveViewModel, child) {
         final homeViewModel = context.read<HomeViewModel>();
@@ -162,55 +158,54 @@ class _PendingRequestDetailScreenState
         // HR → only Resolve button
         if (userRole == 'hr') {
           return SafeArea(
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _ResolveButton(
-                      onPressed: leaveViewModel.isLoading
-                          ? null
-                          : _handleProcessEscalated,
-                      isLoading: leaveViewModel.isProcessEscalatedLeaveLoading,
-                    ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: MyAppButton(
+                    label: 'Resolve',
+                    icon: const Icon(Icons.check_circle_outline_rounded),
+                    onPressed: leaveViewModel.isLoading
+                        ? null
+                        : _handleProcessEscalated,
+                    isLoading: leaveViewModel.isProcessEscalatedLeaveLoading,
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                    type: MyButtonType.elevated,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         }
 
         // Non-HR → always show both Reject and Approve
         return SafeArea(
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.onSurface.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
+          child: Row(
+            children: [
+              Expanded(
+                child: MyAppButton(
+                  label: 'Reject',
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: leaveViewModel.isLoading ? null : _handleReject,
+                  isLoading: leaveViewModel.isRejectLoading,
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  type: MyButtonType.elevated,
                 ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _RejectButton(
-                    onPressed: leaveViewModel.isLoading ? null : _handleReject,
-                    isLoading: leaveViewModel.isRejectLoading,
-                  ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: MyAppButton(
+                  label: 'Approve',
+                  icon: const Icon(Icons.check_rounded),
+                  onPressed: leaveViewModel.isLoading ? null : _handleApprove,
+                  isLoading: leaveViewModel.isApproveLoading,
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  type: MyButtonType.elevated,
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _ApproveButton(
-                    onPressed: leaveViewModel.isLoading ? null : _handleApprove,
-                    isLoading: leaveViewModel.isApproveLoading,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -1420,105 +1415,6 @@ class _InfoRow extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// MARK: - Action Buttons
-class _RejectButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final bool isLoading;
-
-  const _RejectButton({this.onPressed, required this.isLoading});
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: isLoading
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Icon(Icons.close_rounded),
-      label: Text(isLoading ? 'Processing...' : 'Reject'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: Colors.red,
-        side: const BorderSide(color: Colors.transparent, width: 2),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
-}
-
-class _ResolveButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final bool isLoading;
-
-  const _ResolveButton({this.onPressed, required this.isLoading});
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: isLoading
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
-          : const Icon(Icons.check, color: Colors.white),
-      label: Text(
-        isLoading ? 'Processing...' : 'Resolve',
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-          color: Colors.white,
-        ),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
-}
-
-class _ApproveButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final bool isLoading;
-
-  const _ApproveButton({this.onPressed, required this.isLoading});
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: isLoading
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            )
-          : const Icon(Icons.check_rounded),
-      label: Text(isLoading ? 'Processing...' : 'Approve'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
