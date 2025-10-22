@@ -35,7 +35,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   late List<DateTime> _compDates;
   GetLeaveByIdResponse? _leave;
   late String _status;
-  bool _showStatusSection = false;
+  bool _showStatusSection = true;
 
   @override
   void initState() {
@@ -351,8 +351,9 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   }
 
   Widget _buildLeaveCard(ProfileViewModel viewModel, bool isDark) {
-    final durationInDays = _toDate.difference(_fromDate).inDays + 1;
     final cardColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
+    final leaveViewModel = context.read<LeaveViewModel>();
+    final duration = leaveViewModel.selectedLeaveById?.duration;
 
     return Container(
       width: double.infinity,
@@ -575,7 +576,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  '$durationInDays ${durationInDays == 1 ? 'Day' : 'Days'}',
+                  '$duration ${duration == 1 ? 'Day' : 'Days'}',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,

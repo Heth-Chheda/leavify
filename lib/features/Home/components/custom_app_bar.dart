@@ -67,6 +67,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     final viewModel = context.watch<HomeViewModel>();
     final displayName = userName.isNotEmpty ? userName : 'Loading ...';
     final isDarkMode = theme.brightness == Brightness.dark;
+    debugPrint(
+      'CUSTOM APP BAR PRINTING PROFILE IMAGE URL ${viewModel.profileImageUrl}',
+    );
+    debugPrint(
+      'Final image URL: ${ApiEndpoints.baseUrl}/${viewModel.profileImageUrl}',
+    );
 
     return Row(
       children: [

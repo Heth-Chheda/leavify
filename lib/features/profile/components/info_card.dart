@@ -21,12 +21,12 @@ class InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.13),
-            blurRadius: 5,
+            color: Colors.black.withOpacity(0.28),
+            blurRadius: 2,
             offset: const Offset(0, 0),
           ),
         ],

@@ -67,6 +67,6 @@ class DateFormatter extends BaseFormatter {
       locale ?? 'en_US',
     ).format(end);
 
-    return '$startFormatted -> $endFormatted';
+    return '$startFormatted -- $endFormatted';
   }
 }

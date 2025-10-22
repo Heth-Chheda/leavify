@@ -133,9 +133,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                           leaveViewModel,
                           homeViewModel,
                         ),
-                        const SizedBox(height: 24),
-                        _buildSubmitButton(leaveViewModel),
                       ],
+                      const SizedBox(height: 24),
+                      _buildSubmitButton(leaveViewModel),
                     ],
                   ),
                 );
@@ -243,7 +243,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
           }).toList(),
           onChanged: (value) {
             if (value != null) {
-              leaveViewModel.selectedLeaveType = value;
+              leaveViewModel.updateSelectedLeaveType(value);
             }
           },
         ),

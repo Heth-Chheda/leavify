@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
+import 'package:leavify/core/utils/formatters/date_formatter.dart';
 import 'package:leavify/features/Authentication/domain/models/user.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Leave/models/general/my_leaves.dart';
@@ -190,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // Content Section
                 Container(
                   width: double.infinity,
-                  color: theme.scaffoldBackgroundColor,
+                  color: Colors.white,
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -335,46 +336,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Horizontal leave summary cards
-          SizedBox(
-            height: 70,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              children: [
-                _buildHorizontalLeaveCard(
-                  label: 'Available',
-                  count: leaveData.balanceLeaves,
-                  color: Colors.green,
-                  theme: theme,
-                  showRightBorder: true,
-                ),
-                const SizedBox(width: 12),
-                _buildHorizontalLeaveCard(
-                  label: 'Pending',
-                  count: leaveData.pendingLeaves,
-                  color: Colors.orange,
-                  theme: theme,
-                  showRightBorder: true,
-                ),
-                const SizedBox(width: 12),
-                _buildHorizontalLeaveCard(
-                  label: 'Approved',
-                  count: leaveData.approvedLeaves,
-                  color: Colors.blue,
-                  theme: theme,
-                  showRightBorder: true,
-                ),
-                const SizedBox(width: 12),
-                _buildHorizontalLeaveCard(
-                  label: 'Rejected',
-                  count: leaveData.rejectedLeaves,
-                  color: Colors.red,
-                  theme: theme,
-                  showRightBorder: false,
-                ),
-              ],
-            ),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _buildLeaveSummaryBox(
+                label: 'Approved',
+                count: leaveData.approvedLeaves,
+                theme: theme,
+              ),
+              _buildLeaveSummaryBox(
+                label: 'Rejected',
+                count: leaveData.rejectedLeaves,
+                theme: theme,
+              ),
+              _buildLeaveSummaryBox(
+                label: 'Available',
+                count: leaveData.balanceLeaves,
+                theme: theme,
+              ),
+              _buildLeaveSummaryBox(
+                label: 'Pending',
+                count: leaveData.pendingLeaves,
+                theme: theme,
+              ),
+            ],
           ),
 
           if (leaveData.allLeaves.isNotEmpty) ...[
@@ -389,12 +375,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 12),
 
             Wrap(
-              spacing: 12, // horizontal spacing
-              runSpacing: 12, // vertical spacing
+              spacing: 12,
+              runSpacing: 12,
               children: [
                 for (var leave
                     in List.from(leaveData.allLeaves)..sort((a, b) {
-                      // Sort by fromDate descending; if equal, use toDate
                       int fromCompare = b.fromDate.compareTo(a.fromDate);
                       return fromCompare != 0
                           ? fromCompare
@@ -436,13 +421,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String statusText;
 
     if (isApproved) {
-      statusColor = const Color(0xFF10B981); // Modern green
+      statusColor = const Color(0xFF10B981);
       statusText = 'APPROVED';
     } else if (isRejected) {
-      statusColor = const Color(0xFFEF4444); // Modern red
+      statusColor = const Color(0xFFEF4444);
       statusText = 'REJECTED';
     } else if (isPending) {
-      statusColor = const Color(0xFFF59E0B); // Modern amber
+      statusColor = const Color(0xFFF59E0B);
       statusText = 'PENDING';
     } else {
       statusColor = theme.colorScheme.onSurface.withOpacity(0.5);
@@ -450,7 +435,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Container(
-      height: 160,
+      height: 180,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.8),
@@ -491,26 +476,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'From: ${DateFormat('dd MMM yyyy').format(leave.fromDate)}',
+                            DateFormatter.formatDateRange(
+                              leave.fromDate.toIso8601String(),
+                              leave.toDate.toIso8601String(),
+                            ),
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: theme.colorScheme.onSurface,
                               letterSpacing: 0.2,
                               fontSize: 12,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'To: ${DateFormat('dd MMM yyyy').format(leave.toDate)}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface,
-                              letterSpacing: 0.2,
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -569,52 +545,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildHorizontalLeaveCard({
+  Widget _buildLeaveSummaryBox({
     required String label,
     required int count,
-    required Color color,
     required ThemeData theme,
-    required bool showRightBorder,
   }) {
-    return Stack(
-      children: [
-        Container(
-          width: 140,
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                count.toString(),
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+    return Container(
+      width: (MediaQuery.of(context).size.width - 20 * 2 - 12) / 2,
+      height: 80,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.30),
+            blurRadius: 1,
+            offset: Offset(0, 0),
           ),
-        ),
-
-        // Right short border
-        if (showRightBorder)
-          Positioned(
-            right: 0,
-            top: 12,
-            bottom: 12,
-            child: Container(
-              width: 1.5,
-              color: theme.dividerColor.withOpacity(0.3),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            count.toString(),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
             ),
           ),
-      ],
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.8),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

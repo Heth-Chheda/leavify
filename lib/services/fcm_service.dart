@@ -96,7 +96,11 @@ class FCMService {
       styleInformation: bigTextStyle,
     );
 
-    const iosDetails = DarwinNotificationDetails();
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
 
     final notificationDetails = NotificationDetails(
       android: androidDetails,

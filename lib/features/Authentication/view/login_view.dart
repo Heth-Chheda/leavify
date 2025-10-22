@@ -82,9 +82,7 @@ class _LoginPageState extends State<LoginPage> {
         duration: const Duration(seconds: 1),
         child: Container(
           decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('lib/assets/light-1.png'),
-            ),
+            image: DecorationImage(image: AssetImage('lib/assets/light-1.png')),
           ),
         ),
       ),
@@ -100,9 +98,7 @@ class _LoginPageState extends State<LoginPage> {
         duration: const Duration(milliseconds: 1200),
         child: Container(
           decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('lib/assets/light-2.png'),
-            ),
+            image: DecorationImage(image: AssetImage('lib/assets/light-2.png')),
           ),
         ),
       ),
@@ -119,9 +115,7 @@ class _LoginPageState extends State<LoginPage> {
         duration: const Duration(milliseconds: 1300),
         child: Container(
           decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('lib/assets/clock.png'),
-            ),
+            image: DecorationImage(image: AssetImage('lib/assets/clock.png')),
           ),
         ),
       ),
@@ -189,22 +183,17 @@ class _LoginPageState extends State<LoginPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: const Color.fromRGBO(143, 148, 251, 1),
-          ),
+          border: Border.all(color: const Color.fromRGBO(143, 148, 251, 1)),
           boxShadow: const [
             BoxShadow(
               color: Color.fromRGBO(143, 148, 251, .2),
               blurRadius: 20.0,
               offset: Offset(0, 10),
-            )
+            ),
           ],
         ),
         child: Column(
-          children: <Widget>[
-            _buildEmailTextField(),
-            _buildPasswordTextField(),
-          ],
+          children: <Widget>[_buildEmailTextField(), _buildPasswordTextField()],
         ),
       ),
     );
@@ -215,14 +204,13 @@ class _LoginPageState extends State<LoginPage> {
       padding: const EdgeInsets.all(8.0),
       decoration: const BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: Color.fromRGBO(143, 148, 251, 1),
-          ),
+          bottom: BorderSide(color: Color.fromRGBO(143, 148, 251, 1)),
         ),
       ),
       child: TextField(
         controller: _viewModel.usernameController,
         enabled: !_viewModel.isLoading,
+        keyboardType: TextInputType.emailAddress,
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: "Email or Phone number",
@@ -259,44 +247,37 @@ class _LoginPageState extends State<LoginPage> {
     return FadeInUp(
       duration: const Duration(milliseconds: 1900),
       child: GestureDetector(
-        onTap: _viewModel.isLoading
-            ? null
-            : () => _viewModel.login(context),
+        onTap: _viewModel.isLoading ? null : () => _viewModel.login(context),
         child: Container(
           height: 50,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             gradient: LinearGradient(
               colors: _viewModel.isLoading
-                  ? [
-                Colors.grey,
-                Colors.grey.withOpacity(0.6),
-              ]
+                  ? [Colors.grey, Colors.grey.withOpacity(0.6)]
                   : [
-                const Color.fromRGBO(13, 71, 161, 1),
-                const Color.fromRGBO(13, 71, 161, 0.6),
-              ],
+                      const Color.fromRGBO(13, 71, 161, 1),
+                      const Color.fromRGBO(13, 71, 161, 0.6),
+                    ],
             ),
           ),
           child: Center(
             child: _viewModel.isLoading
                 ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Colors.white,
-                ),
-              ),
-            )
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
                 : const Text(
-              "Login",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+                    "Login",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
           ),
         ),
       ),

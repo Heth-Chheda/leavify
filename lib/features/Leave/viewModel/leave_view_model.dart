@@ -106,6 +106,11 @@ class LeaveViewModel extends BaseViewModel {
     _resetFormState();
   }
 
+  void updateSelectedLeaveType(String? value) {
+    selectedLeaveType = value;
+    notifyListeners();
+  }
+
   void updateDates(DateTime? start, DateTime? end) {
     selectedStartDate = start;
     selectedEndDate = end;
