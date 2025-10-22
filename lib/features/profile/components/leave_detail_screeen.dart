@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:leavify/core/utils/components/button/my_app_button.dart';
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/custom_calendar_component.dart';
 import 'package:leavify/features/Leave/components/manager/pending_request_detail_screen.dart';
@@ -141,6 +142,26 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     super.dispose();
   }
 
+  Future<bool> _showDiscardConfirmationDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return ConfirmationDialog(
+              title: 'Discard Changes?',
+              body:
+                  'You have unsaved changes in your leave application. If you go back now, all your progress will be lost.',
+              illustrationAsset: 'lib/assets/gifs/remove.gif',
+              illustrationHeight: 180,
+              confirmButtonText: 'Discard',
+              onConfirm: () => Navigator.of(context).pop(true),
+              buttonBackgroundColor: Colors.red,
+            );
+          },
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -152,85 +173,88 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.background,
-          body: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Status Badge with gradient
-                        if (_status.toLowerCase() != 'cancelled' &&
-                            _showStatusSection) ...[
-                          _buildStatusSection(isDark),
-                          const SizedBox(height: 24),
+
+        return WillPopScope(
+          onWillPop: () async {
+            final viewModel = context.read<ProfileViewModel>();
+
+            if (viewModel.isEditMode) {
+              // Call the centralized confirmation dialog
+              final shouldExit = await _showDiscardConfirmationDialog();
+              return shouldExit; // true = allow pop, false = stay
+            }
+
+            return true; // not in edit mode, allow pop
+          },
+          child: Scaffold(
+            backgroundColor: Theme.of(context).colorScheme.background,
+            body: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_status.toLowerCase() != 'cancelled' &&
+                              _showStatusSection) ...[
+                            _buildStatusSection(isDark),
+                            const SizedBox(height: 24),
+                          ],
+                          _buildLeaveCard(viewModel, isDark),
+                          const SizedBox(height: 20),
+                          _buildDetailsCard(viewModel, isDark),
+                          const SizedBox(height: 20),
+                          if (_leave!.leaveDetails.reqStatusTracking.isNotEmpty)
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 20),
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).cardColor.withOpacity(isDark ? 0.8 : 1.0),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: StatusTrackingCard(
+                                statusTracking:
+                                    _leave!.leaveDetails.reqStatusTracking,
+                              ),
+                            ),
+                          if (_leave!.leaveDetails.documents.isNotEmpty)
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 20),
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).cardColor.withOpacity(isDark ? 0.8 : 1.0),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: DocumentsCard(
+                                documents: _leave!.leaveDetails.documents,
+                              ),
+                            ),
                         ],
-
-                        // Leave Duration Card with glassmorphism effect
-                        _buildLeaveCard(viewModel, isDark),
-                        const SizedBox(height: 20),
-
-                        // Leave Details Form with themed styling
-                        _buildDetailsCard(viewModel, isDark),
-                        const SizedBox(height: 20),
-
-                        if (_leave != null &&
-                            _leave!.leaveDetails.reqStatusTracking.isNotEmpty)
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 20),
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).cardColor.withOpacity(isDark ? 0.8 : 1.0),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: StatusTrackingCard(
-                              statusTracking:
-                                  _leave!.leaveDetails.reqStatusTracking,
-                            ),
-                          ),
-
-                        if (_leave != null &&
-                            _leave!.leaveDetails.documents.isNotEmpty)
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 20),
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).cardColor.withOpacity(isDark ? 0.8 : 1.0),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: DocumentsCard(
-                              documents: _leave!.leaveDetails.documents,
-                            ),
-                          ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-
-                // Bottom Action Bar with gradient buttons
-                _buildBottomActionBar(viewModel, isDark),
-              ],
+                  _buildBottomActionBar(viewModel, isDark),
+                ],
+              ),
             ),
           ),
         );
@@ -243,56 +267,70 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildActionButton(
-              'Remind',
-              Icons.notifications_active,
-              Colors.orange,
-              () => _showConfirmationDialog(
+            // 🔸 Remind Button
+            MyAppButton(
+              label: 'Remind',
+              icon: const Icon(
+                Icons.notifications_active,
+                color: Colors.white,
+                size: 18,
+              ),
+              backgroundColor: Colors.orange,
+              borderRadius: 12,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              onPressed: () => _showConfirmationDialog(
                 title: 'Send Reminder',
                 body:
                     'Are you sure you want to send a reminder for this leave?',
                 confirmButtonText: 'Send',
                 onConfirm: () {
-                  // Your remind logic here
                   onRemindPressed();
-                  print('Reminder sent');
+                  debugPrint('Reminder sent');
                 },
                 illustrationAsset: 'lib/assets/reminder.png',
                 illustrationHeight: 180,
               ),
             ),
-            const SizedBox(width: 16),
-            _buildActionButton(
-              'Escalate',
-              Icons.warning_amber,
-              Colors.red,
-              () => _showConfirmationDialog(
+
+            // 🔸 Escalate Button
+            MyAppButton(
+              label: 'Escalate',
+              icon: const Icon(
+                Icons.warning_amber,
+                color: Colors.white,
+                size: 18,
+              ),
+              backgroundColor: Colors.red,
+              borderRadius: 12,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              onPressed: () => _showConfirmationDialog(
                 title: 'Escalate Leave',
                 body: 'Are you sure you want to escalate this leave request?',
                 confirmButtonText: 'Escalate',
                 onConfirm: () {
-                  // Your escalate logic here
                   onEscalatePressed();
-                  print('Leave escalated');
+                  debugPrint('Leave escalated');
                 },
                 illustrationAsset: 'lib/assets/escalate.png',
               ),
             ),
-            const SizedBox(width: 16),
-            _buildActionButton(
-              'Cancel',
-              Icons.cancel,
-              Colors.grey,
-              () => _showConfirmationDialog(
+
+            // 🔸 Cancel Button
+            MyAppButton(
+              label: 'Cancel',
+              icon: const Icon(Icons.cancel, color: Colors.white, size: 18),
+              backgroundColor: Colors.grey,
+              borderRadius: 12,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              onPressed: () => _showConfirmationDialog(
                 title: 'Cancel Leave',
                 body: 'Are you sure you want to cancel this leave?',
                 confirmButtonText: 'Cancel',
                 onConfirm: () {
-                  // Your cancel logic here
                   onCancelPressed();
-                  print('Leave cancelled');
+                  debugPrint('Leave cancelled');
                 },
                 illustrationAsset: 'lib/assets/cancel.png',
               ),
@@ -324,29 +362,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           Navigator.pop(context); // Close the dialog after action
         },
       ),
-    );
-  }
-
-  Widget _buildActionButton(
-    String label,
-    IconData icon,
-    Color color,
-    VoidCallback onPressed,
-  ) {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.15),
-        foregroundColor: color,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: color.withOpacity(0.4)),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      ),
-      onPressed: onPressed,
-      icon: Icon(icon, size: 16),
-      label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 
