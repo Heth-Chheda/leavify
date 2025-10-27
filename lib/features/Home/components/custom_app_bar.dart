@@ -201,8 +201,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           title: 'Logout',
           body: 'Are you sure you want to logout?',
           confirmButtonText: 'Yes, Logout',
-          illustrationAsset: 'lib/assets/shutDown.png',
-          illustrationHeight: 150,
+          illustrationAsset: 'lib/assets/shutDown3.png',
+          illustrationHeight: 140,
           buttonBackgroundColor: Colors.red,
           buttonForegroundColor: Colors.white,
           onConfirm: () {
