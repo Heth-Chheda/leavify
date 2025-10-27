@@ -79,8 +79,8 @@ class CurrentUserAction {
 class LeaveDetails {
   final String type;
   final DateTime createdAt;
-  final DateTime fromDate;
-  final DateTime toDate;
+  final String fromDate;
+  final String toDate;
   final String reason;
   final List<LeaveDocument> documents;
   final bool isCompOff;
@@ -117,8 +117,8 @@ class LeaveDetails {
     return LeaveDetails(
       type: json['type'],
       createdAt: DateTime.parse(json['createdAt']),
-      fromDate: DateTime.parse(json['fromDate']),
-      toDate: DateTime.parse(json['toDate']),
+      fromDate: json['fromDate'],
+      toDate: json['toDate'],
       reason: json['reason'],
       documents:
           (json['documents'] as List<dynamic>?)

@@ -213,7 +213,7 @@ class _LoginPageState extends State<LoginPage> {
         keyboardType: TextInputType.emailAddress,
         decoration: InputDecoration(
           border: InputBorder.none,
-          hintText: "Email or Phone number",
+          hintText: "Email: eg: abc@xyz.com",
           hintStyle: TextStyle(color: Colors.grey[700]),
         ),
       ),

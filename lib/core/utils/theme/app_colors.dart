@@ -44,6 +44,7 @@ class AppTheme2 {
       onBackground: AppColors.lightText,
       onSurface: AppColors.lightText,
     ),
+    fontFamily: 'Lato',
   );
 
   static final darkTheme = ThemeData(

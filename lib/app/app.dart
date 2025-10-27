@@ -5,27 +5,45 @@ import 'package:leavify/router/app_router.dart';
 import 'package:leavify/app/splash_screen.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Schedule toast initialization AFTER the widget tree is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final overlay = AppNavigator.navigatorKey.currentState?.overlay;
+      if (overlay != null) {
+        InteractiveToast.initializeOverlayState(overlay);
+      } else {
+        debugPrint('⚠️ Overlay not ready yet. Will retry on next frame.');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Leavify',
       debugShowCheckedModeBanner: false,
-      home: Builder(
-        builder: (context) {
-          // Initialize toast overlay here — after MaterialApp and Overlay exist
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            InteractiveToast.initializeOverlayState(Overlay.of(context));
-          });
-
-          return const SplashScreen();
-        },
-      ),
-      onGenerateRoute: AppRouter.generateRoute,
       navigatorKey: AppNavigator.navigatorKey,
+      onGenerateRoute: AppRouter.generateRoute,
       theme: AppTheme2.lightTheme,
+      // Lock system font scaling globally
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(textScaler: const TextScaler.linear(1.0)),
+          child: child!,
+        );
+      },
+      home: const SplashScreen(),
     );
   }
 }

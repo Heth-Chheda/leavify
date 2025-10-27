@@ -209,7 +209,7 @@ class AnnouncementCard extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               height: 1.4,
               letterSpacing: 0.1,
               fontWeight: FontWeight.w700,

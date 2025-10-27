@@ -61,10 +61,14 @@ class _MyAppTextFieldState extends State<MyAppTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isFocused = _internalFocusNode.hasFocus;
     return Container(
       decoration: BoxDecoration(
         color: widget.fillColor,
         borderRadius: BorderRadius.circular(widget.borderRadius),
+        border: Border.all(
+          color: isFocused ? Colors.blueAccent : Colors.transparent,
+        ),
         boxShadow:
             widget.boxShadow ??
             [

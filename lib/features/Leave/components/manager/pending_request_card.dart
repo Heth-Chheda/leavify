@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
+import 'package:leavify/core/utils/formatters/date_formatter.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:provider/provider.dart';
@@ -18,27 +19,49 @@ class PendingRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final homeViewModel = context.read<HomeViewModel>();
+    final isAboveManager =
+        homeViewModel.userRole.toLowerCase() != 'employee' &&
+        homeViewModel.userRole.toLowerCase() != 'manager';
+
+    debugPrint('IS ABOVE MANAGER : $isAboveManager');
+    final shouldShowBell = request.escalated && isAboveManager;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        decoration: _buildCardDecoration(context, isDark, homeViewModel),
+        decoration: _buildCardDecoration(context, homeViewModel),
         child: Container(
-          decoration: _buildGradientDecoration(isDark),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _requestHeader(request: request),
-                const SizedBox(height: 18),
-                _requestDurationAndDateRange(request: request),
-                // const SizedBox(height: 12),
-                // _requestFooter(request: request),
-              ],
-            ),
+          decoration: _buildGradientDecoration(),
+          child: Stack(
+            children: [
+              // Main content
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [_requestHeader(request: request)],
+                ),
+              ),
+
+              // Status badge positioned on top-right corner
+              Positioned(
+                top: 15,
+                right: 15,
+                child: _statusBadge(status: request.status),
+              ),
+
+              if (shouldShowBell)
+                Positioned(
+                  bottom: 15,
+                  right: 20, // You can change this position as needed
+                  child: FaIcon(
+                    FontAwesomeIcons.solidBell,
+                    color: const Color(0xFFFFD43B),
+                    size: 18,
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -48,7 +71,6 @@ class PendingRequestCard extends StatelessWidget {
   // MARK: - BUILD CARD DECORATION
   BoxDecoration _buildCardDecoration(
     BuildContext context,
-    bool isDark,
     HomeViewModel homeViewModel,
   ) {
     final shouldSeeRedBorder =
@@ -65,23 +87,14 @@ class PendingRequestCard extends StatelessWidget {
     );
   }
 
-  BoxDecoration _buildGradientDecoration(bool isDark) {
+  BoxDecoration _buildGradientDecoration() {
     return BoxDecoration(
       borderRadius: BorderRadius.circular(24),
-      gradient: isDark
-          ? LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.grey[900]!.withOpacity(0.3),
-                Colors.grey[900]!.withOpacity(0.1),
-              ],
-            )
-          : LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.white, Colors.grey[50]!.withOpacity(0.5)],
-            ),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Colors.white, Colors.grey[50]!.withOpacity(0.5)],
+      ),
     );
   }
 }
@@ -89,11 +102,16 @@ class PendingRequestCard extends StatelessWidget {
 // MARK: - REQUEST_HEADER
 Widget _requestHeader({required GetAllResponse request}) {
   return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _employeeAvatar(request: request),
       const SizedBox(width: 14),
-      Expanded(child: _employeeInfo(request: request)),
-      _statusBadge(status: request.status),
+      Expanded(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: _employeeInfo(request: request),
+        ),
+      ),
     ],
   );
 }
@@ -102,8 +120,6 @@ Widget _requestHeader({required GetAllResponse request}) {
 Widget _employeeAvatar({required GetAllResponse request}) {
   return Builder(
     builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-
       String? getProfileImageUrl() {
         if (request.profileImage.isEmpty) return null;
         final baseUrl = ApiEndpoints.baseUrl;
@@ -111,24 +127,18 @@ Widget _employeeAvatar({required GetAllResponse request}) {
       }
 
       return Container(
-        width: 60,
-        height: 60,
+        width: 80,
+        height: 80,
         decoration: BoxDecoration(
-          color: Theme.of(
-            context,
-          ).primaryColor.withOpacity(isDark ? 0.15 : 0.08),
-          borderRadius: BorderRadius.circular(16),
+          color: Theme.of(context).primaryColor.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: Theme.of(
-              context,
-            ).secondaryHeaderColor.withOpacity(isDark ? 0.8 : 0.1),
+            color: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(
-                context,
-              ).primaryColor.withOpacity(isDark ? 0.1 : 0.05),
+              color: Theme.of(context).primaryColor.withOpacity(0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -136,7 +146,7 @@ Widget _employeeAvatar({required GetAllResponse request}) {
         ),
         child: getProfileImageUrl() != null
             ? ClipRRect(
-                borderRadius: BorderRadius.circular(26),
+                borderRadius: BorderRadius.circular(24),
                 child: Image.network(
                   getProfileImageUrl()!,
                   fit: BoxFit.cover,
@@ -189,7 +199,6 @@ Widget _employeeInfo({required GetAllResponse request}) {
               color: isDark ? Colors.white : Colors.black87,
             ),
           ),
-          const SizedBox(height: 3),
           Text(
             request.designation ?? 'Loading...',
             style: TextStyle(
@@ -198,6 +207,7 @@ Widget _employeeInfo({required GetAllResponse request}) {
               fontWeight: FontWeight.w400,
             ),
           ),
+          _requestDurationAndDateRange(request: request),
         ],
       );
     },
@@ -258,81 +268,22 @@ Widget _statusBadge({required String status}) {
 Widget _requestDurationAndDateRange({required GetAllResponse request}) {
   return Builder(
     builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-
-      int getDuration() {
-        return request.endDate.difference(request.startDate).inDays + 1;
-      }
-
-      String formatDate(DateTime date) {
-        const months = [
-          'Jan',
-          'Feb',
-          'Mar',
-          'Apr',
-          'May',
-          'Jun',
-          'Jul',
-          'Aug',
-          'Sep',
-          'Oct',
-          'Nov',
-          'Dec',
-        ];
-        return "${date.day} ${months[date.month - 1]} ${date.year}";
-      }
-
-      bool isSameDay(DateTime d1, DateTime d2) {
-        return d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
-      }
-
-      final duration = getDuration();
-      final textColor = isDark ? Colors.grey[300] : Colors.grey[700];
-
-      // Build date string based on whether start & end are the same day
-      final dateText = isSameDay(request.startDate, request.endDate)
-          ? formatDate(request.startDate)
-          : "${formatDate(request.startDate)} - ${formatDate(request.endDate)}";
+      final textColor = Colors.grey[700];
 
       return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Left section: icon, duration, dot, date
-          Row(
-            children: [
-              _iconContainer(
-                icon: Icons.calendar_today_outlined,
-                isDark: isDark,
+          _iconContainer(icon: Icons.calendar_today_outlined),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              DateFormatter.formatDateRange(request.startDate, request.endDate),
+              style: TextStyle(
+                color: textColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(width: 8),
-              Text(
-                '$duration day${duration > 1 ? 's' : ''}',
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text("•", style: TextStyle(color: textColor, fontSize: 14)),
-              const SizedBox(width: 8),
-              Text(
-                dateText,
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-
-          // Right section: ">"
-          FaIcon(
-            FontAwesomeIcons.chevronRight,
-            color: Colors.black.withOpacity(0.6),
-            size: 18,
+            ),
           ),
         ],
       );
@@ -343,16 +294,11 @@ Widget _requestDurationAndDateRange({required GetAllResponse request}) {
 // MARK: - ICON_CONTAINER
 Widget _iconContainer({
   required IconData icon,
-  required bool isDark,
   double size = 14,
   double padding = 4,
 }) {
   return Container(
-    padding: EdgeInsets.all(padding),
-    child: Icon(
-      icon,
-      size: size,
-      color: isDark ? Colors.grey[400] : Colors.grey[600],
-    ),
+    padding: EdgeInsets.symmetric(vertical: padding),
+    child: Icon(icon, size: size, color: Colors.grey[600]),
   );
 }

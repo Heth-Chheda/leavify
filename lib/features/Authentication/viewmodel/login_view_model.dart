@@ -82,7 +82,7 @@ class LoginViewModel extends BaseViewModel {
       }
     } catch (e) {
       debugPrint("Login error: $e");
-      showError(context, 'Login error: $e');
+      showError(context, 'Something went wrong.');
     } finally {
       update(isLoading: false);
       notifyListeners();

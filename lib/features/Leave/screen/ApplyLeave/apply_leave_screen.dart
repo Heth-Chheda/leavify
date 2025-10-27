@@ -50,7 +50,12 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         leaveViewModel.selectedCompOffDates.isNotEmpty;
   }
 
-  final List<String> leaveTypes = ['Casual', 'Sick', 'Emergency'];
+  final List<String> leaveTypes = [
+    'Casual',
+    'Sick',
+    'Emergency',
+    'Annual Leave',
+  ];
 
   // MARK: - SHOW CONFIRMATION DIALOG
   Future<bool> _showConfirmationDialog() async {
@@ -410,6 +415,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         // MyAppTextField now handles background, radius, and shadow internally
         MyAppTextField(
           controller: leaveViewModel.reasonController,
+          focusNode: reasonFocusNode,
           hintText: 'Tell us why you need this leave...',
           maxLines: 4,
           borderRadius: 24,
@@ -623,7 +629,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       width: double.infinity,
       child: MyAppButton(
         label: 'Apply',
-        onPressed: () => leaveViewModel.submitLeaveForm(context),
+        onPressed: () =>
+            leaveViewModel.submitLeaveForm(context, reasonFocusNode),
         isLoading: leaveViewModel.isLoading,
         borderRadius: 16,
         padding: const EdgeInsets.symmetric(vertical: 16),

@@ -37,12 +37,6 @@ class BaseRepository {
       final ioClient = HttpClient()
         ..badCertificateCallback =
             (X509Certificate cert, String host, int port) {
-              debugPrint(
-                "⚠️ WARNING: Accepting invalid certificate from $host:$port",
-              );
-              debugPrint(
-                "⚠️ This is insecure and should only be used in development!",
-              );
               return true; // Accept all certificates
             };
 

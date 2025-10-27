@@ -4,9 +4,11 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' hide Uint8List;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' hide Uint8List;
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/components/button/my_app_button.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
+import 'package:leavify/core/utils/formatters/date_formatter.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Leave/components/manager/conflict/conflict_dialog.dart';
 import 'package:leavify/features/Leave/models/general/leave_document.dart';
@@ -75,30 +77,37 @@ class _PendingRequestDetailScreenState
 
     return Scaffold(
       backgroundColor: colorScheme.background,
-      body: Consumer<LeaveViewModel>(
-        builder: (context, leaveViewModel, child) {
-          if (leaveViewModel.isLoading &&
-              leaveViewModel.selectedLeaveById == null) {
-            return Center(
-              child: CircularProgressIndicator(color: colorScheme.primary),
-            );
-          }
+      body: GestureDetector(
+        onTap: () => {FocusScope.of(context).unfocus()},
+        behavior: HitTestBehavior.translucent,
+        child: Consumer<LeaveViewModel>(
+          builder: (context, leaveViewModel, child) {
+            if (leaveViewModel.isLoading &&
+                leaveViewModel.selectedLeaveById == null) {
+              return Center(
+                child: SpinKitSquareCircle(
+                  color: colorScheme.primary,
+                  size: 100,
+                ),
+              );
+            }
 
-          // if (leaveViewModel.errorMessage != null) {
-          //   return _buildErrorState(leaveViewModel.errorMessage!);
-          // }
+            // if (leaveViewModel.errorMessage != null) {
+            //   return _buildErrorState(leaveViewModel.errorMessage!);
+            // }
 
-          if (leaveViewModel.selectedLeaveById == null) {
-            return Center(
-              child: Text(
-                'No leave details found',
-                style: TextStyle(color: colorScheme.onBackground),
-              ),
-            );
-          }
+            if (leaveViewModel.selectedLeaveById == null) {
+              return Center(
+                child: Text(
+                  'No leave details found',
+                  style: TextStyle(color: colorScheme.onBackground),
+                ),
+              );
+            }
 
-          return _buildLeaveDetailsContent(leaveViewModel.selectedLeaveById!);
-        },
+            return _buildLeaveDetailsContent(leaveViewModel.selectedLeaveById!);
+          },
+        ),
       ),
     );
   }
@@ -216,7 +225,7 @@ class _PendingRequestDetailScreenState
     final leaveViewModel = context.read<LeaveViewModel>();
     if (_commentsController.text.trim().isEmpty) {
       _commentsFocusNode.requestFocus();
-      leaveViewModel.showError(context, 'Provide the reason!');
+      leaveViewModel.showError(context, 'Please provide reason!');
       return;
     }
 
@@ -241,7 +250,7 @@ class _PendingRequestDetailScreenState
   Future<void> _handleProcessEscalated() async {
     final leaveViewModel = context.read<LeaveViewModel>();
     if (_commentsController.text.trim().isEmpty) {
-      leaveViewModel.showError(context, 'Please provide a reason!');
+      leaveViewModel.showError(context, 'Please provide reason!');
       return;
     }
 
@@ -265,7 +274,8 @@ class _PendingRequestDetailScreenState
   Future<void> _handleReject() async {
     final leaveViewModel = context.read<LeaveViewModel>();
     if (_commentsController.text.trim().isEmpty) {
-      leaveViewModel.showError(context, 'Please provide a reason!');
+      _commentsFocusNode.requestFocus();
+      leaveViewModel.showError(context, 'Please provide reason!');
       return;
     }
 
@@ -514,8 +524,8 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
     return '$days day${days > 1 ? 's' : ''}';
   }
 
-  String _formatDate(DateTime date) {
-    return DateFormat('dd MMM yyyy').format(date);
+  String _formatDate(String date) {
+    return DateFormatter.formatShort(date);
   }
 
   String _formatDateTime(DateTime date) {

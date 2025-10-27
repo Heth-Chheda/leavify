@@ -59,15 +59,8 @@ class AppRouter {
 
       case RouteNames.pendingRequests:
         return MaterialPageRoute(
-          builder: (_) => MultiProvider(
-            providers: [
-              ChangeNotifierProvider(create: (_) => LeaveViewModel()),
-            ],
-            child: _withAppBar(
-              const PendingRequestsScreen(),
-              'Pending Requests',
-            ),
-          ),
+          builder: (_) =>
+              _withAppBar(const PendingRequestsScreen(), 'Pending Requests'),
           settings: settings,
         );
 

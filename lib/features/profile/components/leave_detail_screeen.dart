@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/components/button/my_app_button.dart';
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
+import 'package:leavify/core/utils/formatters/date_formatter.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/custom_calendar_component.dart';
 import 'package:leavify/features/Leave/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
@@ -29,8 +30,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
 
-  late DateTime _fromDate;
-  late DateTime _toDate;
+  late String _fromDate;
+  late String _toDate;
   late bool _isHalfDay;
   late bool _isCompOff;
   late List<DateTime> _compDates;
@@ -165,6 +166,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final leaveViewModel = context.read<LeaveViewModel>();
 
     return Consumer<ProfileViewModel>(
       builder: (context, viewModel, child) {
@@ -200,7 +202,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                         children: [
                           if (_status.toLowerCase() != 'cancelled' &&
                               _showStatusSection) ...[
-                            _buildStatusSection(isDark),
+                            _buildStatusSection(leaveViewModel, isDark),
                             const SizedBox(height: 24),
                           ],
                           _buildLeaveCard(viewModel, isDark),
@@ -262,79 +264,111 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     );
   }
 
-  Widget _buildStatusSection(bool isDark) {
+  Widget _buildStatusSection(LeaveViewModel leaveViewModel, bool isDark) {
+    final leaveDetails = leaveViewModel.selectedLeaveById?.leaveDetails;
+
+    // Parse or convert your fromDate (if it’s a String) into DateTime
+    final DateTime? fromDate = DateTime.tryParse(leaveDetails!.fromDate);
+
+    // Get today’s date without time (to ignore hour/minute differences)
+    final DateTime today = DateTime.now();
+    final DateTime todayDateOnly = DateTime(today.year, today.month, today.day);
+
+    // Determine status
+    final bool isApproved = leaveDetails.status.toLowerCase() == 'approved';
+    final bool isPending = leaveDetails.status.toLowerCase() == 'pending';
+
+    // Updated cancel condition:
+    // - If NOT approved → can cancel anytime
+    // - If approved → can cancel only if leave starts today or later
+    final bool canCancelLeave =
+        !isApproved ||
+        (isApproved && fromDate != null && !fromDate.isBefore(todayDateOnly));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             // 🔸 Remind Button
-            MyAppButton(
-              label: 'Remind',
-              icon: const Icon(
-                Icons.notifications_active,
-                color: Colors.white,
-                size: 18,
+            if (isPending)
+              Expanded(
+                child: MyAppButton(
+                  label: 'Remind',
+                  icon: const Icon(
+                    Icons.notifications_active,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                  backgroundColor: Colors.orange,
+                  borderRadius: 12,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  onPressed: () => _showConfirmationDialog(
+                    title: 'Send Reminder',
+                    body:
+                        'Are you sure you want to send a reminder for this leave?',
+                    confirmButtonText: 'Send',
+                    onConfirm: () {
+                      onRemindPressed();
+                      debugPrint('Reminder sent');
+                    },
+                    illustrationAsset: 'lib/assets/reminder.png',
+                    illustrationHeight: 180,
+                  ),
+                ),
               ),
-              backgroundColor: Colors.orange,
-              borderRadius: 12,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              onPressed: () => _showConfirmationDialog(
-                title: 'Send Reminder',
-                body:
-                    'Are you sure you want to send a reminder for this leave?',
-                confirmButtonText: 'Send',
-                onConfirm: () {
-                  onRemindPressed();
-                  debugPrint('Reminder sent');
-                },
-                illustrationAsset: 'lib/assets/reminder.png',
-                illustrationHeight: 180,
-              ),
-            ),
+
+            const SizedBox(width: 10),
 
             // 🔸 Escalate Button
-            MyAppButton(
-              label: 'Escalate',
-              icon: const Icon(
-                Icons.warning_amber,
-                color: Colors.white,
-                size: 18,
-              ),
-              backgroundColor: Colors.red,
-              borderRadius: 12,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              onPressed: () => _showConfirmationDialog(
-                title: 'Escalate Leave',
-                body: 'Are you sure you want to escalate this leave request?',
-                confirmButtonText: 'Escalate',
-                onConfirm: () {
-                  onEscalatePressed();
-                  debugPrint('Leave escalated');
-                },
-                illustrationAsset: 'lib/assets/escalate.png',
+            Expanded(
+              child: MyAppButton(
+                label: 'Escalate',
+                icon: const Icon(
+                  Icons.warning_amber,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                backgroundColor: Colors.red,
+                borderRadius: 12,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                onPressed: () => _showConfirmationDialog(
+                  title: 'Escalate Leave',
+                  body: 'Are you sure you want to escalate this leave request?',
+                  confirmButtonText: 'Escalate',
+                  onConfirm: () {
+                    onEscalatePressed();
+                    debugPrint('Leave escalated');
+                  },
+                  illustrationAsset: 'lib/assets/escalate.png',
+                ),
               ),
             ),
 
-            // 🔸 Cancel Button
-            MyAppButton(
-              label: 'Cancel',
-              icon: const Icon(Icons.cancel, color: Colors.white, size: 18),
-              backgroundColor: Colors.grey,
-              borderRadius: 12,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              onPressed: () => _showConfirmationDialog(
-                title: 'Cancel Leave',
-                body: 'Are you sure you want to cancel this leave?',
-                confirmButtonText: 'Cancel',
-                onConfirm: () {
-                  onCancelPressed();
-                  debugPrint('Leave cancelled');
-                },
-                illustrationAsset: 'lib/assets/cancel.png',
+            if (canCancelLeave) ...[
+              const SizedBox(width: 10),
+
+              // 🔸 Cancel Button
+              Expanded(
+                child: MyAppButton(
+                  label: 'Cancel',
+                  icon: const Icon(Icons.cancel, color: Colors.white, size: 18),
+                  backgroundColor: Colors.grey,
+                  borderRadius: 12,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  onPressed: () => _showConfirmationDialog(
+                    title: 'Cancel Leave',
+                    body: 'Are you sure you want to cancel this leave?',
+                    confirmButtonText: 'Cancel',
+                    onConfirm: () {
+                      onCancelPressed();
+                      debugPrint('Leave cancelled');
+                    },
+                    illustrationAsset: 'lib/assets/cancel.png',
+                  ),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ],
@@ -455,7 +489,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          DateFormat('dd MMM yyyy').format(_fromDate),
+                          DateFormatter.formatShort(_fromDate),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -548,7 +582,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          DateFormat('dd MMM yyyy').format(_toDate),
+                          DateFormatter.formatShort(_toDate),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -936,11 +970,11 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   Future<void> _selectFromDate() async {
     await _showCustomCalendar(
       title: 'Select From Date',
-      initialDate: _fromDate,
+      initialDate: DateTime.parse(_fromDate),
       onDateSelected: (date) {
         setState(() {
-          _fromDate = date;
-          if (_toDate.isBefore(_fromDate)) {
+          _fromDate = date.toIso8601String();
+          if ((DateTime.parse(_toDate)).isBefore(DateTime.parse(_fromDate))) {
             _toDate = _fromDate;
           }
         });
@@ -951,11 +985,11 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   Future<void> _selectToDate() async {
     await _showCustomCalendar(
       title: 'Select To Date',
-      initialDate: _toDate,
-      firstDate: _fromDate,
+      initialDate: DateTime.parse(_toDate),
+      firstDate: DateTime.parse(_fromDate),
       onDateSelected: (date) {
         setState(() {
-          _toDate = date;
+          _toDate = date.toIso8601String();
         });
       },
     );
@@ -1008,11 +1042,30 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   Future<void> _saveChanges(ProfileViewModel viewModel) async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Compare new values with old ones
+    final hasChanges =
+        _fromDate != _leave!.leaveDetails.fromDate ||
+        _toDate != _leave!.leaveDetails.toDate ||
+        _reasonController.text.trim() != _leave!.leaveDetails.reason.trim() ||
+        _isCompOff != _leave!.leaveDetails.isCompOff ||
+        _isHalfDay != _leave!.leaveDetails.isHalfDay ||
+        _compDates.toString() != _leave!.leaveDetails.compDates.toString();
+
+    // If no changes, just pop and don’t call update
+    if (!hasChanges) {
+      Navigator.pop(
+        context,
+        true,
+      ); // you can return `false` to indicate no update
+      return;
+    }
+
+    // Proceed only if something changed
     final success = await viewModel.updateLeave(
       leaveId: _leave!.leaveId,
       userId: widget.userId,
-      fromDate: _fromDate,
-      toDate: _toDate,
+      fromDate: DateTime.parse(_fromDate),
+      toDate: DateTime.parse(_toDate),
       reason: _reasonController.text.trim(),
       isCompOff: _isCompOff,
       isHalfDay: _isHalfDay,

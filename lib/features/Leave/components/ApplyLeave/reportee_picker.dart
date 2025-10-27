@@ -230,14 +230,6 @@ class _ModernUserPickerState extends State<ModernUserPicker> {
     final imagePath = user.profileImagePath;
     final gradientColors = _getGradientForIndex(user.id.hashCode);
 
-    // Debug prints
-    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    print('User: ${user.fName} ${user.lName}');
-    print('Profile Image Path: "$imagePath"');
-    print('Is Empty: ${imagePath.isEmpty}');
-    print('Full URL: ${ApiEndpoints.baseUrl}$imagePath');
-    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -332,14 +324,6 @@ class _ModernUserPickerState extends State<ModernUserPicker> {
                         fontWeight: FontWeight.w600,
                         color: theme.colorScheme.onSurface,
                         letterSpacing: -0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'ID: ${user.id}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: theme.colorScheme.onSurface.withOpacity(0.5),
                       ),
                     ),
                   ],

@@ -3,8 +3,8 @@ class GetAllResponse {
   final String firstName;
   final String lastName;
   final String role;
-  final DateTime startDate;
-  final DateTime endDate;
+  final String startDate;
+  final String endDate;
   final String reason;
   final String status;
   final String leaveId;
@@ -24,7 +24,7 @@ class GetAllResponse {
     required this.leaveId,
     required this.escalated,
     required this.documentsCount,
-    this.designation
+    this.designation,
   });
 
   factory GetAllResponse.fromJson(Map<String, dynamic> json) {
@@ -33,14 +33,14 @@ class GetAllResponse {
       firstName: json['firstName'] ?? '',
       lastName: json['lastName'] ?? '',
       role: json['role'] ?? '',
-      startDate: DateTime.parse(json['startDate']),
-      endDate: DateTime.parse(json['endDate']),
+      startDate: json['startDate'],
+      endDate: json['endDate'],
       reason: json['reason'] ?? '',
       status: json['status'] ?? '',
       leaveId: json['leaveId'] ?? '',
       escalated: json['escalated'] ?? false,
       documentsCount: json['documentsCount'] ?? 0,
-        designation: json['designation'] ?? ''
+      designation: json['designation'] ?? '',
     );
   }
   Map<String, dynamic> toJson() => {
@@ -48,13 +48,13 @@ class GetAllResponse {
     'firstName': firstName,
     'lastName': lastName,
     'role': role,
-    'startDate': startDate.toIso8601String(),
-    'endDate': endDate.toIso8601String(),
+    'startDate': startDate,
+    'endDate': endDate,
     'reason': reason,
     'status': status,
     'leaveId': leaveId,
-    'escalated' : escalated,
+    'escalated': escalated,
     'documentsCount': documentsCount,
-    'designation' : designation
+    'designation': designation,
   };
 }

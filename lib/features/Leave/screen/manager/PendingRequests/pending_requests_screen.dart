@@ -1,5 +1,6 @@
 // pending_requests_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Leave/components/manager/pending_request_card.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
@@ -151,7 +152,9 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                 children: [
                   _buildHeader(context, pendingCount),
                   const Expanded(
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(
+                      child: SpinKitSquareCircle(color: Colors.blue, size: 80),
+                    ),
                   ),
                 ],
               );

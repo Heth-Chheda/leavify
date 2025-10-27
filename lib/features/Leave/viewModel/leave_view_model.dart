@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:leavify/base/base_repository.dart';
+// import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/formatters/date_formatter.dart';
@@ -33,6 +33,8 @@ class LeaveViewModel extends BaseViewModel {
 
   // MARK: - FORM CONTROLLERS
   final TextEditingController reasonController = TextEditingController();
+
+  final String displayErrorMessage = 'Something went wrong';
 
   // MARK: - DATE SELECTION PROPERTIES
   DateTime? selectedStartDate;
@@ -298,7 +300,7 @@ class LeaveViewModel extends BaseViewModel {
         }
       }
     } catch (e) {
-      showError(context, 'Error picking files: $e');
+      showError(context, displayErrorMessage);
     }
   }
 
@@ -323,7 +325,10 @@ class LeaveViewModel extends BaseViewModel {
   }
 
   // MARK: - SUBMIT LEAVE FORM METHOD
-  Future<void> submitLeaveForm(BuildContext context) async {
+  Future<void> submitLeaveForm(
+    BuildContext context,
+    FocusNode reasonFocusNode,
+  ) async {
     if (!validateForm(context)) {
       return;
     }
@@ -332,6 +337,7 @@ class LeaveViewModel extends BaseViewModel {
 
     try {
       if (reasonController.text.length < 10) {
+        reasonFocusNode.requestFocus();
         update(isLoading: false);
         return;
       }
@@ -359,16 +365,6 @@ class LeaveViewModel extends BaseViewModel {
     } catch (e) {
       update(isLoading: false);
       showError(context, 'Error submitting leave.');
-      debugPrint("Error in submitLeaveForm: $e");
-
-      String errorMessage;
-      if (e is ApiException) {
-        errorMessage = e.message;
-      } else {
-        errorMessage = e.toString();
-      }
-
-      showError(context, errorMessage);
     }
   }
 
@@ -381,8 +377,8 @@ class LeaveViewModel extends BaseViewModel {
       update(errorMessage: null);
       return true;
     } else {
-      update(errorMessage: response.error);
-      debugPrint("Error applying leave: $errorMessage");
+      update(errorMessage: displayErrorMessage);
+      debugPrint(displayErrorMessage);
       successLeaveId = null;
       return false;
     }
@@ -407,14 +403,9 @@ class LeaveViewModel extends BaseViewModel {
     // Convert documents to LeaveDocument objects with base64
     List<LeaveDocument> documents = [];
     if (selectedDocuments.isNotEmpty) {
-      debugPrint(
-        "Converting ${selectedDocuments.length} documents to LeaveDocuments...",
-      );
       try {
         documents = await _convertDocumentsToLeaveDocuments();
-        debugPrint("Successfully converted ${documents.length} documents");
       } catch (e) {
-        debugPrint("Error converting documents: $e");
         rethrow; // Re-throw to be handled by the calling method
       }
     }
@@ -459,10 +450,6 @@ class LeaveViewModel extends BaseViewModel {
     try {
       for (int i = 0; i < selectedDocuments.length; i++) {
         PlatformFile file = selectedDocuments[i];
-        debugPrint(
-          "Processing document ${i + 1}/${selectedDocuments.length}: ${file.name}",
-        );
-
         Uint8List? fileBytes;
 
         // Try to get bytes from different sources

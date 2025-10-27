@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
@@ -18,7 +19,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<HomeViewModel>();
-    final theme = Theme.of(context);
 
     return AppBar(
       backgroundColor: Colors.transparent,
@@ -33,16 +33,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             Expanded(
               child: viewModel.isLoading
                   ? _buildLoadingWidget()
-                  : _buildContent(viewModel.userName, theme, context),
+                  : _buildContent(viewModel.userName, context),
             ),
             // Action Icons - Show shimmer when loading, actual icons when loaded
             viewModel.isLoading
                 ? const SizedBox.shrink()
-                : _buildActionIcons(
-                    context,
-                    theme,
-                    viewModel.canSendAnnouncement,
-                  ),
+                : _buildActionIcons(context, viewModel.canSendAnnouncement),
           ],
         ),
       ),
@@ -63,17 +59,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildContent(String userName, ThemeData theme, BuildContext context) {
+  Widget _buildContent(String userName, BuildContext context) {
     final viewModel = context.watch<HomeViewModel>();
     final displayName = userName.isNotEmpty ? userName : 'Loading ...';
-    final isDarkMode = theme.brightness == Brightness.dark;
-    debugPrint(
-      'CUSTOM APP BAR PRINTING PROFILE IMAGE URL ${viewModel.profileImageUrl}',
-    );
-    debugPrint(
-      'Final image URL: ${ApiEndpoints.baseUrl}/${viewModel.profileImageUrl}',
-    );
-
     return Row(
       children: [
         // Profile Avatar
@@ -90,19 +78,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: isDarkMode
-                    ? [
-                        theme.colorScheme.surface.withOpacity(0.95),
-                        theme.colorScheme.surface.withOpacity(0.85),
-                      ]
-                    : [
-                        Colors.white.withOpacity(0.95),
-                        Colors.white.withOpacity(0.85),
-                      ],
+                colors: [
+                  Colors.white.withOpacity(0.95),
+                  Colors.white.withOpacity(0.85),
+                ],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: theme.shadowColor.withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -122,20 +105,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: isDarkMode
-                            ? [
-                                theme.colorScheme.surface.withOpacity(0.95),
-                                theme.colorScheme.surface.withOpacity(0.85),
-                              ]
-                            : [
-                                Colors.white.withOpacity(0.95),
-                                Colors.white.withOpacity(0.85),
-                              ],
+                        colors: [
+                          Colors.white.withOpacity(0.95),
+                          Colors.white.withOpacity(0.85),
+                        ],
                       ),
                     ),
                     child: Icon(
                       Icons.person,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: Colors.grey.withOpacity(0.5),
                       size: 20,
                     ),
                   );
@@ -157,7 +135,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
-                  color: theme.colorScheme.onBackground,
+                  color: Colors.black,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -167,7 +145,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: theme.colorScheme.onBackground,
+                    color: Colors.black,
                     letterSpacing: -0.5,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -181,11 +159,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildActionIcons(
-    BuildContext context,
-    ThemeData theme,
-    bool canSendAnnouncement,
-  ) {
+  Widget _buildActionIcons(BuildContext context, bool canSendAnnouncement) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -193,95 +167,48 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           _buildIcon(
             icon: Icons.campaign_rounded,
             onTap: () {
-              _showAnnouncementBottomSheet(context, theme);
+              _showAnnouncementBottomSheet(context);
             },
-            theme: theme,
           ),
         // Logout Icon
         _buildIcon(
           icon: Icons.logout,
           onTap: () {
-            _showLogoutConfirmationDialog(context, theme);
+            _showLogoutConfirmationDialog(context);
           },
-          theme: theme,
         ),
       ],
     );
   }
 
-  void _showAnnouncementBottomSheet(BuildContext context, ThemeData theme) {
+  void _showAnnouncementBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        return _AnnouncementBottomSheetContent(theme: theme);
+        return _AnnouncementBottomSheetContent();
       },
     );
   }
 
-  void _showLogoutConfirmationDialog(BuildContext context, ThemeData theme) {
+  void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          backgroundColor: theme.colorScheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.logout, color: theme.colorScheme.error, size: 24),
-              const SizedBox(width: 12),
-              Text(
-                'Logout',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            'Are you sure you want to logout?',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
-              fontSize: 16,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _performLogout(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.error,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Yes, Logout',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
+        return ConfirmationDialog(
+          title: 'Logout',
+          body: 'Are you sure you want to logout?',
+          confirmButtonText: 'Yes, Logout',
+          illustrationAsset: 'lib/assets/shutDown.png',
+          illustrationHeight: 150,
+          buttonBackgroundColor: Colors.red,
+          buttonForegroundColor: Colors.white,
+          onConfirm: () {
+            Navigator.of(dialogContext).pop();
+            _performLogout(context);
+          },
         );
       },
     );
@@ -319,21 +246,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     }
   }
 
-  Widget _buildIcon({
-    required IconData icon,
-    required VoidCallback onTap,
-    required ThemeData theme,
-  }) {
-    final isDarkMode = theme.brightness == Brightness.dark;
-
+  Widget _buildIcon({required IconData icon, required VoidCallback onTap}) {
     return Container(
       width: 48,
       height: 48,
       margin: const EdgeInsets.only(left: 4),
       decoration: BoxDecoration(
-        color: isDarkMode
-            ? theme.colorScheme.surface.withOpacity(0.1)
-            : Colors.white.withOpacity(0.1),
+        color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Material(
@@ -341,11 +260,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
           onTap: onTap,
-          splashColor: theme.colorScheme.onBackground.withOpacity(0.1),
-          highlightColor: theme.colorScheme.onBackground.withOpacity(0.05),
-          child: Center(
-            child: Icon(icon, color: theme.colorScheme.onBackground, size: 24),
-          ),
+          splashColor: Colors.black.withOpacity(0.1),
+          highlightColor: Colors.black.withOpacity(0.05),
+          child: Center(child: Icon(icon, color: Colors.black, size: 24)),
         ),
       ),
     );
@@ -364,9 +281,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _AnnouncementBottomSheetContent extends StatefulWidget {
-  final ThemeData theme;
-
-  const _AnnouncementBottomSheetContent({required this.theme});
+  const _AnnouncementBottomSheetContent();
 
   @override
   State<_AnnouncementBottomSheetContent> createState() =>
@@ -430,7 +345,7 @@ class _AnnouncementBottomSheetContentState
         child: Container(
           height: MediaQuery.of(context).size.height * 0.7,
           decoration: BoxDecoration(
-            color: widget.theme.colorScheme.surface,
+            color: Colors.black,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
@@ -477,7 +392,7 @@ class _AnnouncementBottomSheetContentState
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: widget.theme.colorScheme.onSurface.withOpacity(0.2),
+        color: Colors.black.withOpacity(0.2),
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -491,21 +406,17 @@ class _AnnouncementBottomSheetContentState
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: widget.theme.colorScheme.primary.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              Icons.campaign_rounded,
-              color: widget.theme.colorScheme.primary,
-              size: 24,
-            ),
+            child: Icon(Icons.campaign_rounded, color: Colors.black, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
               'Create Announcement',
               style: TextStyle(
-                color: widget.theme.colorScheme.onSurface,
+                color: Colors.black,
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.5,
@@ -516,12 +427,10 @@ class _AnnouncementBottomSheetContentState
             onPressed: () => Navigator.pop(context),
             icon: Icon(
               Icons.close_rounded,
-              color: widget.theme.colorScheme.onSurface.withOpacity(0.6),
+              color: Colors.black.withOpacity(0.6),
             ),
             style: IconButton.styleFrom(
-              backgroundColor: widget.theme.colorScheme.onSurface.withOpacity(
-                0.05,
-              ),
+              backgroundColor: Colors.black.withOpacity(0.05),
             ),
           ),
         ],
@@ -543,7 +452,7 @@ class _AnnouncementBottomSheetContentState
           child: Text(
             label,
             style: TextStyle(
-              color: widget.theme.colorScheme.onSurface.withOpacity(0.8),
+              color: Colors.black.withOpacity(0.8),
               fontSize: 14,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.2,
@@ -552,16 +461,16 @@ class _AnnouncementBottomSheetContentState
         ),
         Container(
           decoration: BoxDecoration(
-            color: widget.theme.colorScheme.surface,
+            color: Colors.black,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: widget.theme.colorScheme.onSurface.withOpacity(0.06),
+                color: Colors.black.withOpacity(0.06),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
               BoxShadow(
-                color: widget.theme.colorScheme.onSurface.withOpacity(0.04),
+                color: Colors.black.withOpacity(0.04),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -572,14 +481,14 @@ class _AnnouncementBottomSheetContentState
             controller: controller,
             maxLines: maxLines,
             style: TextStyle(
-              color: widget.theme.colorScheme.onSurface,
+              color: Colors.black,
               fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                color: widget.theme.colorScheme.onSurface.withOpacity(0.4),
+                color: Colors.black.withOpacity(0.4),
                 fontSize: 15,
                 fontWeight: FontWeight.w400,
               ),
@@ -607,7 +516,7 @@ class _AnnouncementBottomSheetContentState
             ? []
             : [
                 BoxShadow(
-                  color: widget.theme.colorScheme.primary.withOpacity(0.3),
+                  color: Colors.blueAccent.withOpacity(0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 8),
                 ),
@@ -616,11 +525,9 @@ class _AnnouncementBottomSheetContentState
       child: ElevatedButton(
         onPressed: isLoading ? null : _sendAnnouncement,
         style: ElevatedButton.styleFrom(
-          backgroundColor: widget.theme.colorScheme.primary,
+          backgroundColor: Colors.blueAccent,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: widget.theme.colorScheme.primary.withOpacity(
-            0.6,
-          ),
+          disabledBackgroundColor: Colors.blueAccent.withOpacity(0.6),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

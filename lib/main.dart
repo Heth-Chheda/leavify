@@ -7,6 +7,7 @@ import 'package:leavify/core/config/app_environment.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Home/viewmodel/announcements_view_model.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:leavify/features/profile/viewmodel/profile_view_model.dart';
 import 'package:leavify/services/fcm_service.dart';
 import 'package:provider/provider.dart';
@@ -45,6 +46,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => HomeViewModel()..initialize()),
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
         ChangeNotifierProvider(create: (_) => AnnouncementViewModel()),
+        ChangeNotifierProvider(create: (_) => LeaveViewModel()),
       ],
       child: const MyApp(),
     ),

@@ -1,5 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Home/components/announcement_card.dart';
@@ -185,12 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          const SpinKitCircle(
-            color: Colors.blue, // change to your theme color
-            size: 60.0,
-          ),
-        ],
+        children: [const SpinKitSquareCircle(color: Colors.blue, size: 100.0)],
       ),
     );
   }
@@ -219,6 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
+              AppStorage.clearAllExcept('USER_FCM_TOKEN');
               AppNavigator.setRootView(RouteNames.login);
             },
             child: const Text('Retry'),
