@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/components/button/my_app_button.dart';
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
 import 'package:leavify/core/utils/components/textfield/my_app_text_field.dart';
+import 'package:leavify/core/utils/helpers/document_helper.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/custom_calendar_component.dart';
 import 'package:leavify/features/Leave/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
@@ -807,6 +808,18 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     }
   }
 
+  void pickDocuments(
+    BuildContext context,
+    LeaveViewModel leaveViewModel,
+  ) async {
+    final updatedFiles = await DocumentHelper.pickDocuments(
+      context,
+      leaveViewModel.selectedDocuments,
+    );
+    leaveViewModel.updateSelectedDocuments(updatedFiles);
+  }
+
+  // MARK: DOCUMENTS
   Widget _buildDocumentUploadSection(ProfileViewModel viewModel) {
     final leaveViewModel = context.read<LeaveViewModel>();
 
@@ -816,8 +829,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         GestureDetector(
           onTap: viewModel.isEditMode
               ? () async {
-                  await leaveViewModel.pickDocuments(context);
-                  setState(() {}); // rebuild to show selected docs
+                  pickDocuments(context, leaveViewModel);
                 }
               : null,
           child: Container(
@@ -935,7 +947,10 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            leaveViewModel.removeDocument(index);
+                            DocumentHelper.removeDocument(
+                              leaveViewModel.selectedDocuments,
+                              index,
+                            );
                             setState(() {});
                           },
                           child: Container(

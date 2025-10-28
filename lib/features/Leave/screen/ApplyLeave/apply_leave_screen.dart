@@ -4,6 +4,7 @@ import 'package:leavify/core/utils/components/calendar/my_app_date_selection_cal
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
 import 'package:leavify/core/utils/components/dropdownmenu/my_app_drop_down_menu.dart';
 import 'package:leavify/core/utils/components/textfield/my_app_text_field.dart';
+import 'package:leavify/core/utils/helpers/document_helper.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/reportee_picker.dart';
@@ -466,13 +467,24 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     );
   }
 
+  void pickDocuments(
+    BuildContext context,
+    LeaveViewModel leaveViewModel,
+  ) async {
+    final updatedFiles = await DocumentHelper.pickDocuments(
+      context,
+      leaveViewModel.selectedDocuments,
+    );
+    leaveViewModel.updateSelectedDocuments(updatedFiles);
+  }
+
   // MARK: - DOCUMENT SECTION
   Widget _buildDocumentsSection(LeaveViewModel leaveViewModel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          onTap: () => leaveViewModel.pickDocuments(context),
+          onTap: () => pickDocuments(context, leaveViewModel),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
@@ -597,7 +609,10 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => leaveViewModel.removeDocument(index),
+                          onTap: () => DocumentHelper.removeDocument(
+                            leaveViewModel.selectedDocuments,
+                            index,
+                          ),
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(

@@ -273,45 +273,11 @@ class LeaveViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  // MARK: - DOCUMENT HANDLING METHODS
-  Future<void> pickDocuments(BuildContext context) async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        allowMultiple: true,
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
-      );
-
-      if (result != null) {
-        List<PlatformFile> newFiles = [];
-        for (PlatformFile file in result.files) {
-          // Check if file with same name already exists
-          bool fileExists = selectedDocuments.any(
-            (existingFile) => existingFile.name == file.name,
-          );
-
-          if (!fileExists) {
-            newFiles.add(file);
-          } else {
-            showInfo(context, 'File "${file.name}" already selected');
-          }
-        }
-
-        if (newFiles.isNotEmpty) {
-          selectedDocuments.addAll(newFiles);
-          notifyListeners();
-        }
-      }
-    } catch (e) {
-      showError(context, displayErrorMessage);
-    }
-  }
-
-  void removeDocument(int index) {
-    if (index >= 0 && index < selectedDocuments.length) {
-      selectedDocuments.removeAt(index);
-      notifyListeners();
-    }
+  void updateSelectedDocuments(List<PlatformFile> newFiles) {
+    selectedDocuments
+      ..clear()
+      ..addAll(newFiles);
+    notifyListeners();
   }
 
   // MARK: - FORM VALIDATION METHODS
