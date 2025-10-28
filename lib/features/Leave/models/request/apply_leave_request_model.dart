@@ -9,7 +9,7 @@ class ApplyLeaveRequestModel {
   final bool isCompOff;
   final bool isHalfDay;
   final List<String> compDates;
-  final List<LeaveDocument> documents;
+  final List<LeaveDocumentForApply> documents;
   final String? category;
 
   ApplyLeaveRequestModel({
@@ -43,11 +43,11 @@ class ApplyLeaveRequestModel {
   };
 }
 
-class LeaveDocument {
+class LeaveDocumentForApply {
   final String docType;
   final String docBytes;
 
-  LeaveDocument({required this.docType, required this.docBytes});
+  LeaveDocumentForApply({required this.docType, required this.docBytes});
 
   Map<String, dynamic> toJson() => {'docType': docType, 'docBytes': docBytes};
 }

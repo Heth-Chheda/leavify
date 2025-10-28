@@ -49,7 +49,7 @@ class AppToast {
     context: context,
     message: message,
     type: ToastType.success,
-    duration: duration ?? const Duration(seconds: 2),
+    duration: duration ?? const Duration(seconds: 1),
   );
 
   static void error(
@@ -60,7 +60,7 @@ class AppToast {
     context: context,
     message: message,
     type: ToastType.error,
-    duration: duration ?? const Duration(seconds: 2),
+    duration: duration ?? const Duration(seconds: 1),
   );
 
   static void info(
@@ -71,7 +71,7 @@ class AppToast {
     context: context,
     message: message,
     type: ToastType.info,
-    duration: duration ?? const Duration(seconds: 2),
+    duration: duration ?? const Duration(seconds: 1),
   );
 
   /// optional: to close all toasts

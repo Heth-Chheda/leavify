@@ -31,14 +31,14 @@ class BaseViewModel extends ChangeNotifier {
     String? lastName,
     String? profileImage,
     bool? isLoading,
-    String? errorMessage,
+    Object? errorMessage = const _Unset(),
   }) {
     if (userId != null) _userId = userId;
     if (firstName != null) _firstName = firstName;
     if (lastName != null) _lastName = lastName;
     if (profileImage != null) _profileImage = profileImage;
     if (isLoading != null) _isLoading = isLoading;
-    if (errorMessage != null) _errorMessage = errorMessage;
+    if (errorMessage is! _Unset) _errorMessage = errorMessage as String?;
 
     notifyListeners();
   }
@@ -65,4 +65,8 @@ class BaseViewModel extends ChangeNotifier {
   void showInfo(BuildContext context, String message) {
     AppToast.info(context, message);
   }
+}
+
+class _Unset {
+  const _Unset();
 }

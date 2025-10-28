@@ -3,8 +3,10 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/components/button/my_app_button.dart';
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
+import 'package:leavify/core/utils/components/textfield/my_app_text_field.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/custom_calendar_component.dart';
 import 'package:leavify/features/Leave/components/manager/pending_request_detail_screen.dart';
+import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:leavify/features/profile/viewmodel/profile_view_model.dart';
@@ -29,6 +31,7 @@ class LeaveDetailScreen extends StatefulWidget {
 class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
+  final FocusNode _reasonFocusNode = FocusNode();
 
   late DateTime _fromDate;
   late DateTime _toDate;
@@ -48,63 +51,74 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     });
   }
 
-  void onRemindPressed() async {
+  Future<void> onRemindPressed() async {
     final leaveVM = context.read<LeaveViewModel>();
-
+    if (leaveVM.isRemindLoading) return;
     await leaveVM.sendReminderForLeave(leaveId: widget.leaveId);
-
     if (!mounted) return;
-    if (leaveVM.errorMessage != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(leaveVM.errorMessage!)));
-    } else if (leaveVM.reminderResponse?.success == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(leaveVM.reminderResponse?.message ?? 'Reminder sent'),
-        ),
-      );
+    final error = leaveVM.errorMessage;
+    final response = leaveVM.reminderResponse;
+    switch ((error != null, response?.success)) {
+      case (true, _):
+        leaveVM.showError(context, 'Error reminding leave');
+        break;
+      case (false, true):
+        leaveVM.showSuccess(context, 'Reminder sent!');
+        Navigator.pop(context, true);
+        break;
+      default:
+        leaveVM.showError(context, 'Something went wrong');
+        debugPrint('Reminder response unhandled: $response');
     }
   }
 
-  void onEscalatePressed() async {
+  Future<void> onEscalatePressed() async {
     final leaveVM = context.read<LeaveViewModel>();
+
+    if (leaveVM.isEscalateLoading) return;
 
     await leaveVM.escalateLeave(leaveId: widget.leaveId);
     if (!mounted) return;
-    if (leaveVM.errorMessage != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(leaveVM.errorMessage!)));
-    } else if (leaveVM.escalateLeaveResponse?.success == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            leaveVM.escalateLeaveResponse?.message ?? 'Escalation sent',
-          ),
-        ),
-      );
+
+    final error = leaveVM.errorMessage;
+    final response = leaveVM.escalateLeaveResponse;
+
+    switch ((error != null, response?.success)) {
+      case (true, _):
+        leaveVM.showError(context, 'Error escalating leave');
+        break;
+      case (false, true):
+        leaveVM.showSuccess(context, 'Escalation sent!');
+        Navigator.pop(context, true);
+        break;
+      default:
+        leaveVM.showError(context, 'Something went wrong');
+        debugPrint('Escalation response unhandled: $response');
     }
   }
 
-  void onCancelPressed() async {
+  Future<void> onCancelPressed() async {
     final leaveVM = context.read<LeaveViewModel>();
+
+    if (leaveVM.isCancelLoading) return;
 
     await leaveVM.cancelLeave(leaveId: widget.leaveId);
     if (!mounted) return;
-    if (leaveVM.errorMessage != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(leaveVM.errorMessage!)));
-    } else if (leaveVM.cancelLeaveResponse?.success == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            leaveVM.cancelLeaveResponse?.message ?? 'Escalation sent',
-          ),
-        ),
-      );
-      Navigator.pop(context, true);
+
+    final error = leaveVM.errorMessage;
+    final response = leaveVM.cancelLeaveResponse;
+
+    switch ((error != null, response?.success)) {
+      case (true, _):
+        leaveVM.showError(context, 'Error cancelling leave');
+        break;
+      case (false, true):
+        leaveVM.showSuccess(context, 'Leave cancelled successfully');
+        Navigator.pop(context, true);
+        break;
+      default:
+        leaveVM.showError(context, 'Something went wrong');
+        debugPrint('Cancel leave response unhandled: $response');
     }
   }
 
@@ -158,68 +172,80 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         false;
   }
 
+  // MARK: MAIN BUILD
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final leaveViewModel = context.read<LeaveViewModel>();
-
     return Consumer<ProfileViewModel>(
       builder: (context, viewModel, child) {
-        if (_leave == null) {
+        final leaveViewModel = context.read<LeaveViewModel>();
+        if (_leave == null ||
+            leaveViewModel.isCancelLoading ||
+            leaveViewModel.isEscalateLoading ||
+            leaveViewModel.isRemindLoading) {
           return const Scaffold(
             body: Center(
               child: SpinKitSquareCircle(color: Colors.blue, size: 100),
             ),
           );
         }
-
         return WillPopScope(
           onWillPop: () async {
-            final viewModel = context.read<ProfileViewModel>();
-
             if (viewModel.isEditMode) {
-              // Call the centralized confirmation dialog
               final shouldExit = await _showDiscardConfirmationDialog();
-              return shouldExit; // true = allow pop, false = stay
+              return shouldExit;
             }
-
-            return true; // not in edit mode, allow pop
+            return true;
           },
-          child: Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.background,
-            body: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_status.toLowerCase() != 'cancelled') ...[
-                            _buildStatusSection(leaveViewModel, isDark),
-                            const SizedBox(height: 24),
+          child: GestureDetector(
+            onTap: () {
+              FocusScope.of(context).unfocus();
+            },
+            behavior: HitTestBehavior.translucent,
+            child: Scaffold(
+              backgroundColor: Theme.of(context).colorScheme.background,
+              body: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (_status.toLowerCase() != 'cancelled') ...[
+                              _buildStatusSection(),
+                              const SizedBox(height: 24),
+                            ],
+                            _buildLeaveCard(viewModel),
+                            const SizedBox(height: 20),
+                            _buildDetailsCard(viewModel),
+                            const SizedBox(height: 20),
+                            if (viewModel.isEditMode ||
+                                _leave!.leaveDetails.documents.isEmpty) ...[
+                              _buildDocumentUploadSection(viewModel),
+                              const SizedBox(height: 20),
+                            ],
+                            if (_leave!
+                                .leaveDetails
+                                .reqStatusTracking
+                                .isNotEmpty)
+                              StatusTrackingCard(
+                                statusTracking:
+                                    _leave!.leaveDetails.reqStatusTracking,
+                              ),
+                            const SizedBox(height: 20),
+                            if (_leave!.leaveDetails.documents.isNotEmpty)
+                              DocumentsCard(
+                                documents: _leave!.leaveDetails.documents,
+                              ),
                           ],
-                          _buildLeaveCard(viewModel, isDark),
-                          const SizedBox(height: 20),
-                          _buildDetailsCard(viewModel, isDark),
-                          const SizedBox(height: 20),
-                          if (_leave!.leaveDetails.reqStatusTracking.isNotEmpty)
-                            StatusTrackingCard(
-                              statusTracking:
-                                  _leave!.leaveDetails.reqStatusTracking,
-                            ),
-                          if (_leave!.leaveDetails.documents.isNotEmpty)
-                            DocumentsCard(
-                              documents: _leave!.leaveDetails.documents,
-                            ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                  _buildBottomActionBar(viewModel, isDark),
-                ],
+                    _buildBottomActionBar(viewModel),
+                  ],
+                ),
               ),
             ),
           ),
@@ -228,24 +254,23 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     );
   }
 
-  Widget _buildStatusSection(LeaveViewModel leaveViewModel, bool isDark) {
-    final leaveDetails = leaveViewModel.selectedLeaveById?.leaveDetails;
+  // MARK: STATUS SECTION
+  Widget _buildStatusSection() {
+    final leaveDetails = _leave?.leaveDetails;
 
     if (leaveDetails == null) {
       return Center(
         child: SpinKitSquareCircle(color: Colors.blueAccent, size: 100),
       );
     }
-
-    final DateTime fromDate = leaveDetails.fromDate;
     final DateTime today = DateTime.now();
     final DateTime todayDateOnly = DateTime(today.year, today.month, today.day);
 
-    final String status = leaveDetails.status.toLowerCase();
-    final bool isApproved = status == 'approved';
-    final bool isPending = status == 'pending';
+    final bool isApproved = leaveDetails.status.toLowerCase() == 'approved';
+    final bool isPending = leaveDetails.status.toLowerCase() == 'pending';
     final bool canCancelLeave =
-        !isApproved || (isApproved && !fromDate.isBefore(todayDateOnly));
+        !isApproved ||
+        (isApproved && !leaveDetails.fromDate.isBefore(todayDateOnly));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -337,6 +362,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     );
   }
 
+  // MARK: CONFIRMATION DIALOG
   void _showConfirmationDialog({
     required String title,
     required String body,
@@ -361,10 +387,9 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     );
   }
 
-  Widget _buildLeaveCard(ProfileViewModel viewModel, bool isDark) {
-    final cardColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
-    final leaveViewModel = context.read<LeaveViewModel>();
-    final duration = leaveViewModel.selectedLeaveById?.duration ?? 'Loading';
+  Widget _buildLeaveCard(ProfileViewModel viewModel) {
+    final cardColor = Colors.white;
+    // final duration = _leave?.duration ?? 'Loading';
 
     return Container(
       width: double.infinity,
@@ -379,200 +404,113 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
             offset: const Offset(0, 4),
           ),
         ],
-        border: isDark
-            ? Border.all(color: Colors.white.withOpacity(0.1))
-            : null,
       ),
       child: Column(
         children: [
           Row(
             children: [
               // From Date
-              Expanded(
-                child: GestureDetector(
-                  onTap: viewModel.isEditMode ? () => _selectFromDate() : null,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: viewModel.isEditMode
-                          ? LinearGradient(
-                              colors: [
-                                Theme.of(
-                                  context,
-                                ).colorScheme.primary.withOpacity(0.1),
-                                Theme.of(
-                                  context,
-                                ).colorScheme.primary.withOpacity(0.05),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      borderRadius: BorderRadius.circular(24),
-                      border: viewModel.isEditMode
-                          ? Border.all(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.3),
-                            )
-                          : Border.all(
-                              color: isDark
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.grey.withOpacity(0.2),
-                            ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'From Date',
-                              style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.7),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            if (viewModel.isEditMode) ...[
-                              const SizedBox(width: 6),
-                              Icon(
-                                Icons.edit_outlined,
-                                size: 14,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          () {
-                            debugPrint(
-                              '[LEAVE_DETAIL] Building From Date text: ${_fromDate.toIso8601String()}',
-                            );
-                            return DateFormat('dd/MM/yyyy').format(_fromDate);
-                          }(),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              _buildDateField(
+                context: context,
+                label: 'From Date',
+                date: _fromDate,
+                isEditMode: viewModel.isEditMode,
+                onTap: () => _selectFromDate(),
               ),
 
               SizedBox(width: 8),
               // To Date
-              Expanded(
-                child: GestureDetector(
-                  onTap: viewModel.isEditMode ? () => _selectToDate() : null,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: viewModel.isEditMode
-                          ? LinearGradient(
-                              colors: [
-                                Theme.of(
-                                  context,
-                                ).colorScheme.primary.withOpacity(0.1),
-                                Theme.of(
-                                  context,
-                                ).colorScheme.primary.withOpacity(0.05),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      borderRadius: BorderRadius.circular(24),
-                      border: viewModel.isEditMode
-                          ? Border.all(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.3),
-                            )
-                          : Border.all(
-                              color: isDark
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.grey.withOpacity(0.2),
-                            ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            if (viewModel.isEditMode) ...[
-                              Icon(
-                                Icons.edit_outlined,
-                                size: 14,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 6),
-                            ],
-                            Text(
-                              'To Date',
-                              style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.7),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          DateFormat('dd/MM/yyyy').format(_toDate),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              _buildDateField(
+                context: context,
+                label: 'To Date',
+                date: _toDate,
+                isEditMode: viewModel.isEditMode,
+                onTap: () => _selectToDate(),
               ),
             ],
-          ),
-
-          const SizedBox(height: 20),
-
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                  'Duration: $duration ${duration == 1 ? 'Day' : 'Days'}',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailsCard(ProfileViewModel viewModel, bool isDark) {
-    final cardColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
+  // MARK: DATE FIELD
+  Widget _buildDateField({
+    required BuildContext context,
+    required String label,
+    required DateTime date,
+    required bool isEditMode,
+    required VoidCallback? onTap,
+  }) {
+    final theme = Theme.of(context);
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: isEditMode ? onTap : null,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: isEditMode
+                ? LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.1),
+                      theme.colorScheme.primary.withOpacity(0.05),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isEditMode
+                  ? theme.colorScheme.primary.withOpacity(0.3)
+                  : (Colors.grey.withOpacity(0.2)),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  if (isEditMode) ...[
+                    Icon(
+                      Icons.edit_outlined,
+                      size: 14,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                DateFormat('dd/MM/yyyy').format(date),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // MARK: - REASON CARD
+  Widget _buildDetailsCard(ProfileViewModel viewModel) {
+    final cardColor = Colors.white;
 
     return Container(
       width: double.infinity,
@@ -582,14 +520,11 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 3,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
-        border: isDark
-            ? Border.all(color: Colors.white.withOpacity(0.1))
-            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -607,50 +542,26 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           const SizedBox(height: 12),
 
           if (viewModel.isEditMode)
-            TextFormField(
+            MyAppTextField(
               controller: _reasonController,
+              hintText: 'Enter reason for leave',
               maxLines: 3,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-              decoration: InputDecoration(
-                hintText: 'Enter reason for leave',
-                hintStyle: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.5),
-                ),
-                filled: true,
-                fillColor: isDark
-                    ? Colors.white.withOpacity(0.05)
-                    : Colors.grey.withOpacity(0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.2)
-                        : Colors.grey.withOpacity(0.3),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 2,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.2)
-                        : Colors.grey.withOpacity(0.3),
-                  ),
-                ),
-              ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter a reason';
                 }
                 return null;
+              },
+              fillColor: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 5,
+                  offset: const Offset(0, 0),
+                ),
+              ],
+              onFocusChanged: (hasFocus) {
+                // Optional: add behavior when focus changes, e.g. scroll into view
               },
             )
           else
@@ -658,15 +569,9 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withOpacity(0.05)
-                    : Colors.grey.withOpacity(0.05),
+                color: Colors.white.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.grey.withOpacity(0.2),
-                ),
+                border: Border.all(color: Colors.black.withOpacity(0.15)),
               ),
               child: Text(
                 _leave!.leaveDetails.reason,
@@ -677,176 +582,65 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                 ),
               ),
             ),
-
-          const SizedBox(height: 20),
-
-          // Created/Updated dates
-          _buildDetailRow(
-            'Applied On',
-            DateFormat(
-              'dd MMM yyyy, hh:mm a',
-            ).format(_leave!.leaveDetails.createdAt),
-            Icons.schedule_outlined,
-            isDark,
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(
-    String label,
-    String value,
-    IconData icon,
-    bool isDark,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withOpacity(0.03)
-            : Colors.grey.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : Colors.grey.withOpacity(0.2),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(
-              icon,
-              size: 16,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.7),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // MARK: - BOTTOM BAR
+  Widget _buildBottomActionBar(ProfileViewModel viewModel) {
+    final theme = Theme.of(context);
 
-  Widget _buildBottomActionBar(ProfileViewModel viewModel, bool isDark) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: SafeArea(
         child: Row(
           children: [
             if (viewModel.isEditMode) ...[
+              // Cancel Button
               Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withOpacity(0.3),
-                    ),
+                child: MyAppButton(
+                  label: 'Cancel',
+                  type: MyButtonType.outlined,
+                  onPressed: viewModel.isLoading
+                      ? null
+                      : () async {
+                          await _initializeData();
+                          viewModel.resetEditMode();
+                        },
+                  foregroundColor: theme.colorScheme.primary,
+                  backgroundColor: theme.colorScheme.primary.withOpacity(
+                    0.3,
+                  ), // border color
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 20,
                   ),
-                  child: OutlinedButton(
-                    onPressed: viewModel.isLoading
-                        ? null
-                        : () async {
-                            await _initializeData();
-                            viewModel.resetEditMode();
-                          },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      side: BorderSide.none,
-                    ),
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  borderRadius: 12,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 4),
+
+              // Save Button
               Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.secondary,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
+                child: MyAppButton(
+                  label: 'Save Changes',
+                  onPressed: viewModel.isLoading ? null : () => _saveChanges(),
+                  isLoading: viewModel.isLoading,
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary,
+                      theme.colorScheme.secondary,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: ElevatedButton(
-                    onPressed: viewModel.isLoading
-                        ? null
-                        : () => _saveChanges(viewModel),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: viewModel.isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            'Save Changes',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 20,
                   ),
+                  borderRadius: 12,
+                  foregroundColor: Colors.white,
                 ),
               ),
             ],
@@ -856,7 +650,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     );
   }
 
-  // Custom Calendar Integration Methods
+  // MARK: PRIVATE METHODS
   Future<void> _selectFromDate() async {
     await _showCustomCalendar(
       title: 'Select From Date',
@@ -864,17 +658,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
       onDateSelected: (date) {
         setState(() {
           _fromDate = date;
-          debugPrint('[LEAVE_DETAIL] Raw From Date: $date');
-          debugPrint('[LEAVE_DETAIL] Local From Date: ${date.toLocal()}');
-          debugPrint('[LEAVE_DETAIL] UTC From Date: ${date.toUtc()}');
-
-          debugPrint('[LEAVE_DETAIL] From Date selected: $_fromDate');
-
           if (_toDate.isBefore(_fromDate)) {
             _toDate = _fromDate;
-            debugPrint(
-              '[LEAVE_DETAIL] To Date adjusted to match From Date: $_toDate',
-            );
           }
         });
       },
@@ -942,7 +727,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     );
   }
 
-  Future<void> _saveChanges(ProfileViewModel viewModel) async {
+  Future<void> _saveChanges() async {
+    final leaveViewModel = context.read<LeaveViewModel>();
     if (!_formKey.currentState!.validate()) return;
 
     // Compare new values with old ones
@@ -952,19 +738,36 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         _reasonController.text.trim() != _leave!.leaveDetails.reason.trim() ||
         _isCompOff != _leave!.leaveDetails.isCompOff ||
         _isHalfDay != _leave!.leaveDetails.isHalfDay ||
-        _compDates.toString() != _leave!.leaveDetails.compDates.toString();
+        _compDates.toString() != _leave!.leaveDetails.compDates.toString() ||
+        leaveViewModel
+            .selectedDocuments
+            .isNotEmpty; // Check if new documents are added
 
-    // If no changes, just pop and don’t call update
+    // If no changes, just pop and don't call update
     if (!hasChanges) {
-      Navigator.pop(
-        context,
-        true,
-      ); // you can return `false` to indicate no update
+      _profileViewModel.resetEditMode();
       return;
     }
 
-    // Proceed only if something changed
-    final success = await viewModel.updateLeave(
+    // Step 1: Convert existing docs (which came from server)
+    final existingDocs = _leave!.leaveDetails.documents.map((doc) {
+      return LeaveDocumentForApply(
+        docType: doc.docType,
+        docBytes: '', // no base64 for old docs, since they already exist
+      );
+    }).toList();
+
+    // Step 2: Convert new uploaded files to LeaveDocumentForApply (includes base64)
+    final newDocs = await leaveViewModel.convertDocumentsToLeaveDocuments();
+
+    // Step 3: Combine both into a single list
+    final List<LeaveDocumentForApply> allDocuments = [
+      ...existingDocs,
+      ...newDocs,
+    ];
+
+    // Step 4: Send update request
+    final success = await _profileViewModel.updateLeave(
       leaveId: _leave!.leaveId,
       userId: widget.userId,
       fromDate: _fromDate,
@@ -973,24 +776,19 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
       isCompOff: _isCompOff,
       isHalfDay: _isHalfDay,
       compDates: _compDates,
+      documents: allDocuments,
     );
 
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Leave updated successfully'),
-            ],
-          ),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-      Navigator.pop(context, true);
+      _profileViewModel.showInfo(context, 'Leave updated successfully');
+
+      // Clear selected documents and refresh
+      setState(() {
+        leaveViewModel.selectedDocuments.clear();
+      });
+
+      // Reload the leave data to show updated documents
+      await _initializeData();
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -998,9 +796,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
             children: [
               const Icon(Icons.error, color: Colors.white),
               const SizedBox(width: 8),
-              Expanded(
-                child: Text(viewModel.errorMessage ?? 'Failed to update leave'),
-              ),
+              Expanded(child: Text('Failed to update leave')),
             ],
           ),
           backgroundColor: Colors.red,
@@ -1009,5 +805,161 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         ),
       );
     }
+  }
+
+  Widget _buildDocumentUploadSection(ProfileViewModel viewModel) {
+    final leaveViewModel = context.read<LeaveViewModel>();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: viewModel.isEditMode
+              ? () async {
+                  await leaveViewModel.pickDocuments(context);
+                  setState(() {}); // rebuild to show selected docs
+                }
+              : null,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            decoration: BoxDecoration(
+              color: viewModel.isEditMode ? Colors.white : Colors.grey[200],
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: viewModel.isEditMode
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 4,
+                        offset: const Offset(0, 0),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Upload supporting documents',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: viewModel.isEditMode ? Colors.black : Colors.grey,
+                  ),
+                ),
+                Text(
+                  'PDF, DOC, JPG, PNG up to 10MB',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: viewModel.isEditMode
+                        ? Colors.grey[600]
+                        : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (leaveViewModel.selectedDocuments.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.25),
+                  blurRadius: 4,
+                  offset: const Offset(0, 0),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.folder, color: Colors.blue, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Selected Documents (${leaveViewModel.selectedDocuments.length})',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...List.generate(leaveViewModel.selectedDocuments.length, (
+                  index,
+                ) {
+                  final document = leaveViewModel.selectedDocuments[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(
+                            leaveViewModel.getFileIcon(
+                              document.extension ?? '',
+                            ),
+                            color: Colors.blue,
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            document.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            leaveViewModel.removeDocument(index);
+                            setState(() {});
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.red,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
   }
 }

@@ -3,8 +3,8 @@ import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 // import 'package:leavify/dummydata/leave/dummy_user_leaves.dart';
 import 'package:leavify/features/Leave/data/leave_repository.dart';
-import 'package:leavify/features/Leave/models/general/leave_document.dart';
 import 'package:leavify/features/Leave/models/general/my_leaves.dart';
+import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
 import 'package:leavify/features/Profile/data/profile_repository.dart';
 
 enum ProfileViewState { loading, success, error }
@@ -65,7 +65,7 @@ class ProfileViewModel extends BaseViewModel {
     bool? isCompOff,
     bool? isHalfDay,
     List<DateTime>? compDates,
-    List<LeaveDocument>? documents,
+    List<LeaveDocumentForApply>? documents,
   }) async {
     update(isLoading: true, errorMessage: null);
     notifyListeners();
@@ -117,17 +117,17 @@ class ProfileViewModel extends BaseViewModel {
 
       final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
 
-      final success = await _repository.editUserLeave(updateData, accessToken);
+      final response = await _repository.editUserLeave(updateData, accessToken);
 
-      if (success.success == true) {
+      if (response.success == true) {
         _isEditMode = false;
       }
 
       _isEditMode = false;
       update(isLoading: false);
       notifyListeners();
-      return true;
-      // return success;
+      // return true;
+      return response.success ?? false;
     } catch (e) {
       update(errorMessage: e.toString(), isLoading: false);
       notifyListeners();

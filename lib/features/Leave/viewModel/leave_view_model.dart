@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-// import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/formatters/date_formatter.dart';
@@ -91,6 +90,10 @@ class LeaveViewModel extends BaseViewModel {
   List<Reportee> teamUsers = [];
   Reportee? _selectedUser;
   Reportee? get selectedUser => _selectedUser;
+
+  bool isRemindLoading = false;
+  bool isEscalateLoading = false;
+  bool isCancelLoading = false;
 
   // MARK: LEAVE TYPE
   String? selectedLeaveType;
@@ -401,10 +404,10 @@ class LeaveViewModel extends BaseViewModel {
     }).toList();
 
     // Convert documents to LeaveDocument objects with base64
-    List<LeaveDocument> documents = [];
+    List<LeaveDocumentForApply> documents = [];
     if (selectedDocuments.isNotEmpty) {
       try {
-        documents = await _convertDocumentsToLeaveDocuments();
+        documents = await convertDocumentsToLeaveDocuments();
       } catch (e) {
         rethrow; // Re-throw to be handled by the calling method
       }
@@ -444,8 +447,8 @@ class LeaveViewModel extends BaseViewModel {
   }
 
   // MARK: - CONVERT DOCUMENTS TO BASE64 (Fixed Version)
-  Future<List<LeaveDocument>> _convertDocumentsToLeaveDocuments() async {
-    List<LeaveDocument> leaveDocuments = [];
+  Future<List<LeaveDocumentForApply>> convertDocumentsToLeaveDocuments() async {
+    List<LeaveDocumentForApply> leaveDocuments = [];
 
     try {
       for (int i = 0; i < selectedDocuments.length; i++) {
@@ -474,7 +477,7 @@ class LeaveViewModel extends BaseViewModel {
         String extension = file.extension?.toLowerCase() ?? '';
         String docType = _getDocumentType(extension);
         // Create LeaveDocument object
-        LeaveDocument leaveDocument = LeaveDocument(
+        LeaveDocumentForApply leaveDocument = LeaveDocumentForApply(
           docType: docType,
           docBytes: base64String,
         );
@@ -627,6 +630,7 @@ class LeaveViewModel extends BaseViewModel {
   // MARK: SEND REMINDER FOR LEAVE
   Future<void> sendReminderForLeave({required String leaveId}) async {
     try {
+      isRemindLoading = true;
       update(isLoading: true, errorMessage: null);
       reminderResponse = null;
       notifyListeners();
@@ -641,8 +645,10 @@ class LeaveViewModel extends BaseViewModel {
       );
 
       reminderResponse = response;
+      isRemindLoading = false;
     } catch (e) {
       update(isLoading: false, errorMessage: e.toString());
+      isRemindLoading = false;
     } finally {
       notifyListeners();
     }
@@ -651,6 +657,7 @@ class LeaveViewModel extends BaseViewModel {
   // MARK: - ESCALATE LEAVE
   Future<void> escalateLeave({required String leaveId}) async {
     try {
+      isEscalateLoading = true;
       update(isLoading: true, errorMessage: null);
       escalateLeaveResponse = null;
       notifyListeners();
@@ -665,8 +672,10 @@ class LeaveViewModel extends BaseViewModel {
       );
 
       escalateLeaveResponse = response;
+      isEscalateLoading = false;
     } catch (e) {
       update(isLoading: false, errorMessage: e.toString());
+      isEscalateLoading = false;
     } finally {
       notifyListeners();
     }
@@ -675,6 +684,7 @@ class LeaveViewModel extends BaseViewModel {
   // MARK: - CANCEL LEAVE
   Future<void> cancelLeave({required String leaveId}) async {
     try {
+      isCancelLoading = true;
       update(isLoading: true, errorMessage: null);
       cancelLeaveResponse = null;
       notifyListeners();
@@ -688,8 +698,10 @@ class LeaveViewModel extends BaseViewModel {
         accessToken: accessToken,
       );
 
+      isCancelLoading = false;
       cancelLeaveResponse = response;
     } catch (e) {
+      isCancelLoading = false;
       update(isLoading: false, errorMessage: e.toString());
     } finally {
       notifyListeners();
@@ -820,6 +832,9 @@ class LeaveViewModel extends BaseViewModel {
     _selectedUser = null;
     selectedLeaveType = null;
     _selectedLeaveCategory = null;
+    isRemindLoading = false;
+    isEscalateLoading = false;
+    isCancelLoading = false;
     notifyListeners();
   }
 
