@@ -524,8 +524,8 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
     return '$days day${days > 1 ? 's' : ''}';
   }
 
-  String _formatDate(String date) {
-    return DateFormatter.formatShort(date);
+  String _formatDate(DateTime date) {
+    return DateFormatter.formatShort(date.toIso8601String());
   }
 
   String _formatDateTime(DateTime date) {

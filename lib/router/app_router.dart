@@ -103,10 +103,10 @@ class AppRouter {
                 'Leave Details',
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.settings),
+                    icon: const Icon(Icons.edit),
                     onPressed: () {
                       final state = leaveDetailKey.currentState;
-                      state?.toggleStatusSection();
+                      state?.toggleEditModel();
                     },
                   ),
                 ],

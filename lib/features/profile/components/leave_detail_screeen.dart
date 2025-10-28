@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/components/button/my_app_button.dart';
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
-import 'package:leavify/core/utils/formatters/date_formatter.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/custom_calendar_component.dart';
 import 'package:leavify/features/Leave/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
@@ -30,14 +30,14 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   final _formKey = GlobalKey<FormState>();
   final _reasonController = TextEditingController();
 
-  late String _fromDate;
-  late String _toDate;
+  late DateTime _fromDate;
+  late DateTime _toDate;
   late bool _isHalfDay;
   late bool _isCompOff;
   late List<DateTime> _compDates;
   GetLeaveByIdResponse? _leave;
   late String _status;
-  bool _showStatusSection = true;
+  late ProfileViewModel _profileViewModel;
 
   @override
   void initState() {
@@ -65,12 +65,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         ),
       );
     }
-  }
-
-  void toggleStatusSection() {
-    setState(() {
-      _showStatusSection = !_showStatusSection;
-    });
   }
 
   void onEscalatePressed() async {
@@ -114,7 +108,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     }
   }
 
-  void _initializeData() async {
+  Future<void> _initializeData() async {
     final leaveVM = Provider.of<LeaveViewModel>(context, listen: false);
     final profileVM = context.read<ProfileViewModel>();
 
@@ -133,6 +127,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         _isCompOff = leave.leaveDetails.isCompOff;
         _compDates = leave.leaveDetails.compDates.map(DateTime.parse).toList();
         _status = leave.leaveDetails.status;
+        _profileViewModel = profileVM;
       });
     }
   }
@@ -172,7 +167,9 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
       builder: (context, viewModel, child) {
         if (_leave == null) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: SpinKitSquareCircle(color: Colors.blue, size: 100),
+            ),
           );
         }
 
@@ -200,8 +197,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (_status.toLowerCase() != 'cancelled' &&
-                              _showStatusSection) ...[
+                          if (_status.toLowerCase() != 'cancelled') ...[
                             _buildStatusSection(leaveViewModel, isDark),
                             const SizedBox(height: 24),
                           ],
@@ -210,45 +206,13 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                           _buildDetailsCard(viewModel, isDark),
                           const SizedBox(height: 20),
                           if (_leave!.leaveDetails.reqStatusTracking.isNotEmpty)
-                            Container(
-                              margin: const EdgeInsets.only(bottom: 20),
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).cardColor.withOpacity(isDark ? 0.8 : 1.0),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: StatusTrackingCard(
-                                statusTracking:
-                                    _leave!.leaveDetails.reqStatusTracking,
-                              ),
+                            StatusTrackingCard(
+                              statusTracking:
+                                  _leave!.leaveDetails.reqStatusTracking,
                             ),
                           if (_leave!.leaveDetails.documents.isNotEmpty)
-                            Container(
-                              margin: const EdgeInsets.only(bottom: 20),
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).cardColor.withOpacity(isDark ? 0.8 : 1.0),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: DocumentsCard(
-                                documents: _leave!.leaveDetails.documents,
-                              ),
+                            DocumentsCard(
+                              documents: _leave!.leaveDetails.documents,
                             ),
                         ],
                       ),
@@ -267,23 +231,21 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   Widget _buildStatusSection(LeaveViewModel leaveViewModel, bool isDark) {
     final leaveDetails = leaveViewModel.selectedLeaveById?.leaveDetails;
 
-    // Parse or convert your fromDate (if it’s a String) into DateTime
-    final DateTime? fromDate = DateTime.tryParse(leaveDetails!.fromDate);
+    if (leaveDetails == null) {
+      return Center(
+        child: SpinKitSquareCircle(color: Colors.blueAccent, size: 100),
+      );
+    }
 
-    // Get today’s date without time (to ignore hour/minute differences)
+    final DateTime fromDate = leaveDetails.fromDate;
     final DateTime today = DateTime.now();
     final DateTime todayDateOnly = DateTime(today.year, today.month, today.day);
 
-    // Determine status
-    final bool isApproved = leaveDetails.status.toLowerCase() == 'approved';
-    final bool isPending = leaveDetails.status.toLowerCase() == 'pending';
-
-    // Updated cancel condition:
-    // - If NOT approved → can cancel anytime
-    // - If approved → can cancel only if leave starts today or later
+    final String status = leaveDetails.status.toLowerCase();
+    final bool isApproved = status == 'approved';
+    final bool isPending = status == 'pending';
     final bool canCancelLeave =
-        !isApproved ||
-        (isApproved && fromDate != null && !fromDate.isBefore(todayDateOnly));
+        !isApproved || (isApproved && !fromDate.isBefore(todayDateOnly));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -393,7 +355,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         confirmButtonText: confirmButtonText,
         onConfirm: () {
           onConfirm();
-          Navigator.pop(context); // Close the dialog after action
+          Navigator.pop(context);
         },
       ),
     );
@@ -402,20 +364,18 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   Widget _buildLeaveCard(ProfileViewModel viewModel, bool isDark) {
     final cardColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
     final leaveViewModel = context.read<LeaveViewModel>();
-    final duration = leaveViewModel.selectedLeaveById?.duration;
+    final duration = leaveViewModel.selectedLeaveById?.duration ?? 'Loading';
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.08),
-            blurRadius: 20,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 3,
             offset: const Offset(0, 4),
           ),
         ],
@@ -448,7 +408,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                               end: Alignment.bottomRight,
                             )
                           : null,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(24),
                       border: viewModel.isEditMode
                           ? Border.all(
                               color: Theme.of(
@@ -489,7 +449,12 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          DateFormatter.formatShort(_fromDate),
+                          () {
+                            debugPrint(
+                              '[LEAVE_DETAIL] Building From Date text: ${_fromDate.toIso8601String()}',
+                            );
+                            return DateFormat('dd/MM/yyyy').format(_fromDate);
+                          }(),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -502,23 +467,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                 ),
               ),
 
-              Container(
-                height: 60,
-                width: 1,
-                margin: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                      Colors.transparent,
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
-
+              SizedBox(width: 8),
               // To Date
               Expanded(
                 child: GestureDetector(
@@ -540,7 +489,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                               end: Alignment.bottomRight,
                             )
                           : null,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(24),
                       border: viewModel.isEditMode
                           ? Border.all(
                               color: Theme.of(
@@ -554,10 +503,10 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                             ),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             if (viewModel.isEditMode) ...[
                               Icon(
@@ -582,7 +531,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          DateFormatter.formatShort(_toDate),
+                          DateFormat('dd/MM/yyyy').format(_toDate),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -601,31 +550,12 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-              ),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.calendar_today_outlined,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
                 Text(
-                  '$duration ${duration == 1 ? 'Day' : 'Days'}',
+                  'Duration: $duration ${duration == 1 ? 'Day' : 'Days'}',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
@@ -649,13 +579,11 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.08),
-            blurRadius: 20,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 3,
             offset: const Offset(0, 4),
           ),
         ],
@@ -852,10 +780,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                   child: OutlinedButton(
                     onPressed: viewModel.isLoading
                         ? null
-                        : () {
-                            setState(() {
-                              _initializeData();
-                            });
+                        : () async {
+                            await _initializeData();
                             viewModel.resetEditMode();
                           },
                     style: OutlinedButton.styleFrom(
@@ -923,42 +849,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                   ),
                 ),
               ),
-            ] else ...[
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.secondary,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: () => viewModel.toggleEditMode(),
-                    icon: Icon(Icons.edit_outlined, color: Colors.white),
-                    label: Text(
-                      'Edit Leave',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
             ],
           ],
         ),
@@ -970,12 +860,21 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   Future<void> _selectFromDate() async {
     await _showCustomCalendar(
       title: 'Select From Date',
-      initialDate: DateTime.parse(_fromDate),
+      initialDate: _fromDate,
       onDateSelected: (date) {
         setState(() {
-          _fromDate = date.toIso8601String();
-          if ((DateTime.parse(_toDate)).isBefore(DateTime.parse(_fromDate))) {
+          _fromDate = date;
+          debugPrint('[LEAVE_DETAIL] Raw From Date: $date');
+          debugPrint('[LEAVE_DETAIL] Local From Date: ${date.toLocal()}');
+          debugPrint('[LEAVE_DETAIL] UTC From Date: ${date.toUtc()}');
+
+          debugPrint('[LEAVE_DETAIL] From Date selected: $_fromDate');
+
+          if (_toDate.isBefore(_fromDate)) {
             _toDate = _fromDate;
+            debugPrint(
+              '[LEAVE_DETAIL] To Date adjusted to match From Date: $_toDate',
+            );
           }
         });
       },
@@ -985,14 +884,18 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   Future<void> _selectToDate() async {
     await _showCustomCalendar(
       title: 'Select To Date',
-      initialDate: DateTime.parse(_toDate),
-      firstDate: DateTime.parse(_fromDate),
+      initialDate: _toDate,
+      firstDate: _fromDate,
       onDateSelected: (date) {
         setState(() {
-          _toDate = date.toIso8601String();
+          _toDate = date;
         });
       },
     );
+  }
+
+  void toggleEditModel() {
+    _profileViewModel.toggleEditMode();
   }
 
   Future<void> _showCustomCalendar({
@@ -1064,8 +967,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     final success = await viewModel.updateLeave(
       leaveId: _leave!.leaveId,
       userId: widget.userId,
-      fromDate: DateTime.parse(_fromDate),
-      toDate: DateTime.parse(_toDate),
+      fromDate: _fromDate,
+      toDate: _toDate,
       reason: _reasonController.text.trim(),
       isCompOff: _isCompOff,
       isHalfDay: _isHalfDay,
