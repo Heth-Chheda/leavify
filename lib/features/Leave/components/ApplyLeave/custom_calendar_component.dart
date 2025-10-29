@@ -117,7 +117,7 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFFFF8A4C),
+            color: Colors.blueAccent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -492,7 +492,7 @@ class _CustomCalendarState extends State<CustomCalendarComponent> {
       child: ElevatedButton(
         onPressed: isValid ? _handleConfirm : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isValid ? const Color(0xFFFF8A4C) : Colors.grey[300],
+          backgroundColor: isValid ? Colors.blueAccent : Colors.grey[300],
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(

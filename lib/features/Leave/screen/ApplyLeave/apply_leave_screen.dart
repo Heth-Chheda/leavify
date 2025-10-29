@@ -4,7 +4,7 @@ import 'package:leavify/core/utils/components/calendar/my_app_date_selection_cal
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
 import 'package:leavify/core/utils/components/dropdownmenu/my_app_drop_down_menu.dart';
 import 'package:leavify/core/utils/components/textfield/my_app_text_field.dart';
-import 'package:leavify/core/utils/helpers/document_helper.dart';
+import 'package:leavify/core/utils/helpers/documents/ui/document_ui.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/reportee_picker.dart';
@@ -130,7 +130,10 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                       const SizedBox(height: 24),
                       _buildReasonSection(leaveViewModel),
                       const SizedBox(height: 24),
-                      _buildDocumentsSection(leaveViewModel),
+                      DocumentUploadSection(
+                        leaveViewModel: leaveViewModel,
+                        parentContext: context,
+                      ),
                       const SizedBox(height: 24),
                       if (homeViewModel.userRole.toLowerCase() !=
                           'employee') ...[
@@ -463,177 +466,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             );
           },
         ),
-      ],
-    );
-  }
-
-  void pickDocuments(
-    BuildContext context,
-    LeaveViewModel leaveViewModel,
-  ) async {
-    final updatedFiles = await DocumentHelper.pickDocuments(
-      context,
-      leaveViewModel.selectedDocuments,
-    );
-    leaveViewModel.updateSelectedDocuments(updatedFiles);
-  }
-
-  // MARK: - DOCUMENT SECTION
-  Widget _buildDocumentsSection(LeaveViewModel leaveViewModel) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: () => pickDocuments(context, leaveViewModel),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
-                  blurRadius: 4,
-                  offset: const Offset(0, 0),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Upload documents',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
-                  ),
-                ),
-                Text(
-                  'PDF, DOC, JPG, PNG up to 10MB',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        if (leaveViewModel.selectedDocuments.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
-                  blurRadius: 4,
-                  offset: const Offset(0, 0),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.folder,
-                      color: AppColors.highlightGreen,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Selected Documents (${leaveViewModel.selectedDocuments.length})',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ...List.generate(leaveViewModel.selectedDocuments.length, (
-                  index,
-                ) {
-                  final document = leaveViewModel.selectedDocuments[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.highlightBlue.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Icon(
-                            leaveViewModel.getFileIcon(
-                              document.extension ?? '',
-                            ),
-                            color: AppColors.highlightBlue,
-                            size: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                document.name,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                leaveViewModel.formatFileSize(document.size),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => DocumentHelper.removeDocument(
-                            leaveViewModel.selectedDocuments,
-                            index,
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              color: Colors.red,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }

@@ -141,6 +141,17 @@ class LeaveViewModel extends BaseViewModel {
     notifyListeners();
   }
 
+  // MARK: - Document Helpers
+  void removeDocumentAt(int index) {
+    if (selectedLeaveById == null) return;
+    final docs = selectedLeaveById!.leaveDetails.documents;
+
+    if (index < 0 || index >= docs.length) return;
+
+    docs.removeAt(index);
+    notifyListeners();
+  }
+
   Future<void> getReportees() async {
     try {
       update(isLoading: true, errorMessage: null);
