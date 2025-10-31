@@ -2,8 +2,6 @@ import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.da
 import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 
-enum UserRole { employee, manager, hr }
-
 class CustomBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final Function(int) onTabSelected;

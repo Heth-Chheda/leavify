@@ -1,5 +1,5 @@
 import 'package:intl/intl.dart';
-import 'base_formatter.dart';
+import '../base_formatter.dart';
 
 class DateFormatter extends BaseFormatter {
   DateFormatter({super.locale});

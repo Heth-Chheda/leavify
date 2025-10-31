@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
-import 'package:leavify/core/utils/formatters/date_formatter.dart';
+import 'package:leavify/core/utils/constants/status_color/status_colors.dart';
+import 'package:leavify/core/utils/formatters/date/date_formatter.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:provider/provider.dart';
@@ -218,24 +219,7 @@ Widget _employeeInfo({required GetAllResponse request}) {
 Widget _statusBadge({required String status}) {
   return Builder(
     builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-
-      Color getStatusColor() {
-        switch (status.toLowerCase()) {
-          case 'pending':
-            return const Color(0xFFFFA200); // highlightOrange
-          case 'approved':
-            return const Color(0xFF51DC8E); // highlightGreen
-          case 'rejected':
-            return const Color(0xFFFF3E6C); // highlightPink
-          case 'escalated':
-            return const Color(0xFF4735DD); // highlightBlue
-          default:
-            return const Color(0xFF61BFC2); // highlightTeal
-        }
-      }
-
-      final statusColor = getStatusColor();
+      final statusColor = StatusColors.fromStatus(status);
 
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -244,7 +228,7 @@ Widget _statusBadge({required String status}) {
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: statusColor.withOpacity(isDark ? 0.1 : 0.05),
+              color: statusColor.withOpacity(0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -253,7 +237,7 @@ Widget _statusBadge({required String status}) {
         child: Text(
           status.toUpperCase(),
           style: TextStyle(
-            color: isDark ? Colors.white : Colors.black,
+            color: Colors.black,
             fontWeight: FontWeight.w600,
             fontSize: 11,
             letterSpacing: 0.5,

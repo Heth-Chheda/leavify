@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
-import 'package:leavify/core/utils/formatters/date_formatter.dart';
+import 'package:leavify/core/utils/constants/status_color/status_colors.dart';
+import 'package:leavify/core/utils/formatters/date/date_formatter.dart';
 import 'package:leavify/features/Authentication/domain/models/user.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Leave/models/general/my_leaves.dart';
@@ -78,7 +79,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user == null) {
       return SafeArea(
         child: Scaffold(
-          appBar: AppBar(title: const Text('My Profile'), centerTitle: true),
           backgroundColor: theme.scaffoldBackgroundColor,
           body: Center(
             child: Column(
@@ -120,15 +120,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       top: false,
       bottom: true,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text("My Profile", textAlign: TextAlign.center),
-          centerTitle: true,
-          leading: const BackButton(),
-        ),
         backgroundColor: theme.scaffoldBackgroundColor,
         body: RefreshIndicator(
           onRefresh: () async {
-            // reload the user data and leaves
             viewModel.loadUserLeaves(user?.id ?? '');
           },
           child: SingleChildScrollView(
@@ -405,34 +399,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildLeaveItemCard(MyLeaves leave, ThemeData theme) {
-    final String statusLower = leave.status.toLowerCase();
-    final bool isApproved = statusLower == 'approved';
-    final bool isRejected =
-        statusLower == 'rejected' || statusLower == 'denied';
-    final bool isPending = statusLower == 'pending';
+    final String statusUpper = leave.status.toUpperCase();
+    final Color statusColor = StatusColors.fromStatus(leave.status);
 
     // Check if from and to dates are the same
     final bool isSingleDay =
         DateFormat('dd MMM yyyy').format(leave.fromDate) ==
         DateFormat('dd MMM yyyy').format(leave.toDate);
-
-    // Determine status color and text
-    Color statusColor;
-    String statusText;
-
-    if (isApproved) {
-      statusColor = const Color(0xFF10B981);
-      statusText = 'APPROVED';
-    } else if (isRejected) {
-      statusColor = const Color(0xFFEF4444);
-      statusText = 'REJECTED';
-    } else if (isPending) {
-      statusColor = const Color(0xFFF59E0B);
-      statusText = 'PENDING';
-    } else {
-      statusColor = theme.colorScheme.onSurface.withOpacity(0.5);
-      statusText = leave.status.toUpperCase();
-    }
 
     return Container(
       height: 180,
@@ -497,7 +470,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(height: 12),
 
-          // Leave reason with subtle background - single line
+          // Leave reason
           Row(
             children: [
               Expanded(
@@ -516,7 +489,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const Spacer(),
 
-          // Status badge - always shown
+          // Status badge
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -529,7 +502,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  statusText,
+                  statusUpper,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,

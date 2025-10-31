@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/components/button/my_app_button.dart';
+import 'package:leavify/core/utils/components/statustracking/status_tracking.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
-import 'package:leavify/core/utils/formatters/date_formatter.dart';
+import 'package:leavify/core/utils/constants/enums/enums.dart';
+import 'package:leavify/core/utils/formatters/date/date_formatter.dart';
 import 'package:leavify/core/utils/helpers/documents/ui/viewer/document_viewer.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Leave/components/manager/conflict/conflict_dialog.dart';
@@ -133,8 +135,18 @@ class _PendingRequestDetailScreenState
             const SizedBox(height: 16),
           if (leaveData.leaveDetails.reqStatusTracking.isNotEmpty)
             StatusTrackingCard(
-              statusTracking: leaveData.leaveDetails.reqStatusTracking,
+              statusTracking: leaveData.leaveDetails.reqStatusTracking.map((
+                tracking,
+              ) {
+                return StatusTrackingItem(
+                  status: tracking.status,
+                  processedBy: tracking.processedBy,
+                  processedAt: tracking.processedAt,
+                  comment: tracking.comment,
+                );
+              }).toList(),
             ),
+
           if (leaveData.leaveDetails.reqStatusTracking.isNotEmpty)
             const SizedBox(height: 16),
           if (leaveData.leaveDetails.isEscalated &&
@@ -559,132 +571,6 @@ class _ReasonCard extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-// MARK: - Status Tracking Card
-class StatusTrackingCard extends StatelessWidget {
-  final List<ReqStatusTracking> statusTracking;
-
-  const StatusTrackingCard({super.key, required this.statusTracking});
-
-  @override
-  Widget build(BuildContext context) {
-    return _InfoCard(
-      title: 'Status History',
-      children: [
-        ...statusTracking.asMap().entries.map((entry) {
-          final index = entry.key;
-          final tracking = entry.value;
-          final isLast = index == statusTracking.length - 1;
-
-          return _TimelineItem(tracking: tracking, isLast: isLast);
-        }),
-      ],
-    );
-  }
-}
-
-// MARK: - Timeline Item
-class _TimelineItem extends StatelessWidget {
-  final ReqStatusTracking tracking;
-  final bool isLast;
-
-  const _TimelineItem({required this.tracking, required this.isLast});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: _getStatusColor(tracking.status),
-                shape: BoxShape.circle,
-              ),
-            ),
-            if (!isLast)
-              Container(
-                width: 2,
-                height: 40,
-                color: colorScheme.onSurface.withOpacity(0.2),
-                margin: const EdgeInsets.symmetric(vertical: 4),
-              ),
-          ],
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                tracking.status.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _getStatusColor(tracking.status),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'By: ${tracking.processedBy}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurface.withOpacity(0.7),
-                ),
-              ),
-              Text(
-                DateFormat('dd MMM yyyy, hh:mm a').format(tracking.processedAt),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurface.withOpacity(0.7),
-                ),
-              ),
-              if (tracking.comment.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.onSurface.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    tracking.comment,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-              ],
-              if (!isLast) const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return Colors.orange.shade600;
-      case 'approved':
-        return Colors.green.shade600;
-      case 'rejected':
-        return Colors.red.shade600;
-      case 'escalated':
-        return Colors.purple.shade600;
-      default:
-        return Colors.grey.shade600;
-    }
   }
 }
 

@@ -9,8 +9,6 @@ import 'package:leavify/router/app_navigator.dart';
 import 'package:leavify/router/route_names.dart';
 import 'package:provider/provider.dart';
 
-enum LeaveStatus { pending, approved, rejected, escalated }
-
 class PendingRequestsScreen extends StatefulWidget {
   const PendingRequestsScreen({super.key});
 

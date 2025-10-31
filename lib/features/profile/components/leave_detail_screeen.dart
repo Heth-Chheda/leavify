@@ -4,12 +4,14 @@ import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/components/button/my_app_button.dart';
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
 import 'package:leavify/core/utils/components/container/my_app_container.dart';
+import 'package:leavify/core/utils/components/dropdownmenu/my_app_drop_down_menu.dart';
+import 'package:leavify/core/utils/components/statustracking/status_tracking.dart';
 import 'package:leavify/core/utils/components/textfield/my_app_text_field.dart';
 import 'package:leavify/core/utils/components/toast/app_toast.dart';
+import 'package:leavify/core/utils/constants/enums/enums.dart';
 import 'package:leavify/core/utils/helpers/documents/ui/document_ui.dart';
 import 'package:leavify/core/utils/helpers/documents/ui/viewer/document_viewer.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/custom_calendar_component.dart';
-import 'package:leavify/features/Leave/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
@@ -46,6 +48,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   late String _status;
   late ProfileViewModel _profileViewModel;
   int _originalDocumentCount = 0;
+  late String _selectedLeaveType;
 
   @override
   void initState() {
@@ -56,75 +59,82 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     });
   }
 
-  Future<void> onRemindPressed() async {
+  Future<void> handleLeaveAction(LeaveActionType type) async {
     final leaveVM = context.read<LeaveViewModel>();
-    if (leaveVM.isRemindLoading) return;
-    await leaveVM.sendReminderForLeave(leaveId: widget.leaveId);
+    final leaveId = widget.leaveId;
+
+    final isLoading = switch (type) {
+      LeaveActionType.remind => leaveVM.isRemindLoading,
+      LeaveActionType.escalate => leaveVM.isEscalateLoading,
+      LeaveActionType.cancel => leaveVM.isCancelLoading,
+    };
+    if (isLoading) return;
+
+    switch (type) {
+      case LeaveActionType.remind:
+        await leaveVM.sendReminderForLeave(leaveId: leaveId);
+        break;
+      case LeaveActionType.escalate:
+        await leaveVM.escalateLeave(leaveId: leaveId);
+        break;
+      case LeaveActionType.cancel:
+        await leaveVM.cancelLeave(leaveId: leaveId);
+        break;
+    }
+
     if (!mounted) return;
+
     final error = leaveVM.errorMessage;
-    final response = leaveVM.reminderResponse;
-    switch ((error != null, response?.success)) {
-      case (true, _):
-        leaveVM.showError(context, 'Error reminding leave');
+    bool success = false;
+    String successMessage = '';
+    String errorMessage = '';
+
+    switch (type) {
+      case LeaveActionType.remind:
+        final response = leaveVM.reminderResponse;
+        success = response?.success ?? false;
+        successMessage = 'Reminder sent!';
+        errorMessage = 'Error reminding leave';
         break;
-      case (false, true):
-        leaveVM.showSuccess(context, 'Reminder sent!');
-        Navigator.pop(context, true);
+
+      case LeaveActionType.escalate:
+        final response = leaveVM.escalateLeaveResponse;
+        success = response?.success ?? false;
+        successMessage = 'Escalation sent!';
+        errorMessage = 'Error escalating leave';
         break;
-      default:
-        leaveVM.showError(context, 'Something went wrong');
-        debugPrint('Reminder response unhandled: $response');
+
+      case LeaveActionType.cancel:
+        final response = leaveVM.cancelLeaveResponse;
+        success = response?.success ?? false;
+        successMessage = 'Leave cancelled successfully';
+        errorMessage = 'Error cancelling leave';
+        break;
+    }
+
+    if (error != null) {
+      leaveVM.showError(context, errorMessage);
+    } else if (success) {
+      leaveVM.showSuccess(context, successMessage);
+      Navigator.pop(context, true);
+    } else {
+      leaveVM.showError(context, 'Something went wrong');
     }
   }
 
-  Future<void> onEscalatePressed() async {
-    final leaveVM = context.read<LeaveViewModel>();
+  void _resetValues() {
+    if (_leave == null) return;
 
-    if (leaveVM.isEscalateLoading) return;
-
-    await leaveVM.escalateLeave(leaveId: widget.leaveId);
-    if (!mounted) return;
-
-    final error = leaveVM.errorMessage;
-    final response = leaveVM.escalateLeaveResponse;
-
-    switch ((error != null, response?.success)) {
-      case (true, _):
-        leaveVM.showError(context, 'Error escalating leave');
-        break;
-      case (false, true):
-        leaveVM.showSuccess(context, 'Escalation sent!');
-        Navigator.pop(context, true);
-        break;
-      default:
-        leaveVM.showError(context, 'Something went wrong');
-        debugPrint('Escalation response unhandled: $response');
-    }
-  }
-
-  Future<void> onCancelPressed() async {
-    final leaveVM = context.read<LeaveViewModel>();
-
-    if (leaveVM.isCancelLoading) return;
-
-    await leaveVM.cancelLeave(leaveId: widget.leaveId);
-    if (!mounted) return;
-
-    final error = leaveVM.errorMessage;
-    final response = leaveVM.cancelLeaveResponse;
-
-    switch ((error != null, response?.success)) {
-      case (true, _):
-        leaveVM.showError(context, 'Error cancelling leave');
-        break;
-      case (false, true):
-        leaveVM.showSuccess(context, 'Leave cancelled successfully');
-        Navigator.pop(context, true);
-        break;
-      default:
-        leaveVM.showError(context, 'Something went wrong');
-        debugPrint('Cancel leave response unhandled: $response');
-    }
+    setState(() {
+      _reasonController.text = _leave!.leaveDetails.reason;
+      _fromDate = _leave!.leaveDetails.fromDate;
+      _toDate = _leave!.leaveDetails.toDate;
+      _isHalfDay = _leave!.leaveDetails.isHalfDay;
+      _isCompOff = _leave!.leaveDetails.isCompOff;
+      _compDates = _leave!.leaveDetails.compDates.map(DateTime.parse).toList();
+      _status = _leave!.leaveDetails.status;
+      _selectedLeaveType = _leave!.leaveDetails.subType;
+    });
   }
 
   Future<void> _initializeData() async {
@@ -148,6 +158,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         _status = leave.leaveDetails.status;
         _profileViewModel = profileVM;
         _originalDocumentCount = leave.leaveDetails.documents.length;
+        _selectedLeaveType = leave.leaveDetails.subType;
       });
     }
   }
@@ -156,26 +167,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   void dispose() {
     _reasonController.dispose();
     super.dispose();
-  }
-
-  Future<bool> _showDiscardConfirmationDialog() async {
-    return await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return ConfirmationDialog(
-              title: 'Discard Changes?',
-              body:
-                  'You have unsaved changes in your leave application. If you go back now, all your progress will be lost.',
-              illustrationAsset: 'lib/assets/gifs/remove.gif',
-              illustrationHeight: 180,
-              confirmButtonText: 'Discard',
-              onConfirm: () => Navigator.of(context).pop(true),
-              buttonBackgroundColor: Colors.red,
-            );
-          },
-        ) ??
-        false;
   }
 
   // MARK: MAIN BUILD
@@ -197,8 +188,18 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
         return WillPopScope(
           onWillPop: () async {
             if (viewModel.isEditMode) {
-              final shouldExit = await _showDiscardConfirmationDialog();
-              return shouldExit;
+              _showConfirmationDialog(
+                title: 'Discard Changes?',
+                body:
+                    'You have unsaved changes in your leave application. If you go back now, all your progress will be lost.',
+                confirmButtonText: 'Discard',
+                illustrationAsset: 'lib/assets/gifs/remove.gif',
+                illustrationHeight: 180,
+                onConfirm: () {
+                  Navigator.of(context).pop(true);
+                },
+              );
+              return false;
             }
             return true;
           },
@@ -225,6 +226,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                             ],
                             _buildLeaveCard(viewModel),
                             const SizedBox(height: 20),
+                            _buildLeaveTypeCard(viewModel),
+                            const SizedBox(height: 20),
                             _buildDetailsCard(viewModel),
                             const SizedBox(height: 20),
                             if (viewModel.isEditMode) ...[
@@ -249,10 +252,24 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                                 .leaveDetails
                                 .reqStatusTracking
                                 .isNotEmpty)
-                              StatusTrackingCard(
-                                statusTracking:
-                                    _leave!.leaveDetails.reqStatusTracking,
-                              ),
+                              if (_leave!
+                                  .leaveDetails
+                                  .reqStatusTracking
+                                  .isNotEmpty)
+                                StatusTrackingCard(
+                                  statusTracking: _leave!
+                                      .leaveDetails
+                                      .reqStatusTracking
+                                      .map((tracking) {
+                                        return StatusTrackingItem(
+                                          status: tracking.status,
+                                          processedBy: tracking.processedBy,
+                                          processedAt: tracking.processedAt,
+                                          comment: tracking.comment,
+                                        );
+                                      })
+                                      .toList(),
+                                ),
                           ],
                         ),
                       ),
@@ -265,6 +282,59 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildLeaveTypeCard(ProfileViewModel profileViewModel) {
+    final List<String> leaveTypes = ['Casual', 'Sick', 'Emergency', 'Annual'];
+    final currentType = leaveTypes.firstWhere(
+      (type) => type.toUpperCase() == _selectedLeaveType.toUpperCase(),
+      orElse: () => leaveTypes[0],
+    );
+
+    return MyAppContainer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Leave Type",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+
+          if (!profileViewModel.isEditMode)
+            Text(currentType, style: const TextStyle(fontSize: 14))
+          else
+            MyAppDropDownMenu<String>(
+              value: currentType,
+              hint: 'Select Leave Type',
+              borderRadius: 15,
+              borderColor: Colors.transparent,
+              dropdownColor: Colors.white,
+              textColor: Colors.black87,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.25),
+                  blurRadius: 2,
+                  offset: const Offset(0, 0),
+                ),
+              ],
+              items: leaveTypes.map((item) {
+                return DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(item, style: const TextStyle(fontSize: 14)),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedLeaveType = value; // 👈 update local variable
+                  });
+                }
+              },
+            ),
+        ],
+      ),
     );
   }
 
@@ -310,8 +380,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                         'Are you sure you want to send a reminder for this leave?',
                     confirmButtonText: 'Send',
                     onConfirm: () {
-                      onRemindPressed();
-                      debugPrint('Reminder sent');
+                      handleLeaveAction(LeaveActionType.remind);
                     },
                     illustrationAsset: 'lib/assets/reminder.png',
                     illustrationHeight: 180,
@@ -338,8 +407,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                   body: 'Are you sure you want to escalate this leave request?',
                   confirmButtonText: 'Escalate',
                   onConfirm: () {
-                    onEscalatePressed();
-                    debugPrint('Leave escalated');
+                    handleLeaveAction(LeaveActionType.escalate);
                   },
                   illustrationAsset: 'lib/assets/escalate.png',
                 ),
@@ -362,8 +430,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                     body: 'Are you sure you want to cancel this leave?',
                     confirmButtonText: 'Cancel',
                     onConfirm: () {
-                      onCancelPressed();
-                      debugPrint('Leave cancelled');
+                      handleLeaveAction(LeaveActionType.cancel);
                     },
                     illustrationAsset: 'lib/assets/cancel.png',
                   ),
@@ -738,6 +805,9 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
   void toggleEditModel() {
     _profileViewModel.toggleEditMode();
+    if (_profileViewModel.isEditMode == false) {
+      _resetValues();
+    }
   }
 
   Future<void> _showCustomCalendar({
@@ -788,6 +858,10 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
     final leaveViewModel = context.read<LeaveViewModel>();
     if (!_formKey.currentState!.validate()) return;
 
+    final hasLeaveTypeChanges =
+        _selectedLeaveType.toLowerCase() !=
+        leaveViewModel.selectedLeaveType?.toLowerCase();
+
     // Compare new values with old ones
     final hasDateChanges =
         _fromDate != _leave!.leaveDetails.fromDate ||
@@ -795,11 +869,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
     final hasReasonChange =
         _reasonController.text.trim() != _leave!.leaveDetails.reason.trim();
-
-    final hasCompOffChanges =
-        _isCompOff != _leave!.leaveDetails.isCompOff ||
-        _isHalfDay != _leave!.leaveDetails.isHalfDay ||
-        _compDates.toString() != _leave!.leaveDetails.compDates.toString();
 
     final hasNewDocuments = leaveViewModel.selectedDocuments.isNotEmpty;
 
@@ -810,8 +879,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
     final hasChanges =
         hasDateChanges ||
+        hasLeaveTypeChanges ||
         hasReasonChange ||
-        hasCompOffChanges ||
         hasNewDocuments ||
         hasDeletedDocuments;
 
@@ -851,6 +920,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
       isHalfDay: _isHalfDay,
       compDates: _compDates,
       documents: allDocuments,
+      leaveType: _selectedLeaveType,
     );
 
     if (success && mounted) {

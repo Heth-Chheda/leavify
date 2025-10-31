@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:leavify/core/utils/formatters/date_formatter.dart';
+import 'package:leavify/core/utils/formatters/date/date_formatter.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 
 class LeaveCard extends StatelessWidget {

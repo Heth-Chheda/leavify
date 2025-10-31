@@ -1,6 +1,7 @@
 import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/core/utils/constants/enums/enums.dart';
 import 'package:leavify/features/Authentication/domain/response/get_category_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_holiday_list_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';

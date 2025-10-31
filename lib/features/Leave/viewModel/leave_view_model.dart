@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
-import 'package:leavify/core/utils/formatters/date_formatter.dart';
+import 'package:leavify/core/utils/constants/enums/enums.dart';
+import 'package:leavify/core/utils/formatters/date/date_formatter.dart';
 // import 'package:leavify/dummydata/leave/dummy_leave_detail.dart';
 // import 'package:leavify/dummydata/leave/dummy_pending_request_user.dart';
 // import 'package:leavify/dummydata/leave/dummy_team_users.dart';
@@ -24,8 +25,6 @@ import 'package:leavify/router/app_navigator.dart';
 import 'package:leavify/router/route_names.dart';
 
 import '../data/leave_repository.dart';
-
-enum LeaveFormType { leave, extra, workFromHome }
 
 class LeaveViewModel extends BaseViewModel {
   final LeaveRepository _repository = LeaveRepository();

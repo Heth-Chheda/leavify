@@ -7,8 +7,6 @@ import 'package:leavify/features/Leave/models/general/my_leaves.dart';
 import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
 import 'package:leavify/features/Profile/data/profile_repository.dart';
 
-enum ProfileViewState { loading, success, error }
-
 class ProfileViewModel extends BaseViewModel {
   final LeaveRepository _repository = LeaveRepository();
   final ProfileRepository _userRepository = ProfileRepository();
@@ -66,6 +64,7 @@ class ProfileViewModel extends BaseViewModel {
     bool? isHalfDay,
     List<DateTime>? compDates,
     List<LeaveDocumentForApply>? documents,
+    String? leaveType,
   }) async {
     update(isLoading: true, errorMessage: null);
     notifyListeners();
@@ -99,6 +98,9 @@ class ProfileViewModel extends BaseViewModel {
       }
       if (documents != null && documents.isNotEmpty) {
         updateData['documents'] = documents.map((doc) => doc.toJson()).toList();
+      }
+      if (leaveType != null && leaveType.isNotEmpty) {
+        updateData['subType'] = leaveType.toUpperCase();
       }
 
       // Validate that at least one field is being updated

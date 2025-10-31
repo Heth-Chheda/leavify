@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_sliding_toast/flutter_sliding_toast.dart';
-
-enum ToastType { success, error, info }
+import 'package:leavify/core/utils/constants/enums/enums.dart';
 
 class AppToast {
   static void show({
