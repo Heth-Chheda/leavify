@@ -1,4 +1,4 @@
-enum LeaveStatus { pending, approved, rejected, escalated }
+import 'package:leavify/core/utils/constants/enums/enums.dart';
 
 class LeaveApplication {
   final String id;

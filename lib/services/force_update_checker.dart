@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:leavify/core/utils/theme/app_theme.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// A wrapper widget that checks for a forced app update as soon as the app starts.
@@ -115,8 +114,8 @@ class UpdateDialog extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.primaryBlueDark, // Deep blue
-              AppTheme.secondaryBlueDark, // Bright blue
+              Colors.blueAccent, // Deep blue
+              Colors.lightBlueAccent, // Bright blue
             ],
           ),
           borderRadius: BorderRadius.circular(20),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-enum MyButtonType { elevated, outlined, text }
+import 'package:leavify/core/utils/constants/enums/enums.dart';
 
 class MyAppButton extends StatelessWidget {
   final String label;

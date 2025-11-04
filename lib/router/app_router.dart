@@ -13,7 +13,6 @@ import 'package:leavify/features/Home/screens/home_screen.dart';
 import 'package:leavify/features/Authentication/view/login_view.dart';
 
 // ViewModels
-import 'package:leavify/features/Profile/viewmodel/profile_view_model.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:leavify/features/Authentication/viewmodel/login_view_model.dart';
 
@@ -123,10 +122,7 @@ class AppRouter {
       // ----------------- PROFILE ROUTE -----------------
       case RouteNames.profile:
         return MaterialPageRoute(
-          builder: (_) => ChangeNotifierProvider(
-            create: (_) => ProfileViewModel(),
-            child: const ProfileScreen(),
-          ),
+          builder: (_) => _withAppBar(const ProfileScreen(), 'Profile'),
           settings: settings,
         );
 

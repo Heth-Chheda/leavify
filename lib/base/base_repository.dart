@@ -3,12 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
-
-/// Enum for supported HTTP methods
-enum HttpMethod { get, post, put, delete }
-
-/// Enum for body type
-enum BodyType { json, formUrlEncoded, multipart }
+import 'package:leavify/core/utils/constants/enums/enums.dart';
 
 /// Custom API exception for clarity
 class ApiException implements Exception {
@@ -25,12 +20,10 @@ class BaseRepository {
   final int _maxRetries = 2;
 
   // ⚠️ DEVELOPMENT ONLY: Flag to enable/disable SSL certificate verification bypass
-  // TODO: Remove this before deploying to production!
   static const bool _bypassSSLCertificate = true;
 
   // ⚠️ DEVELOPMENT ONLY: Custom HTTP client that bypasses SSL certificate verification
   // This is INSECURE and should NEVER be used in production!
-  // TODO: Remove this method and use default http client in production
   http.Client _getHttpClient() {
     if (_bypassSSLCertificate) {
       // Create an HTTP client that accepts all certificates (INSECURE!)
