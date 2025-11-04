@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 // import 'package:leavify/dummydata/announcement/announcement.dart';
 // import 'package:leavify/dummydata/users/balance_leaves.dart';
@@ -12,7 +12,7 @@ import 'package:leavify/features/Authentication/domain/response/get_holiday_list
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Leave/models/response/get_announcements_response.dart';
 
-class HomeViewModel extends ChangeNotifier {
+class HomeViewModel extends BaseViewModel {
   final AuthenticationRepository _authenticationRepository =
       AuthenticationRepository();
 
@@ -186,6 +186,12 @@ class HomeViewModel extends ChangeNotifier {
     await _fetchAnnouncements();
     await _getHolidayList();
     // await _getLeaveBalance();
+  }
+
+  // MARK: - LOGOUT
+  Future<bool> logout() async {
+    final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
+    return await _authenticationRepository.logout(accessToken: accessToken);
   }
 
   List<LeaveDetailsWithoutLeaveId> get myUpcomingLeaves =>

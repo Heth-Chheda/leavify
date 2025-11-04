@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
+import 'package:leavify/core/utils/components/toast/app_toast.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
@@ -216,33 +217,27 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   void _performLogout(BuildContext context) async {
     try {
-      // First, clear the data immediately to prevent further provider access
       if (context.mounted) {
+        // Load the home view Model // just read the home view Model.
         final homeViewModel = context.read<HomeViewModel>();
-        homeViewModel.clearData();
-      }
 
-      // Clear SharedPreferences
-      await AppStorage.clearAllExcept("USER_FCM_TOKEN");
+        // Call logout API
+        final isLogoutSuccess = await homeViewModel.logout();
 
-      // Navigate immediately after clearing data
-      if (context.mounted) {
-        // Navigator.pushNamed(context, '/login');
-        AppNavigator.setRootView(RouteNames.login);
+        // Navigate based on result
+        if (isLogoutSuccess) {
+          homeViewModel.clearData();
+          // Clear data and preferences
+          await AppStorage.clearAllExcept("USER_FCM_TOKEN");
+          AppNavigator.setRootView(RouteNames.login);
+        } else {
+          // debugPrint("Logout failed.");
+          // Optionally show a toast/snackbar here
+          homeViewModel.showError(context, 'Something went wrong.');
+        }
       }
     } catch (e) {
-      // If provider access fails during logout, proceed anyway
-      debugPrint('Error during logout: $e');
-
-      // Still try to clear storage and navigate
-      try {
-        await AppStorage.clearAllExcept("USER_FCM_TOKEN");
-        if (context.mounted) {
-          Navigator.pushNamed(context, '/login');
-        }
-      } catch (e2) {
-        debugPrint('Critical logout error: $e2');
-      }
+      AppToast.error(context, 'Something went wrong.');
     }
   }
 

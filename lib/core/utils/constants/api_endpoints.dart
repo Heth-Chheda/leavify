@@ -46,4 +46,7 @@ class ApiEndpoints {
   // Leaves // Manager
   static final String processLeave = '$baseUrl/request/process';
   static final String getPendingLeaves = '$baseUrl/request/getall';
+
+  // logout
+  static final String logout = '$baseUrl/auth/logout';
 }

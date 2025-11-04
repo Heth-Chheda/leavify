@@ -84,4 +84,22 @@ class AuthenticationRepository extends BaseRepository {
       fromJson: GetHolidayListResponse.fromJson,
     );
   }
+
+  // MARK: - LOGOUT
+  Future<bool> logout({required String accessToken}) async {
+    try {
+      await performRequest<Map<String, dynamic>>(
+        url: ApiEndpoints.logout,
+        method: HttpMethod.post,
+        accessToken: accessToken,
+        fromJson: (json) => json,
+      );
+      // If we reach here, performRequest didn't throw → means 2xx response
+      return true;
+    } on ApiException {
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
 }
