@@ -38,7 +38,7 @@ class PendingRequestCard extends StatelessWidget {
             children: [
               // Main content
               Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.fromLTRB(10, 10, 100, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [_requestHeader(request: request)],
@@ -49,13 +49,21 @@ class PendingRequestCard extends StatelessWidget {
               Positioned(
                 top: 15,
                 right: 15,
-                child: _statusBadge(status: request.status),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _statusBadge(status: request.status),
+                    const SizedBox(height: 4),
+                    if ((request.actionTaken ?? '').isNotEmpty)
+                      _actionTakenTag(request.actionTaken!),
+                  ],
+                ),
               ),
 
               if (shouldShowBell)
                 Positioned(
-                  bottom: 15,
-                  right: 20, // You can change this position as needed
+                  bottom: 8,
+                  right: 20,
                   child: FaIcon(
                     FontAwesomeIcons.solidBell,
                     color: const Color(0xFFFFD43B),
@@ -65,6 +73,53 @@ class PendingRequestCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // MARK: - ACTION_TAKEN TAG
+  Widget _actionTakenTag(String actionTaken) {
+    final normalized = actionTaken.trim().toLowerCase();
+    late final Color bgColor;
+    late final Color textColor;
+    late final String displayText;
+
+    switch (normalized) {
+      case 'approved':
+        bgColor = Colors.green.withOpacity(0.15);
+        textColor = Colors.green[700]!;
+        displayText = 'Approved';
+        break;
+      case 'rejected':
+        bgColor = Colors.red.withOpacity(0.15);
+        textColor = Colors.red[700]!;
+        displayText = 'Rejected';
+        break;
+      default:
+        bgColor = Colors.grey.withOpacity(0.1);
+        textColor = Colors.grey[700]!;
+        displayText = 'Pending';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            displayText,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
