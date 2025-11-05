@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:leavify/core/utils/components/container/my_app_container.dart';
+import 'package:leavify/core/utils/components/toast/app_toast.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/features/Leave/models/general/leave_document.dart';
 import 'package:path_provider/path_provider.dart';
@@ -215,9 +216,7 @@ class _DocumentViewerDialogState extends State<DocumentViewerDialog> {
         await File(filePath).writeAsBytes(response.bodyBytes);
 
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Downloaded to: $filePath')));
+          AppToast.success(context, 'Downloaded the document successfully');
         }
 
         await OpenFilex.open(filePath);
