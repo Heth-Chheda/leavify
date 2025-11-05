@@ -44,10 +44,10 @@ class ApplyLeaveRequestModel {
 }
 
 class LeaveDocumentForApply {
-  final String docType;
-  final String docBytes;
+  final String? docType;
+  final String? docBytes;
 
-  LeaveDocumentForApply({required this.docType, required this.docBytes});
+  LeaveDocumentForApply({this.docType, this.docBytes});
 
   Map<String, dynamic> toJson() => {'docType': docType, 'docBytes': docBytes};
 }

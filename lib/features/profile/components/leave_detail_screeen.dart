@@ -855,83 +855,89 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   }
 
   Future<void> _saveChanges() async {
+    if (!mounted) return;
     final leaveViewModel = context.read<LeaveViewModel>();
     if (!_formKey.currentState!.validate()) return;
 
+    final leave = _leave!;
+    final details = leave.leaveDetails;
+
     final hasLeaveTypeChanges =
-        _selectedLeaveType.toLowerCase() !=
-        leaveViewModel.selectedLeaveType?.toLowerCase();
-
-    // Compare new values with old ones
+        _selectedLeaveType.toLowerCase() != details.subType.toLowerCase();
     final hasDateChanges =
-        _fromDate != _leave!.leaveDetails.fromDate ||
-        _toDate != _leave!.leaveDetails.toDate;
-
+        _fromDate != details.fromDate || _toDate != details.toDate;
     final hasReasonChange =
-        _reasonController.text.trim() != _leave!.leaveDetails.reason.trim();
+        _reasonController.text.trim() != details.reason.trim();
 
-    final hasNewDocuments = leaveViewModel.selectedDocuments.isNotEmpty;
+    final existingDocs =
+        leaveViewModel.selectedLeaveById?.leaveDetails.documents ?? [];
 
-    // Check if documents were deleted by comparing with original count
-    final currentDocumentCount =
-        leaveViewModel.selectedLeaveById?.leaveDetails.documents.length ?? 0;
-    final hasDeletedDocuments = _originalDocumentCount != currentDocumentCount;
+    final newDocsSelected = leaveViewModel.selectedDocuments;
+    final hasNewDocuments = newDocsSelected.isNotEmpty;
+
+    final currentDocCount = existingDocs.length + newDocsSelected.length;
+    final hasDeletedDocuments = _originalDocumentCount != currentDocCount;
+
+    final hasCompOffChange = _isCompOff != details.isCompOff;
+    final hasHalfDayChange = _isHalfDay != details.isHalfDay;
+    final hasCompDatesChange =
+        _compDates.join(',') != details.compDates.join(',');
 
     final hasChanges =
         hasDateChanges ||
         hasLeaveTypeChanges ||
         hasReasonChange ||
         hasNewDocuments ||
-        hasDeletedDocuments;
+        hasDeletedDocuments ||
+        hasCompOffChange ||
+        hasHalfDayChange ||
+        hasCompDatesChange;
 
-    // If no changes, just pop and don't call update
     if (!hasChanges) {
       _profileViewModel.resetEditMode();
       return;
     }
 
-    // Step 1: Convert remaining existing docs (after deletions)
-    final existingDocs = leaveViewModel
-        .selectedLeaveById
-        ?.leaveDetails
-        .documents
-        .map((doc) {
-          return LeaveDocumentForApply(docType: doc.docType, docBytes: '');
-        })
-        .toList();
+    // ✅ Prepare documents only if user added OR deleted any
+    List<LeaveDocumentForApply>? documents;
+    if (hasNewDocuments || hasDeletedDocuments) {
+      // Keep existing docs (without bytes, since they already exist on server)
+      final keptDocs = existingDocs
+          .map(
+            (doc) => LeaveDocumentForApply(
+              docType: doc.docType,
+              docBytes: doc.docBytes,
+            ),
+          )
+          .toList();
 
-    // Step 2: Convert new uploaded files to LeaveDocumentForApply (includes base64)
-    final newDocs = await leaveViewModel.convertDocumentsToLeaveDocuments();
+      // Add newly selected docs (with bytes)
+      final newDocs = await leaveViewModel.convertDocumentsToLeaveDocuments();
 
-    // Step 3: Combine both into a single list
-    final List<LeaveDocumentForApply> allDocuments = [
-      ...(existingDocs ?? []),
-      ...newDocs,
-    ];
+      documents = [...keptDocs, ...newDocs];
+    }
 
-    // Step 4: Send update request
+    // ✅ Call update API
     final success = await _profileViewModel.updateLeave(
-      leaveId: _leave!.leaveId,
+      leaveId: leave.leaveId,
       userId: widget.userId,
-      fromDate: _fromDate,
-      toDate: _toDate,
-      reason: _reasonController.text.trim(),
-      isCompOff: _isCompOff,
-      isHalfDay: _isHalfDay,
-      compDates: _compDates,
-      documents: allDocuments,
-      leaveType: _selectedLeaveType,
+      fromDate: hasDateChanges ? _fromDate : null,
+      toDate: hasDateChanges ? _toDate : null,
+      reason: hasReasonChange ? _reasonController.text.trim() : null,
+      isCompOff: hasCompOffChange ? _isCompOff : null,
+      isHalfDay: hasHalfDayChange ? _isHalfDay : null,
+      compDates: hasCompDatesChange ? _compDates : null,
+      documents: documents,
+      leaveType: hasLeaveTypeChanges ? _selectedLeaveType : null,
     );
 
-    if (success && mounted) {
+    if (!mounted) return;
+
+    if (success) {
       _profileViewModel.showInfo(context, 'Leave updated successfully');
-      // Clear selected documents and refresh
-      setState(() {
-        leaveViewModel.selectedDocuments.clear();
-      });
-      // Reload the leave data to show updated documents
+      setState(() => leaveViewModel.selectedDocuments.clear());
       await _initializeData();
-    } else if (mounted) {
+    } else {
       AppToast.error(context, 'Failed to update leave');
     }
   }

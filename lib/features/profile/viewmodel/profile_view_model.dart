@@ -96,7 +96,7 @@ class ProfileViewModel extends BaseViewModel {
             .map((date) => date.toIso8601String())
             .toList();
       }
-      if (documents != null && documents.isNotEmpty) {
+      if (documents != null) {
         updateData['documents'] = documents.map((doc) => doc.toJson()).toList();
       }
       if (leaveType != null && leaveType.isNotEmpty) {
