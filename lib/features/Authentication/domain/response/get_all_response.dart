@@ -11,6 +11,7 @@ class GetAllResponse {
   final bool escalated;
   final int documentsCount;
   final String? designation;
+  final String? actionTaken;
 
   GetAllResponse({
     required this.profileImage,
@@ -25,6 +26,7 @@ class GetAllResponse {
     required this.escalated,
     required this.documentsCount,
     this.designation,
+    this.actionTaken,
   });
 
   factory GetAllResponse.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,7 @@ class GetAllResponse {
       escalated: json['escalated'] ?? false,
       documentsCount: json['documentsCount'] ?? 0,
       designation: json['designation'] ?? '',
+      actionTaken: json['actionTaken'] ?? '',
     );
   }
   Map<String, dynamic> toJson() => {
@@ -56,5 +59,6 @@ class GetAllResponse {
     'escalated': escalated,
     'documentsCount': documentsCount,
     'designation': designation,
+    'actionTaken': actionTaken,
   };
 }
