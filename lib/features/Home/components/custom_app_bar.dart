@@ -340,7 +340,7 @@ class _AnnouncementBottomSheetContentState
         child: Container(
           height: MediaQuery.of(context).size.height * 0.7,
           decoration: BoxDecoration(
-            color: Colors.black,
+            color: Colors.white,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
@@ -456,20 +456,8 @@ class _AnnouncementBottomSheetContentState
         ),
         Container(
           decoration: BoxDecoration(
-            color: Colors.black,
+            color: Colors.grey.withOpacity(0.2),
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: TextField(
             onEditingComplete: () => FocusScope.of(context).unfocus(),
@@ -507,15 +495,6 @@ class _AnnouncementBottomSheetContentState
       height: 56,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: isLoading
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.blueAccent.withOpacity(0.3),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
       ),
       child: ElevatedButton(
         onPressed: isLoading ? null : _sendAnnouncement,

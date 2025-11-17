@@ -37,6 +37,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     });
   }
 
+  List<DateTime> highlightedDates = [];
+
   @override
   void dispose() {
     reasonFocusNode.dispose();
@@ -69,7 +71,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
               title: 'Discard Changes?',
               body:
                   'You have unsaved changes in your leave application. If you go back now, all your progress will be lost.',
-              illustrationAsset: 'lib/assets/gifs/remove.gif',
+              illustrationAsset: 'lib/assets/gifs/trash2.gif',
               illustrationHeight: 180,
               confirmButtonText: 'Discard',
               onConfirm: () => Navigator.of(context).pop(true),
@@ -282,6 +284,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       children: [
         // Inline Calendar - directly embedded
         MyAppDateSelectionCalendar(
+          highlightDates: context.read<HomeViewModel>().upcomingLeaveDates,
           initialStartDate: leaveViewModel.selectedStartDate,
           initialEndDate: leaveViewModel.selectedEndDate,
           enableRangeSelection: true,

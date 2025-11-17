@@ -208,4 +208,30 @@ class HomeViewModel extends BaseViewModel {
 
   bool get hasUpcomingLeaves => myUpcomingLeaves.isNotEmpty;
   bool get hasTeamUpcomingLeaves => teamUpcomingLeaves.isNotEmpty;
+
+
+  List<DateTime> generateDateRange(DateTime start, DateTime end) {
+    List<DateTime> dates = [];
+    DateTime current = start;
+
+    while (!current.isAfter(end)) {
+      dates.add(current);
+      current = current.add(const Duration(days: 1));
+    }
+
+    return dates;
+  }
+
+  List<DateTime> get upcomingLeaveDates {
+    List<DateTime> dates = [];
+
+    for (var leave in myUpcomingLeaves) {
+      final start = DateTime.parse(leave.startDate);
+      final end = DateTime.parse(leave.endDate);
+
+      dates.addAll(generateDateRange(start, end));
+    }
+
+    return dates;
+  }
 }

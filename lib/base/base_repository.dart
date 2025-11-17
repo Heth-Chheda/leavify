@@ -5,7 +5,9 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:leavify/core/utils/constants/enums/enums.dart';
 
-/// Custom API exception for clarity
+/// Global callback for session expiration (set from MyApp)
+typedef SessionExpiredCallback = void Function(String msg);
+
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
@@ -15,32 +17,28 @@ class ApiException implements Exception {
   String toString() => 'ApiException($statusCode): $message';
 }
 
-/// Base repository to perform requests
 class BaseRepository {
   final int _maxRetries = 2;
 
-  // ⚠️ DEVELOPMENT ONLY: Flag to enable/disable SSL certificate verification bypass
+  // DEVELOPMENT ONLY
   static const bool _bypassSSLCertificate = true;
 
-  // ⚠️ DEVELOPMENT ONLY: Custom HTTP client that bypasses SSL certificate verification
-  // This is INSECURE and should NEVER be used in production!
+  // 🔥 Global session expire callback
+  static SessionExpiredCallback? onSessionExpired;
+
   http.Client _getHttpClient() {
     if (_bypassSSLCertificate) {
-      // Create an HTTP client that accepts all certificates (INSECURE!)
       final ioClient = HttpClient()
         ..badCertificateCallback =
             (X509Certificate cert, String host, int port) {
-              return true; // Accept all certificates
-            };
-
+          return true;
+        };
       return IOClient(ioClient);
     } else {
-      // Use default secure client
       return http.Client();
     }
   }
 
-  /// Perform a request that returns a single object
   Future<T> performRequest<T>({
     required String url,
     required HttpMethod method,
@@ -78,7 +76,6 @@ class BaseRepository {
     }
   }
 
-  /// Perform a request that returns a list of objects
   Future<List<T>> performListRequest<T>({
     required String url,
     required HttpMethod method,
@@ -101,12 +98,8 @@ class BaseRepository {
       final decoded = jsonDecode(response.body);
 
       if (decoded is List) {
-        // Handle empty list
-        if (decoded.isEmpty) {
-          return [];
-        }
+        if (decoded.isEmpty) return [];
 
-        // Map each item to the model
         return decoded
             .map((item) => fromJson(item as Map<String, dynamic>))
             .toList();
@@ -121,7 +114,6 @@ class BaseRepository {
     }
   }
 
-  /// Core request execution logic (shared by both methods)
   Future<http.Response> _executeRequest({
     required String url,
     required HttpMethod method,
@@ -133,31 +125,26 @@ class BaseRepository {
     BodyType bodyType = BodyType.json,
   }) async {
     final uri = Uri.parse(url);
-
-    // ⚠️ Get custom HTTP client (with or without SSL bypass)
     final client = _getHttpClient();
 
-    // Default headers
     final headers = _headers();
-    if (extraHeaders != null) {
-      headers.addAll(extraHeaders);
-    }
+    if (extraHeaders != null) headers.addAll(extraHeaders);
 
-    // Add access token to body if provided
     final requestBody = body != null
         ? Map<String, dynamic>.from(body)
         : <String, dynamic>{};
+
     if (accessToken != null && accessToken.isNotEmpty) {
       requestBody['jwtToken'] = accessToken;
     }
 
     int attempt = 0;
+
     while (attempt <= _maxRetries) {
       try {
         http.Response response;
 
         if (bodyType == BodyType.multipart) {
-          // Multipart request
           final request = http.MultipartRequest(method.name.toUpperCase(), uri);
           request.headers.addAll(headers);
 
@@ -179,50 +166,35 @@ class BaseRepository {
             request.files.addAll(files);
           }
 
-          // ⚠️ Use custom client for multipart requests
           final streamedResponse = await client.send(request);
           response = await http.Response.fromStream(streamedResponse);
         } else {
-          // Regular requests
           String? encodedBody;
+
           if (requestBody.isNotEmpty) {
             if (bodyType == BodyType.json) {
               encodedBody = jsonEncode(requestBody);
             } else if (bodyType == BodyType.formUrlEncoded) {
               encodedBody = Uri(
                 queryParameters: requestBody.map(
-                  (k, v) => MapEntry(k, v.toString()),
+                      (k, v) => MapEntry(k, v.toString()),
                 ),
               ).query;
               headers["Content-Type"] = "application/x-www-form-urlencoded";
             }
           }
 
-          _logRequest(
-            method: method,
-            url: url,
-            headers: headers,
-            body: requestBody,
-          );
+          _logRequest(method: method, url: url, headers: headers, body: requestBody);
 
-          // ⚠️ Use custom client for all requests
           switch (method) {
             case HttpMethod.get:
               response = await client.get(uri, headers: headers);
               break;
             case HttpMethod.post:
-              response = await client.post(
-                uri,
-                headers: headers,
-                body: encodedBody,
-              );
+              response = await client.post(uri, headers: headers, body: encodedBody);
               break;
             case HttpMethod.put:
-              response = await client.put(
-                uri,
-                headers: headers,
-                body: encodedBody,
-              );
+              response = await client.put(uri, headers: headers, body: encodedBody);
               break;
             case HttpMethod.delete:
               response = await client.delete(uri, headers: headers);
@@ -231,9 +203,18 @@ class BaseRepository {
         }
 
         _logResponse(response);
-
-        // ⚠️ Clean up: Close the client after use
         client.close();
+
+        // 🔥🔥🔥 GLOBAL 401 JWT EXPIRED HANDLER
+        if (response.statusCode == 401 || response.statusCode == 404) {
+          String message = "Please login again.";
+
+          if (BaseRepository.onSessionExpired != null) {
+            BaseRepository.onSessionExpired!(message);
+          }
+
+          throw ApiException(message, statusCode: 401);
+        }
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
           return response;
@@ -241,41 +222,33 @@ class BaseRepository {
           if (response.statusCode == 500 && attempt < _maxRetries) {
             attempt++;
             continue;
-          } else {
-            // Improved error extraction
-            String errorMessage = "Request failed (${response.statusCode})";
-
-            try {
-              if (response.body.isNotEmpty) {
-                final decoded = jsonDecode(response.body);
-
-                if (decoded is Map<String, dynamic>) {
-                  if (decoded['error'] != null) {
-                    errorMessage = decoded['error'].toString();
-                  } else if (decoded['message'] != null) {
-                    errorMessage = decoded['message'].toString();
-                  } else {
-                    errorMessage = response.body;
-                  }
-                } else {
-                  errorMessage = response.body;
-                }
-              }
-            } catch (_) {
-              errorMessage = response.body;
-            }
-
-            throw ApiException(errorMessage, statusCode: response.statusCode);
           }
+
+          String errorMessage = "Request failed (${response.statusCode})";
+
+          try {
+            if (response.body.isNotEmpty) {
+              final decoded = jsonDecode(response.body);
+              if (decoded is Map<String, dynamic>) {
+                if (decoded['error'] != null) errorMessage = decoded['error'];
+                else if (decoded['message'] != null) errorMessage = decoded['message'];
+              } else {
+                errorMessage = response.body;
+              }
+            }
+          } catch (_) {
+            errorMessage = response.body;
+          }
+
+          throw ApiException(errorMessage, statusCode: response.statusCode);
         }
       } on SocketException {
         client.close();
         if (attempt < _maxRetries) {
           attempt++;
           continue;
-        } else {
-          throw ApiException("No Internet connection");
         }
+        throw ApiException("No Internet connection");
       } catch (e) {
         client.close();
         if (e is ApiException) rethrow;
@@ -283,22 +256,18 @@ class BaseRepository {
         if (attempt < _maxRetries) {
           attempt++;
           continue;
-        } else {
-          throw ApiException("Unknown error: $e");
         }
+        throw ApiException("Unknown error: $e");
       }
     }
 
     throw ApiException("Max retries exceeded");
   }
 
-  /// Default headers
-  Map<String, String> _headers() {
-    return {"Content-Type": "application/json"};
-  }
+  Map<String, String> _headers() => {"Content-Type": "application/json"};
 
   void printFullJson(String jsonStr) {
-    const int chunkSize = 800;
+    const chunkSize = 800;
     for (var i = 0; i < jsonStr.length; i += chunkSize) {
       final end = (i + chunkSize < jsonStr.length)
           ? i + chunkSize
@@ -307,7 +276,6 @@ class BaseRepository {
     }
   }
 
-  /// Log request details
   void _logRequest({
     required HttpMethod method,
     required String url,
@@ -328,7 +296,6 @@ class BaseRepository {
     debugPrint("-----------------------");
   }
 
-  /// Log response details
   void _logResponse(http.Response response) {
     debugPrint("-----------------------");
     debugPrint("----- API RESPONSE -----");
@@ -336,9 +303,8 @@ class BaseRepository {
     debugPrint("Headers: ${response.headers}");
     if (response.body.isNotEmpty) {
       try {
-        final prettyBody = const JsonEncoder.withIndent(
-          '  ',
-        ).convert(jsonDecode(response.body));
+        final prettyBody =
+        const JsonEncoder.withIndent('  ').convert(jsonDecode(response.body));
         printFullJson(prettyBody);
       } catch (e) {
         printFullJson(response.body);

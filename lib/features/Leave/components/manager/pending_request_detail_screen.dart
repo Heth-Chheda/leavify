@@ -61,7 +61,7 @@ class _PendingRequestDetailScreenState
       context: context,
       builder: (context) => ConflictDialog(
         conflicts: conflicts,
-        illustrationAsset: 'lib/assets/conflict.png', // Your conflict image
+        illustrationAsset: 'lib/assets/conflict.png',
       ),
     );
   }
@@ -170,8 +170,11 @@ class _PendingRequestDetailScreenState
         final homeViewModel = context.read<HomeViewModel>();
         final userRole = homeViewModel.userRole.toLowerCase();
 
-        // HR → only Resolve button
-        if (userRole == 'hr') {
+        final actionTaken =
+            widget.user?.actionTaken?.trim().toLowerCase() ?? "pending";
+
+        // HR → still only Resolve button
+        if (userRole == "hr") {
           return SafeArea(
             child: Row(
               children: [
@@ -193,7 +196,53 @@ class _PendingRequestDetailScreenState
           );
         }
 
-        // Non-HR → always show both Reject and Approve
+        // ================================
+        // NEW LOGIC (BASED ON actionTaken)
+        // ================================
+
+        // If APPROVED → show only REJECT
+        if (actionTaken == "approved") {
+          return SafeArea(
+            child: Row(
+              children: [
+                Expanded(
+                  child: MyAppButton(
+                    label: 'Reject',
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: leaveViewModel.isLoading ? null : _handleReject,
+                    isLoading: leaveViewModel.isRejectLoading,
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    type: MyButtonType.elevated,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // If REJECTED → show only APPROVE
+        if (actionTaken == "rejected") {
+          return SafeArea(
+            child: Row(
+              children: [
+                Expanded(
+                  child: MyAppButton(
+                    label: 'Approve',
+                    icon: const Icon(Icons.check_rounded),
+                    onPressed: leaveViewModel.isLoading ? null : _handleApprove,
+                    isLoading: leaveViewModel.isApproveLoading,
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    type: MyButtonType.elevated,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // If PENDING → show both Approve + Reject
         return SafeArea(
           child: Row(
             children: [
@@ -226,6 +275,7 @@ class _PendingRequestDetailScreenState
       },
     );
   }
+
 
   Future<void> _handleApprove() async {
     final leaveViewModel = context.read<LeaveViewModel>();

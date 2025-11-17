@@ -80,49 +80,69 @@ class PendingRequestCard extends StatelessWidget {
   // MARK: - ACTION_TAKEN TAG
   Widget _actionTakenTag(String actionTaken) {
     final normalized = actionTaken.trim().toLowerCase();
-    late final Color bgColor;
-    late final Color textColor;
-    late final String displayText;
+    late final Color dotColor;
+    late final String statusText;
 
     switch (normalized) {
       case 'approved':
-        bgColor = Colors.green.withOpacity(0.15);
-        textColor = Colors.green[700]!;
-        displayText = 'Approved';
+        dotColor = Colors.green;
+        statusText = 'Approved';
         break;
       case 'rejected':
-        bgColor = Colors.red.withOpacity(0.15);
-        textColor = Colors.red[700]!;
-        displayText = 'Rejected';
+        dotColor = Colors.red;
+        statusText = 'Rejected';
         break;
       default:
-        bgColor = Colors.grey.withOpacity(0.1);
-        textColor = Colors.grey[700]!;
-        displayText = 'Pending';
+        dotColor = Colors.grey;
+        statusText = 'Pending';
         break;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            displayText,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+
+        // 🔵 Dot
+        Container(
+          width: 8,
+          height: 8,
+          margin: const EdgeInsets.only(top: 3),
+          decoration: BoxDecoration(
+            color: dotColor,
+            shape: BoxShape.circle,
           ),
-        ],
-      ),
+        ),
+
+        const SizedBox(width: 8),
+
+        // 🔤 Two-line Text
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              statusText,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+            Text(
+              "by me",
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
+
+
 
   // MARK: - BUILD CARD DECORATION
   BoxDecoration _buildCardDecoration(

@@ -193,7 +193,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                 body:
                     'You have unsaved changes in your leave application. If you go back now, all your progress will be lost.',
                 confirmButtonText: 'Discard',
-                illustrationAsset: 'lib/assets/gifs/remove.gif',
+                illustrationAsset: 'lib/assets/gifs/trash2.gif',
                 illustrationHeight: 180,
                 onConfirm: () {
                   Navigator.of(context).pop(true);

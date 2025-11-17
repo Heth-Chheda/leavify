@@ -1,5 +1,6 @@
 // calendar_widget.dart
 import 'package:flutter/material.dart';
+import 'package:leavify/core/utils/components/button/my_app_button.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/Authentication/domain/response/get_holiday_list_response.dart';
 import 'package:leavify/features/Leave/components/calendar/week_calendar_view.dart';
@@ -313,20 +314,76 @@ class _HomeCalendarWidgetState extends State<HomeCalendarWidget> {
   void _showHolidayDialog(HolidayDate holiday) {
     showDialog(
       context: context,
+      barrierDismissible: true,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Holiday', style: TextStyle(fontWeight: FontWeight.w700)),
-          content: Text(holiday.description ?? 'No description available'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 🎯 Holiday Title
+                Text(
+                  'Holiday',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // 📅 Holiday Description
+                Text(
+                  holiday.description ?? 'No description available',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // 🎨 Button
+                SizedBox(
+                  width: double.infinity,
+                  child: MyAppButton(
+                    label: 'OK',
+                    onPressed: () => Navigator.of(context).pop(),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    borderRadius: 14,
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF7BA5B8),
+                        Color(0xFF9CCAD3),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
+
 
   DateTime _getWeekStart(DateTime date) {
     return date.subtract(Duration(days: date.weekday - 1));

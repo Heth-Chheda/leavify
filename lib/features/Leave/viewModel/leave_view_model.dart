@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/constants/enums/enums.dart';
@@ -343,6 +344,12 @@ class LeaveViewModel extends BaseViewModel {
       }
     } catch (e) {
       update(isLoading: false);
+      
+      if (e is ApiException && e.statusCode == 409) {
+        showError(context, "You already have a leave on that date.");
+        return;
+      }
+      
       showError(context, 'Error submitting leave.');
     }
   }

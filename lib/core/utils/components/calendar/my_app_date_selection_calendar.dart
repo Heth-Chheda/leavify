@@ -5,6 +5,7 @@ class MyAppDateSelectionCalendar extends StatefulWidget {
   final DateTime? initialEndDate;
   final bool enableRangeSelection;
   final Function(DateTime startDate, DateTime? endDate)? onDateSelected;
+  final List<DateTime> highlightDates;
 
   const MyAppDateSelectionCalendar({
     super.key,
@@ -12,6 +13,7 @@ class MyAppDateSelectionCalendar extends StatefulWidget {
     this.initialEndDate,
     this.enableRangeSelection = true,
     this.onDateSelected,
+    this.highlightDates = const [],
   });
 
   @override
@@ -32,6 +34,13 @@ class _MyAppDateSelectionCalendarState
     _currentMonth = widget.initialStartDate ?? DateTime.now();
     _selectedStartDate = widget.initialStartDate;
     _selectedEndDate = widget.initialEndDate;
+  }
+
+  bool _isHighlighted(DateTime date) {
+    return widget.highlightDates.any((d) =>
+    d.year == date.year &&
+        d.month == date.month &&
+        d.day == date.day);
   }
 
   void _showMonthYearPicker() async {
@@ -190,7 +199,7 @@ class _MyAppDateSelectionCalendarState
           // Weekday headers
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
+            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
               return SizedBox(
                 width: 40,
                 child: Center(
@@ -206,6 +215,7 @@ class _MyAppDateSelectionCalendarState
               );
             }).toList(),
           ),
+
           const SizedBox(height: 8),
           // Calendar grid
           ..._buildCalendarGrid(),
@@ -225,7 +235,7 @@ class _MyAppDateSelectionCalendarState
       _currentMonth.month,
       1,
     );
-    final startingWeekday = firstDayOfMonth.weekday % 7;
+    final startingWeekday = firstDayOfMonth.weekday - 1;
 
     List<Widget> rows = [];
     List<Widget> dayWidgets = [];
@@ -240,6 +250,17 @@ class _MyAppDateSelectionCalendarState
       final date = DateTime(_currentMonth.year, _currentMonth.month, day);
       final isSelected = _isDateSelected(date);
       final isInRange = _isDateInRange(date);
+      Color backgroundColor;
+
+      if (isSelected) {
+        backgroundColor = const Color(0xFF7BA5B8);              // selected
+      } else if (isInRange) {
+        backgroundColor = const Color(0xFFE0EDF2);              // range
+      } else if (_isHighlighted(date)) {
+        backgroundColor = const Color(0xFFB4E7C1);              // green highlight
+      } else {
+        backgroundColor = Colors.transparent;
+      }
 
       dayWidgets.add(
         GestureDetector(
@@ -248,9 +269,7 @@ class _MyAppDateSelectionCalendarState
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: isSelected
-                  ? const Color(0xFF7BA5B8)
-                  : (isInRange ? const Color(0xFFE0EDF2) : Colors.transparent),
+              color: backgroundColor,
               shape: BoxShape.circle,
             ),
             child: Center(
