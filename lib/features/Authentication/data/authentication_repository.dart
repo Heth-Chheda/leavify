@@ -6,12 +6,23 @@ import 'package:leavify/features/Authentication/domain/response/get_category_res
 import 'package:leavify/features/Authentication/domain/response/get_holiday_list_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Authentication/domain/response/login_response.dart';
+import 'package:leavify/features/Authentication/domain/response/version_response.dart';
 import 'package:leavify/features/Leave/models/response/get_announcements_response.dart';
 import 'package:leavify/features/Leave/models/response/get_working_days_response.dart';
 
 import '../domain/request/login_request.dart';
 
 class AuthenticationRepository extends BaseRepository {
+
+  // MARK: VERSION INFO
+  Future<VersionResponse> getVersionInfo () async {
+    return await performRequest(
+        url: ApiEndpoints.versionCheck,
+        method: HttpMethod.get,
+        fromJson: VersionResponse.fromJson
+    );
+  }
+
   // MARK: - LOGIN
   Future<LoginResponse> login(LoginRequest request) async {
     final result = await performRequest(

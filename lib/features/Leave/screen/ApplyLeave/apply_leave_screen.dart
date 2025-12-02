@@ -63,6 +63,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
   // MARK: - SHOW CONFIRMATION DIALOG
   Future<bool> _showConfirmationDialog() async {
+    FocusScope.of(context).unfocus();
+
     return await showDialog<bool>(
           context: context,
           barrierDismissible: false,
@@ -85,6 +87,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   // MARK: - HANDLE BACK NAVIGATION
   Future<bool> _onWillPop() async {
     final leaveViewModel = Provider.of<LeaveViewModel>(context, listen: false);
+
+    FocusScope.of(context).unfocus();
 
     // If form has data, show confirmation dialog
     if (_hasFormData(leaveViewModel)) {

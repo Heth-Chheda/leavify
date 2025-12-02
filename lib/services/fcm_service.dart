@@ -1,148 +1,180 @@
-import 'dart:io';
+import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:leavify/router/services/notification_redirection.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 
+// 1. Define the background handler as a top-level function
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  // We call the public method in FCMService
+  await FCMService.showLocalNotification(message);
+}
+
 class FCMService {
-  // 🔸 Step 1: Add a local notifications instance
   static final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
+
+  static const MethodChannel _apnsChannel = MethodChannel("leavify/apns");
+
+  static RemoteMessage? _pendingInitialMessage;
 
   static Future<void> initialize() async {
+    await _initializeLocalNotifications();
+
     final messaging = FirebaseMessaging.instance;
 
-    await _initializeLocalNotifications();
-    await _requestPermissions(messaging);
+    // -----------------------------
+    // 2. REQUEST PERMISSION HERE
+    // -----------------------------
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
 
-    if (Platform.isIOS) {
-      await _printAPNSToken();
+    debugPrint('🔔 User granted permission: ${settings.authorizationStatus}');
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      debugPrint('✅ User granted permission');
+    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+      debugPrint('⚠️ User granted provisional permission');
+    } else {
+      debugPrint('❌ User declined or has not accepted permission');
+      // You might want to return here if permission is denied,
+      // but we continue to save the token just in case.
     }
 
     await _saveFCMToken(messaging);
 
-    // 🔸 Step 2: Listen for foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint(
-        '📩 Foreground message received: ${message.notification?.title}',
-      );
-      _showLocalNotification(message);
+    // Register the background handler
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // -----------------------------
+    // iOS APNs → Flutter receiver
+    // -----------------------------
+    _apnsChannel.setMethodCallHandler((call) async {
+      if (call.method == "apnsPayload") {
+        final payload = Map<String, dynamic>.from(call.arguments);
+
+        debugPrint("📥 [Flutter] Received APNs payload = $payload");
+
+        final mockMessage = RemoteMessage(data: {
+          "screen": payload["screen"]?.toString(),
+          "leaveId": payload["leaveId"]?.toString(),
+        });
+
+        NotificationRedirection.handleNotification(mockMessage);
+      }
     });
 
-    // 🔸 Step 3: When user taps a notification and opens the app
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      debugPrint('📲 Notification clicked: ${message.data}');
+    // NORMAL FCM foreground notifications
+    FirebaseMessaging.onMessage.listen((message) {
+      debugPrint("📩 [FG] Foreground message received");
+      debugPrint("📩 Data: ${message.data}");
+      showLocalNotification(message);
     });
 
-    // 🔸 Step 4: Handle token refresh
-    messaging.onTokenRefresh.listen((newToken) {
-      AppStorage.saveString("USER_FCM_TOKEN", newToken);
-      debugPrint('🔄 FCM Token Refreshed: $newToken');
+    // App opened from background
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      debugPrint("🔔 Notification opened from BACKGROUND");
+      NotificationRedirection.handleNotification(message);
     });
+
+    // App opened from terminated
+    final initialMsg = await messaging.getInitialMessage();
+    if (initialMsg != null) {
+      debugPrint("🚀 App opened from TERMINATED via FCM");
+      _pendingInitialMessage = initialMsg;
+    }
   }
 
-  // 🔸 Step 5: Initialize flutter_local_notifications
-  static Future<void> _initializeLocalNotifications() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        );
-
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-          android: initializationSettingsAndroid,
-          iOS: initializationSettingsIOS,
-        );
-
-    await _localNotifications.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (details) {
-        debugPrint('📲 Notification tapped: ${details.payload}');
-      },
-    );
-
-    // ✅ Explicitly ask iOS for notification permissions
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin
-        >()
-        ?.requestPermissions(alert: true, badge: true, sound: true);
+  static Future<void> handlePendingNotification() async {
+    if (_pendingInitialMessage != null) {
+      NotificationRedirection.handleNotification(_pendingInitialMessage!);
+      _pendingInitialMessage = null;
+    }
   }
 
-  // 🔸 Step 6: Show local notification manually for foreground messages
-  static Future<void> _showLocalNotification(RemoteMessage message) async {
-    final notification = message.notification;
-    if (notification == null) return;
+  // LOCAL NOTIFICATION TAP HANDLER
+  static Future<void> _handleNotificationResponse(
+      NotificationResponse response,
+      ) async {
+    debugPrint("👉 Local notification tapped");
 
-    final bigTextStyle = BigTextStyleInformation(
-      notification.body ?? '',
-      contentTitle: notification.title,
-      htmlFormatContent: true,
-      htmlFormatContentTitle: true,
-    );
+    if (response.payload == null) return;
 
-    final androidDetails = AndroidNotificationDetails(
-      'default_channel_id',
-      'General Notifications',
-      channelDescription: 'Used for showing important notifications',
-      importance: Importance.max,
-      priority: Priority.high,
-      showWhen: true,
-      styleInformation: bigTextStyle,
-    );
+    final data = jsonDecode(response.payload!);
+    final mock = RemoteMessage(data: Map<String, dynamic>.from(data));
 
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+    NotificationRedirection.handleNotification(mock);
+  }
 
-    final notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
+  // SHOW LOCAL NOTIFICATION
+  // Note: I removed the underscore (_) to make this public so the
+  // background handler can access it.
+  static Future<void> showLocalNotification(RemoteMessage message) async {
+    final payload = jsonEncode(message.data);
+
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'high_importance_channel',
+        'High Importance Notifications',
+        importance: Importance.max,
+        priority: Priority.high,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
     );
 
     await _localNotifications.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      notificationDetails,
+      0, // ID 0 means it replaces previous notifs. Change if you want stacking.
+      message.notification?.title ?? "New Notification",
+      message.notification?.body ?? "You have a new message",
+      details,
+      payload: payload,
     );
   }
 
-  static Future<void> _requestPermissions(FirebaseMessaging messaging) async {
-    final settings = await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
+  static Future<void> _initializeLocalNotifications() async {
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'high_importance_channel',
+      'High Importance Notifications',
+      importance: Importance.max,
     );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('✅ User granted notification permission');
-    } else {
-      debugPrint('❌ User declined or has not accepted permission');
-    }
-  }
+    final android = _localNotifications
+        .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
 
-  static Future<void> _printAPNSToken() async {
-    String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-    if (apnsToken == null) {
-      await Future.delayed(const Duration(seconds: 1));
-      apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-    }
-    debugPrint('📱 APNS Token: $apnsToken');
+    await android?.createNotificationChannel(channel);
+
+    debugPrint("📣 Android Notification Channel Created");
+
+    // Initialize plugin
+    const initSettings = InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(),
+    );
+
+    await _localNotifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: _handleNotificationResponse,
+    );
   }
 
   static Future<void> _saveFCMToken(FirebaseMessaging messaging) async {
     final token = await messaging.getToken();
-    if (token != null) {
-      AppStorage.saveString('USER_FCM_TOKEN', token);
-      debugPrint('📲 FCM Token: $token');
-    }
+    if (token != null) AppStorage.saveString("USER_FCM_TOKEN", token);
   }
 }

@@ -4,6 +4,9 @@ class ApiEndpoints {
   // Base Url
   static String baseUrl = AppEnvironment.baseUrl;
 
+  // version check
+  static String versionCheck = '$baseUrl/auth/versioninfo';
+
   // Authentication
   static final String login = '$baseUrl/auth/login';
   static final String register = '$baseUrl/auth/register';

@@ -9,6 +9,8 @@ import 'package:leavify/router/app_navigator.dart';
 import 'package:leavify/router/route_names.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../core/utils/theme/app_colors.dart';
+
 class PendingRequestsScreen extends StatefulWidget {
   const PendingRequestsScreen({super.key});
 
@@ -151,7 +153,7 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                   _buildHeader(context, pendingCount),
                   const Expanded(
                     child: Center(
-                      child: SpinKitSquareCircle(color: Colors.blue, size: 80),
+                      child: SpinKitSquareCircle(color: AppColors.highlightBlue, size: 80),
                     ),
                   ),
                 ],

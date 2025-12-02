@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 // import 'package:leavify/dummydata/login/dummy_login_response.dart';
@@ -82,7 +83,11 @@ class LoginViewModel extends BaseViewModel {
       }
     } catch (e) {
       debugPrint("Login error: $e");
-      showError(context, 'Something went wrong.');
+      if (e is ApiException) {
+        showError(context, e.message);
+      } else {
+        showError(context, 'Something went wrong.');
+      }
     } finally {
       update(isLoading: false);
       notifyListeners();

@@ -1,14 +1,19 @@
+// force_update_checker.dart
 import 'package:flutter/material.dart';
+import 'package:leavify/features/Authentication/data/authentication_repository.dart';
+import 'package:leavify/router/app_navigator.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'dart:io';
+import 'package:url_launcher/url_launcher.dart';
 
-/// A wrapper widget that checks for a forced app update as soon as the app starts.
-/// If the current app version is lower than the minimum required version,
-/// a non-dismissible update dialog is shown to prevent usage until updated.
 class ForceUpdateWrapper extends StatefulWidget {
-  /// The actual app UI to display if update is not required
   final Widget child;
 
   const ForceUpdateWrapper({super.key, required this.child});
+
+  static _ForceUpdateWrapperState? of(BuildContext context) {
+    return context.findAncestorStateOfType<_ForceUpdateWrapperState>();
+  }
 
   @override
   State<ForceUpdateWrapper> createState() => _ForceUpdateWrapperState();
@@ -16,92 +21,114 @@ class ForceUpdateWrapper extends StatefulWidget {
 
 class _ForceUpdateWrapperState extends State<ForceUpdateWrapper> {
   bool _hasCheckedForUpdate = false;
+  bool _isUpdateRequired = false;
 
-  @override
-  void initState() {
-    super.initState();
-    // Start version check after the first frame is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkForUpdate();
-    });
-  }
+  bool get isUpdateRequired => _isUpdateRequired;
 
-  /// Checks if the current app version is less than the required version
-  /// If yes, displays a force update dialog
-  Future<void> _checkForUpdate() async {
-    if (_hasCheckedForUpdate) return;
+  /// Called by SplashScreen before navigation
+  Future<bool> checkForUpdate() async {
+    if (_hasCheckedForUpdate) {
+      debugPrint("⚠️ [ForceUpdate] Returning cached result: $_isUpdateRequired");
+      return _isUpdateRequired;
+    }
+
     _hasCheckedForUpdate = true;
+    debugPrint("🔍 [ForceUpdate] Starting version check...");
 
     try {
-      // Fetch the current app version from platform (e.g., 1.2.3)
       final info = await PackageInfo.fromPlatform();
       final currentVersion = info.version;
+      debugPrint("📱 [ForceUpdate] Current App Version: $currentVersion");
 
-      // Fetch the required minimum version from remote (API or Firebase)
-      final latestVersion = await _getRequiredVersionFromServer();
+      final repo = AuthenticationRepository();
+      debugPrint("🌐 [ForceUpdate] Calling version API...");
+      final response = await repo.getVersionInfo();
 
-      // Compare versions: if outdated, prompt update
-      // NOTE: Using `true ||` forces the update dialog to always show for now
-      if (_isVersionOutdated(currentVersion, latestVersion)) {
-        if (mounted) {
-          await _showForceUpdateDialog(context);
-        }
+      final requiredVersion = response.version;
+      debugPrint("📝 [ForceUpdate] Server Minimum Version: $requiredVersion");
+
+      _isUpdateRequired = _isVersionOutdated(currentVersion, requiredVersion);
+      debugPrint("🔎 [ForceUpdate] Outdated? → $_isUpdateRequired");
+
+      if (_isUpdateRequired) {
+        debugPrint("🚫 [ForceUpdate] Update required - blocking navigation");
+        // Show dialog after a short delay to ensure Navigator is ready
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _showForceUpdateDialog();
+        });
+      } else {
+        debugPrint("✅ [ForceUpdate] Version is OK");
       }
+
+      return _isUpdateRequired;
     } catch (e) {
-      // If there's an error checking for updates, allow the app to continue
+      debugPrint("⚠️ [ForceUpdate] Version check failed: $e");
+      // On error, allow navigation (fail open)
+      return false;
     }
   }
 
-  /// Mock method to return required app version from backend or remote config
-  /// In production, replace this with an actual API or Firebase Remote Config call
-  Future<String> _getRequiredVersionFromServer() async {
-    // Simulate network delay (optional - remove in production for faster check)
-    await Future.delayed(const Duration(milliseconds: 500));
-    return '1.0.0'; // Example: Server mandates 2.0.0 or above
-  }
-
-  /// Compares the current version to the required one
-  /// Returns true if the current version is *older*
   bool _isVersionOutdated(String current, String required) {
-    final currentParts = current.split('.').map(int.parse).toList();
-    final requiredParts = required.split('.').map(int.parse).toList();
+    final c = current.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    final r = required.split('.').map((e) => int.tryParse(e) ?? 0).toList();
 
-    // Compare each segment of the version (major.minor.patch)
-    for (int i = 0; i < requiredParts.length; i++) {
-      if (currentParts.length <= i || currentParts[i] < requiredParts[i]) {
-        return true; // Current version is less than required
-      }
-      if (currentParts[i] > requiredParts[i]) {
-        return false; // Current version is already newer
-      }
+    while (c.length < r.length) c.add(0);
+    while (r.length < c.length) r.add(0);
+
+    for (int i = 0; i < r.length; i++) {
+      if (c[i] < r[i]) return true;
+      if (c[i] > r[i]) return false;
     }
-
-    return false; // Versions are equal
+    return false;
   }
 
-  /// Shows a modal dialog that prevents usage unless the app is updated
-  Future<void> _showForceUpdateDialog(BuildContext context) async {
-    if (!context.mounted) return;
+  Future<void> _showForceUpdateDialog() async {
+    final context = AppNavigator.navigatorKey.currentContext;
+    if (context == null) {
+      debugPrint("⚠️ [ForceUpdate] Navigator context not available yet");
+      return;
+    }
 
     return showDialog(
       context: context,
-      barrierDismissible: false, // User cannot dismiss by tapping outside
-      builder: (_) => WillPopScope(
-        onWillPop: () async => false, // Prevent back button dismiss
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
         child: const UpdateDialog(),
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    // Simply return the child app - no loading screens or duplicate MaterialApps
-    return widget.child;
-  }
+  Widget build(BuildContext context) => widget.child;
 }
 
+
+/// UI for the forced update dialog
 class UpdateDialog extends StatelessWidget {
   const UpdateDialog({super.key});
+
+  Future<void> _openStore() async {
+    try {
+      if (Platform.isAndroid) {
+        // Replace with your app's package name
+        final Uri playStoreUri = Uri.parse('market://details?id=com.yourcompany.leavify');
+        final Uri playStoreWebUri = Uri.parse('https://play.google.com/store/apps/details?id=com.yourcompany.leavify');
+
+        if (await canLaunchUrl(playStoreUri)) {
+          await launchUrl(playStoreUri, mode: LaunchMode.externalApplication);
+        } else {
+          await launchUrl(playStoreWebUri, mode: LaunchMode.externalApplication);
+        }
+      } else if (Platform.isIOS) {
+        // Replace with your app's App Store ID
+        final Uri appStoreUri = Uri.parse('https://apps.apple.com/app/idYOUR_APP_ID');
+        await launchUrl(appStoreUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('❌ [ForceUpdate] Failed to open store: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,8 +141,8 @@ class UpdateDialog extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.blueAccent, // Deep blue
-              Colors.lightBlueAccent, // Bright blue
+              Colors.blueAccent,
+              Colors.lightBlueAccent,
             ],
           ),
           borderRadius: BorderRadius.circular(20),
@@ -123,7 +150,7 @@ class UpdateDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Top section with rocket illustration
+            // Top illustration
             Container(
               height: 100,
               padding: const EdgeInsets.all(20),
@@ -144,7 +171,8 @@ class UpdateDialog extends StatelessWidget {
                 ],
               ),
             ),
-            // White content section
+
+            // Content section
             Container(
               padding: const EdgeInsets.all(24),
               decoration: const BoxDecoration(
@@ -157,7 +185,7 @@ class UpdateDialog extends StatelessWidget {
               child: Column(
                 children: [
                   const Text(
-                    'Update Notice',
+                    'Update Required',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -166,7 +194,7 @@ class UpdateDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'For more features and a better\nuser experience, upgrade your\napp please.',
+                    'A new version of the app is available.\nPlease update to continue using Leavify.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -175,31 +203,25 @@ class UpdateDialog extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
+
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // You can use `url_launcher` like:
-                        // launchUrl(Uri.parse('https://your-app-store-link'));
-                      },
+                      onPressed: _openStore,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFFEF4444),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: const Color(0xFFEF4444),
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
-                          side: const BorderSide(
-                            color: Color(0xFFEF4444),
-                            width: 1,
-                          ),
                         ),
                       ),
                       child: const Text(
-                        'Go to update',
+                        'Update Now',
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),

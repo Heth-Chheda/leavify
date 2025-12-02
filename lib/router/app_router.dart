@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/components/work_in_progress.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
+import 'package:leavify/router/app_navigator.dart';
 import 'package:provider/provider.dart';
 
 // Screens
@@ -175,7 +176,17 @@ class AppRouter {
       appBar: AppBar(
         title: Text(title, textAlign: TextAlign.center),
         centerTitle: true,
-        leading: const BackButton(),
+        leading: BackButton(
+          onPressed: () {
+            final canPop = AppNavigator.navigatorKey.currentState?.canPop() ?? false;
+
+            if (canPop) {
+              AppNavigator.goBack();
+            } else {
+              AppNavigator.setRootView(RouteNames.home);
+            }
+          },
+        ),
         // Only add actions if provided
         actions: actions != null ? actions : null,
       ),

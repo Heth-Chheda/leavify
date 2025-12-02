@@ -11,6 +11,7 @@ import 'package:leavify/core/utils/components/toast/app_toast.dart';
 import 'package:leavify/core/utils/constants/enums/enums.dart';
 import 'package:leavify/core/utils/helpers/documents/ui/document_ui.dart';
 import 'package:leavify/core/utils/helpers/documents/ui/viewer/document_viewer.dart';
+import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/custom_calendar_component.dart';
 import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
@@ -181,7 +182,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
             leaveViewModel.isRemindLoading) {
           return const Scaffold(
             body: Center(
-              child: SpinKitSquareCircle(color: Colors.blue, size: 100),
+              child: SpinKitSquareCircle(color: AppColors.highlightBlue, size: 100),
             ),
           );
         }
@@ -344,7 +345,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
     if (leaveDetails == null) {
       return Center(
-        child: SpinKitSquareCircle(color: Colors.blueAccent, size: 100),
+        child: SpinKitSquareCircle(color: AppColors.highlightBlue, size: 100),
       );
     }
     final DateTime today = DateTime.now();

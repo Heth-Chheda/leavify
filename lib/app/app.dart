@@ -10,6 +10,7 @@ import 'package:leavify/router/app_router.dart';
 import 'package:leavify/app/splash_screen.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/router/route_names.dart';
+import 'package:leavify/services/force_update_checker.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -74,7 +75,7 @@ class _MyAppState extends State<MyApp> {
         final mediaQuery = MediaQuery.of(context);
         return MediaQuery(
           data: mediaQuery.copyWith(textScaler: const TextScaler.linear(1.0)),
-          child: child!,
+          child: ForceUpdateWrapper(child: child!),
         );
       },
       home: const SplashScreen(),

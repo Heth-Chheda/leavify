@@ -186,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [const SpinKitSquareCircle(color: Colors.blue, size: 100.0)],
+        children: [const SpinKitSquareCircle(color: AppColors.highlightBlue, size: 100.0)],
       ),
     );
   }

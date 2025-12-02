@@ -7,6 +7,7 @@ import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/utils/constants/enums/enums.dart';
 import 'package:leavify/core/utils/formatters/date/date_formatter.dart';
 import 'package:leavify/core/utils/helpers/documents/ui/viewer/document_viewer.dart';
+import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Leave/components/manager/conflict/conflict_dialog.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
@@ -82,7 +83,7 @@ class _PendingRequestDetailScreenState
                 leaveViewModel.selectedLeaveById == null) {
               return Center(
                 child: SpinKitSquareCircle(
-                  color: colorScheme.primary,
+                  color: AppColors.highlightBlue,
                   size: 100,
                 ),
               );

@@ -52,7 +52,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SpinKitCircle(
-            color: Colors.blue, // change to your theme color
+            color: AppColors.highlightBlue, // change to your theme color
             size: 60.0,
           ),
         ],
@@ -202,7 +202,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           title: 'Logout',
           body: 'Are you sure you want to logout?',
           confirmButtonText: 'Yes, Logout',
-          illustrationAsset: 'lib/assets/shutDown3.png',
+          illustrationAsset: 'lib/assets/logout.png',
           illustrationHeight: 140,
           buttonBackgroundColor: Colors.red,
           buttonForegroundColor: Colors.white,

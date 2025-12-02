@@ -206,7 +206,7 @@ class BaseRepository {
         client.close();
 
         // 🔥🔥🔥 GLOBAL 401 JWT EXPIRED HANDLER
-        if (response.statusCode == 401 || response.statusCode == 404) {
+        if (response.statusCode == 400 || response.statusCode == 404) {
           String message = "Please login again.";
 
           if (BaseRepository.onSessionExpired != null) {
