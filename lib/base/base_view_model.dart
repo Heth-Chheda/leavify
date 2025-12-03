@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/core/utils/components/toast/app_toast.dart';
 
 class BaseViewModel extends ChangeNotifier {
@@ -64,6 +65,19 @@ class BaseViewModel extends ChangeNotifier {
 
   void showInfo(BuildContext context, String message) {
     AppToast.info(context, message);
+  }
+
+  String cleanErrorMessage(dynamic e) {
+    if (e is ApiException) {
+      if (e.message.contains("ClientException") ||
+          e.message.contains("uri=") ||
+          e.message.contains("Client is already closed")) {
+        return "Network request failed. Please retry.";
+      }
+      return e.message;
+    }
+    // Fallback for non-ApiExceptions (crashes, parsing errors)
+    return "Something went wrong";
   }
 }
 

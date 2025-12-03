@@ -5,7 +5,12 @@ class MyAppDateSelectionCalendar extends StatefulWidget {
   final DateTime? initialEndDate;
   final bool enableRangeSelection;
   final Function(DateTime startDate, DateTime? endDate)? onDateSelected;
+
+  // Existing highlight list (used for Applied Leaves - Green)
   final List<DateTime> highlightDates;
+
+  // NEW: List specifically for Holidays (Red/Pink)
+  final List<DateTime> holidayDates;
 
   const MyAppDateSelectionCalendar({
     super.key,
@@ -14,6 +19,7 @@ class MyAppDateSelectionCalendar extends StatefulWidget {
     this.enableRangeSelection = true,
     this.onDateSelected,
     this.highlightDates = const [],
+    this.holidayDates = const [],
   });
 
   @override
@@ -26,7 +32,6 @@ class _MyAppDateSelectionCalendarState
   late DateTime _currentMonth;
   DateTime? _selectedStartDate;
   DateTime? _selectedEndDate;
-  bool _isSelectingEndDate = false;
 
   @override
   void initState() {
@@ -37,10 +42,17 @@ class _MyAppDateSelectionCalendarState
   }
 
   bool _isHighlighted(DateTime date) {
-    return widget.highlightDates.any((d) =>
-    d.year == date.year &&
-        d.month == date.month &&
-        d.day == date.day);
+    return widget.highlightDates.any((d) => _isSameDay(d, date));
+  }
+
+  bool _isHoliday(DateTime date) {
+    return widget.holidayDates.any((d) => _isSameDay(d, date));
+  }
+
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 
   void _showMonthYearPicker() async {
@@ -79,47 +91,36 @@ class _MyAppDateSelectionCalendarState
   void _onDateTap(DateTime date) {
     setState(() {
       if (!widget.enableRangeSelection) {
-        // Single date selection - just set start date
         _selectedStartDate = date;
         _selectedEndDate = null;
       } else {
-        // Range selection
         if (_selectedStartDate == null) {
-          // First tap - select start date
           _selectedStartDate = date;
           _selectedEndDate = null;
         } else if (_selectedEndDate == null) {
-          // Second tap - determine if it's end date or new start date
           if (date.isBefore(_selectedStartDate!)) {
-            // Date is before current start, so it becomes the new start date
             _selectedStartDate = date;
             _selectedEndDate = null;
           } else if (_isSameDay(date, _selectedStartDate!)) {
-            // Tapped same date - keep as single date
             _selectedEndDate = null;
           } else {
-            // Date is after start, so it becomes end date
             _selectedEndDate = date;
           }
         } else {
-          // Both dates already selected - start new selection
           _selectedStartDate = date;
           _selectedEndDate = null;
         }
       }
     });
-
-    // Notify parent
     widget.onDateSelected?.call(_selectedStartDate!, _selectedEndDate);
   }
 
   bool _isDateInRange(DateTime date) {
     if (_selectedStartDate == null) return false;
     if (_selectedEndDate == null) return false;
-
     return date.isAfter(
-          _selectedStartDate!.subtract(const Duration(days: 1)),
-        ) &&
+      _selectedStartDate!.subtract(const Duration(days: 1)),
+    ) &&
         date.isBefore(_selectedEndDate!.add(const Duration(days: 1)));
   }
 
@@ -131,12 +132,6 @@ class _MyAppDateSelectionCalendarState
       return true;
     }
     return false;
-  }
-
-  bool _isSameDay(DateTime date1, DateTime date2) {
-    return date1.year == date2.year &&
-        date1.month == date2.month &&
-        date1.day == date2.day;
   }
 
   @override
@@ -155,71 +150,80 @@ class _MyAppDateSelectionCalendarState
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Month/Year header with navigation
-          Text(
-            'Select Dates',
-            textAlign: TextAlign.left,
-            style: const TextStyle(
-              fontFamily: 'Lato',
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+      // 1. Wrap the content in GestureDetector
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent, // Ensures swipes on empty space work
+        onHorizontalDragEnd: (details) {
+          // 2. Determine Swipe Direction
+          if (details.primaryVelocity! > 0) {
+            // Swiped Right -> Go to Previous Month
+            _previousMonth();
+          } else if (details.primaryVelocity! < 0) {
+            // Swiped Left -> Go to Next Month
+            _nextMonth();
+          }
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select Dates',
+              style: const TextStyle(
+                fontFamily: 'Lato',
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
-          ),
-
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: _previousMonth,
-              ),
-              InkWell(
-                onTap: _showMonthYearPicker,
-                child: Text(
-                  _getMonthYearString(_currentMonth),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: _previousMonth,
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: _nextMonth,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Weekday headers
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
-              return SizedBox(
-                width: 40,
-                child: Center(
+                InkWell(
+                  onTap: _showMonthYearPicker,
                   child: Text(
-                    day,
-                    style: TextStyle(
+                    _getMonthYearString(_currentMonth),
+                    style: const TextStyle(
+                      fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey[600],
-                      fontSize: 14,
                     ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-
-          const SizedBox(height: 8),
-          // Calendar grid
-          ..._buildCalendarGrid(),
-        ],
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: _nextMonth,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children:
+              ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
+                return SizedBox(
+                  width: 40,
+                  child: Center(
+                    child: Text(
+                      day,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 8),
+            ..._buildCalendarGrid(),
+          ],
+        ),
       ),
     );
   }
@@ -240,24 +244,27 @@ class _MyAppDateSelectionCalendarState
     List<Widget> rows = [];
     List<Widget> dayWidgets = [];
 
-    // Add empty cells for days before the month starts
     for (int i = 0; i < startingWeekday; i++) {
       dayWidgets.add(const SizedBox(width: 40, height: 40));
     }
 
-    // Add day cells
     for (int day = 1; day <= daysInMonth; day++) {
       final date = DateTime(_currentMonth.year, _currentMonth.month, day);
       final isSelected = _isDateSelected(date);
       final isInRange = _isDateInRange(date);
+
       Color backgroundColor;
+      Color textColor = Colors.black87;
 
       if (isSelected) {
-        backgroundColor = const Color(0xFF7BA5B8);              // selected
+        backgroundColor = const Color(0xFF7BA5B8);
+        textColor = Colors.white;
       } else if (isInRange) {
-        backgroundColor = const Color(0xFFE0EDF2);              // range
+        backgroundColor = const Color(0xFFE0EDF2);
+      } else if (_isHoliday(date)) {
+        backgroundColor = const Color(0xFFFFCDD2);
       } else if (_isHighlighted(date)) {
-        backgroundColor = const Color(0xFFB4E7C1);              // green highlight
+        backgroundColor = const Color(0xFFB4E7C1);
       } else {
         backgroundColor = Colors.transparent;
       }
@@ -276,7 +283,7 @@ class _MyAppDateSelectionCalendarState
               child: Text(
                 '$day',
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black87,
+                  color: textColor,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   fontSize: 16,
                 ),
@@ -286,7 +293,6 @@ class _MyAppDateSelectionCalendarState
         ),
       );
 
-      // Create a new row after every 7 days
       if (dayWidgets.length == 7) {
         rows.add(
           Padding(
@@ -301,9 +307,7 @@ class _MyAppDateSelectionCalendarState
       }
     }
 
-    // Add remaining days in the last week if any
     if (dayWidgets.isNotEmpty) {
-      // Fill remaining cells with empty space to complete the week
       while (dayWidgets.length < 7) {
         dayWidgets.add(const SizedBox(width: 40, height: 40));
       }
@@ -323,24 +327,14 @@ class _MyAppDateSelectionCalendarState
 
   String _getMonthYearString(DateTime date) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
     ];
     return '${months[date.month - 1]} ${date.year}';
   }
 }
 
-// Month and Year Picker Dialog
+// Keep _MonthYearPickerDialog class as it is
 class _MonthYearPickerDialog extends StatefulWidget {
   final DateTime initialDate;
   final Function(DateTime) onDateSelected;
@@ -373,7 +367,6 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -420,7 +413,6 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
             ],
           ),
           const SizedBox(height: 16),
-          // Grid
           _showingMonths ? _buildMonthGrid() : _buildYearGrid(),
         ],
       ),
@@ -429,18 +421,7 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
 
   Widget _buildMonthGrid() {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
 
     return GridView.builder(

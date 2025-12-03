@@ -22,52 +22,33 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  User? user;
-  bool isLoadingUser = true;
-  LeaveData? leaveData;
-  bool isLoadingLeaves = true;
-
   @override
   void initState() {
     super.initState();
-    _loadUserData();
-  }
-
-  // MARK: LOAD USER DATA
-  Future<void> _loadUserData() async {
-    try {
-      // get the user summary from the homeViewModel
-      final homeViewModel = context.read<HomeViewModel>();
-
-      setState(() {
-        user = homeViewModel.homeData?.currentUser;
-        isLoadingUser = false;
-      });
-
+    // We fetch the user's leaves when the screen is first initialized.
+    // We use `addPostFrameCallback` to ensure the context is available and
+    // to avoid trying to access providers before the build is complete.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // We use context.read here to get the HomeViewModel just once, without
+      // subscribing to its changes inside initState.
+      final user = context.read<HomeViewModel>().homeData?.currentUser;
       if (user != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          context.read<ProfileViewModel>().loadUserLeaves(user!.id);
-        });
+        // We call the method to load the leaves for the current user.
+        context.read<ProfileViewModel>().loadUserLeaves(user.id);
       }
-      setState(() {
-        isLoadingUser = false;
-        isLoadingLeaves = false;
-      });
-    } catch (e) {
-      setState(() {
-        isLoadingUser = false;
-        isLoadingLeaves = false;
-      });
-    }
+    });
   }
 
   // MARK: MAIN BUILD SECTION
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final viewModel = context.watch<ProfileViewModel>();
+    final homeViewModel = context.watch<HomeViewModel>();
+    final profileViewModel = context.watch<ProfileViewModel>();
 
-    if (isLoadingUser) {
+    final user = homeViewModel.homeData?.currentUser;
+
+    if (homeViewModel.isLoading) {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         body: Center(
@@ -123,7 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: theme.scaffoldBackgroundColor,
         body: RefreshIndicator(
           onRefresh: () async {
-            viewModel.loadUserLeaves(user?.id ?? '');
+            profileViewModel.loadUserLeaves(user.id);
           },
           child: SingleChildScrollView(
             child: Column(
@@ -138,16 +119,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 20),
                         // Profile Avatar
                         Container(
-                          decoration: BoxDecoration(shape: BoxShape.circle),
+                          decoration:
+                              const BoxDecoration(shape: BoxShape.circle),
                           child: ProfileAvatar(
                             initials:
-                                '${user!.firstName[0]}${user!.lastName[0]}',
+                                '${user.firstName[0]}${user.lastName[0]}',
                             size: 100,
                             baseUrl: ApiEndpoints.baseUrl, // Your base URL
                             imagePath:
-                                (user?.profileImageUrl?.isNotEmpty ?? false)
-                                ? user!.profileImageUrl
-                                : null, // Pass null if empty or null, // Path from backend, e.g. "profilepics/abc.png"
+                                (user.profileImageUrl?.isNotEmpty ?? false)
+                                    ? user.profileImageUrl
+                                    : null, // Pass null if empty or null, // Path from backend, e.g. "profilepics/abc.png"
                           ),
                         ),
 
@@ -159,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${user!.firstName} ${user!.lastName}'.trim(),
+                                '${user.firstName} ${user.lastName}'.trim(),
                                 style: theme.textTheme.headlineMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: theme.colorScheme.onSurface,
@@ -168,7 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 overflow: TextOverflow.visible,
                               ),
                               Text(
-                                user!.designation ?? 'Unknown',
+                                user.designation ?? 'Unknown',
                                 style: theme.textTheme.bodyLarge?.copyWith(
                                   color: theme.colorScheme.onSurface,
                                   fontWeight: FontWeight.w400,
@@ -198,7 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         InfoCard(
                           icon: Icons.email_outlined,
                           title: 'Email Address',
-                          value: user!.email,
+                          value: user.email,
                           iconColor: Colors.blue[600],
                         ),
                         const SizedBox(height: 12),
@@ -209,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: InfoCard(
                                 icon: Icons.phone_outlined,
                                 title: 'Mobile Number',
-                                value: user!.mobile,
+                                value: user.mobile,
                                 iconColor: Colors.green[600],
                               ),
                             ),
@@ -218,7 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: InfoCard(
                                 icon: Icons.calendar_today_outlined,
                                 title: 'Joining Date',
-                                value: _formatJoiningDate(user!.joiningDate),
+                                value: _formatJoiningDate(user.joiningDate),
                                 iconColor: Colors.purple[600],
                               ),
                             ),
@@ -228,26 +210,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 30),
 
                         // Work Information Section
-                        if (user!.reportingTo.isNotEmpty ||
-                            user!.projectList.isNotEmpty) ...[
+                        if (user.reportingTo.isNotEmpty ||
+                            user.projectList.isNotEmpty) ...[
                           const SectionHeader(title: 'Work Information'),
                           const SizedBox(height: 16),
-
-                          if (user!.reportingTo.isNotEmpty) ...[
+                          if (user.reportingTo.isNotEmpty) ...[
                             InfoCard(
                               icon: Icons.supervisor_account_outlined,
                               title: 'Reporting To',
-                              value: user!.reportingTo.join(', '),
+                              value: user.reportingTo.join(', '),
                               iconColor: Colors.orange[600],
                             ),
                             const SizedBox(height: 12),
                           ],
-
-                          if (user!.projectList.isNotEmpty) ...[
+                          if (user.projectList.isNotEmpty) ...[
                             InfoCard(
                               icon: Icons.work_outline,
                               title: 'Projects',
-                              value: user!.projectList.join(', '),
+                              value: user.projectList.join(', '),
                               iconColor: Colors.teal[600],
                             ),
                             const SizedBox(height: 30),
@@ -258,7 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SectionHeader(title: 'My Leaves'),
                         const SizedBox(height: 16),
 
-                        _buildLeaveSection(viewModel, theme),
+                        _buildLeaveSection(profileViewModel, theme, user),
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -285,7 +265,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // MARK: LEAVE SECTION WITH HORIZONTAL SCROLL
-  Widget _buildLeaveSection(ProfileViewModel viewModel, ThemeData theme) {
+  Widget _buildLeaveSection(
+      ProfileViewModel viewModel, ThemeData theme, User user) {
     // Show loader
     if (viewModel.isLoading) {
       return Center(
@@ -312,7 +293,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 8),
             ElevatedButton(
-              onPressed: () => viewModel.loadUserLeaves(user!.id),
+              onPressed: () => viewModel.loadUserLeaves(user.id),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
@@ -356,7 +337,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-
           if (leaveData.allLeaves.isNotEmpty) ...[
             const SizedBox(height: 24),
             Text(
@@ -367,7 +347,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -504,12 +483,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   statusUpper,
                   style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.bold,
                     color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11,
-                    letterSpacing: 1.2,
                   ),
-                ),
+                )
               ],
             ),
           ),
@@ -524,33 +501,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required ThemeData theme,
   }) {
     return Container(
-      width: (MediaQuery.of(context).size.width - 20 * 2 - 12) / 2,
-      height: 80,
+      width: (MediaQuery.of(context).size.width - 20 * 2 - 12 * 3) / 2,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.30),
-            blurRadius: 1,
-            offset: Offset(0, 0),
-          ),
-        ],
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.18), width: 0.5),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            count.toString(),
+            '$count',
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: theme.colorScheme.onSurface,
             ),
           ),
+          const SizedBox(height: 4),
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -559,18 +530,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // MARK: NAVIGATE TO LEAVE DETAIL
-  Future<void> _navigateToLeaveDetail(String leaveId) async {
-    if (user == null) return;
-
-    final result = await AppNavigator.navigateTo(
-      RouteNames.leaveDetail,
-      arguments: {'leaveId': leaveId, 'userId': user!.id},
-    );
-
-    if (result == true && mounted) {
-      final viewModel = Provider.of<ProfileViewModel>(context, listen: false);
-      viewModel.loadUserLeaves(user!.id);
+  void _navigateToLeaveDetail(String leaveId) {
+    final user = context.read<HomeViewModel>().homeData?.currentUser;
+    if (user != null) {
+      AppNavigator.navigateTo(
+        RouteNames.leaveDetail,
+        arguments: {
+          'leaveId': leaveId,
+          'userId': user.id,
+        },
+      );
     }
   }
 }

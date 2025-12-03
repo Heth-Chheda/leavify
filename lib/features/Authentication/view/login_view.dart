@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // 1. Add this import
 import 'package:animate_do/animate_do.dart';
 import 'package:leavify/features/Authentication/viewmodel/login_view_model.dart';
 
@@ -15,14 +16,24 @@ class _LoginPageState extends State<LoginPage> {
 
   final FocusNode _emailFocusNode = FocusNode();
 
+  final List<String> emailDomains = [
+    "ritetechnologies.net",
+    "ritetechnologies.co.in"
+  ];
+
   @override
   void initState() {
     super.initState();
     _viewModel = LoginViewModel();
     _viewModel.addListener(_onViewModelChanged);
 
-    // 🔴 REMOVED: The listener that was auto-hiding the list is gone.
-    // This allows the click to register properly.
+    // 2. FORCE STATUS BAR TO BE VISIBLE
+    // This handles cases where a Splash Screen might have hidden it.
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+    _emailFocusNode.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -43,30 +54,106 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  final List<String> emailDomains = [
-    "ritetechnologies.net",
-    "ritetechnologies.co.in"
-  ];
+  void _applyEmailDomain(String domain) {
+    String currentText = _viewModel.usernameController.text;
+    String newText;
 
-  bool showDomainDropdown = false;
+    if (currentText.contains('@')) {
+      final prefix = currentText.split('@')[0];
+      newText = "$prefix@$domain";
+    } else {
+      newText = "$currentText@$domain";
+    }
+
+    setState(() {
+      _viewModel.usernameController.text = newText;
+      _viewModel.usernameController.selection = TextSelection.fromPosition(
+        TextPosition(offset: newText.length),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        // Added keyboard dismissal on drag to improve UX
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        child: Column(
-          children: <Widget>[
-            _buildTopBackgroundContainer(),
-            _buildLoginFormSection(),
+    final bool showSuggestionBar = _emailFocusNode.hasFocus;
+
+    // 3. CONTROL STATUS BAR COLOR/BRIGHTNESS
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        // Make the status bar transparent so the image shows behind it
+        statusBarColor: Colors.transparent,
+
+        // Use Brightness.light for WHITE icons (if your bg is dark)
+        // Use Brightness.dark for BLACK icons (if your bg is light)
+        statusBarIconBrightness: Brightness.light,
+
+        // For Android: match the brightness logic
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: true,
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Column(
+                  children: <Widget>[
+                    _buildTopBackgroundContainer(),
+                    _buildLoginFormSection(),
+                  ],
+                ),
+              ),
+            ),
+            if (showSuggestionBar)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  border: Border(
+                    top: BorderSide(color: Colors.grey[300]!, width: 1),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: emailDomains.map((domain) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 10.0),
+                        child: Material(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          elevation: 1,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () => _applyEmailDomain(domain),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Text(
+                                domain,
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
+  // MARK: - UI COMPONENTS (Unchanged)
   Widget _buildTopBackgroundContainer() {
     return Container(
       height: 400,
@@ -87,6 +174,8 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+
+  // ... Keep the rest of your widgets (_buildLightImage1, etc.) exactly as they were
 
   Widget _buildLightImage1() {
     return Positioned(
@@ -158,19 +247,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildLoginFormSection() {
-    return Padding(
-      padding: const EdgeInsets.all(30.0),
-      child: Column(
-        children: <Widget>[
-          _buildInputFieldsContainer(),
-          const SizedBox(height: 60),
-          _buildLoginButton(),
-        ],
-      ),
-    );
-  }
-
   Widget _buildManLuggageSection() {
     return Positioned(
       right: 10,
@@ -186,6 +262,19 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoginFormSection() {
+    return Padding(
+      padding: const EdgeInsets.all(30.0),
+      child: Column(
+        children: <Widget>[
+          _buildInputFieldsContainer(),
+          const SizedBox(height: 60),
+          _buildLoginButton(),
+        ],
       ),
     );
   }
@@ -207,91 +296,14 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ],
         ),
-        // Stack with clipBehavior: Clip.none allows drawing the dropdown
-        // completely outside the box bounds.
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Column(
-              children: <Widget>[
-                _buildEmailTextField(),
-                _buildPasswordTextField()
-              ],
-            ),
-
-            // Dropdown Positioned ABOVE the input fields
-            if (showDomainDropdown)
-              Positioned(
-                bottom: 135, // Pushes it upwards above the container
-                left: 0,
-                right: 0,
-                child: Material(
-                  elevation: 10,
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.white,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    constraints: const BoxConstraints(maxHeight: 150),
-                    child: ListView.separated(
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      itemCount: emailDomains.length,
-                      separatorBuilder: (context, index) =>
-                      const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        return InkWell(
-                          onTap: () {
-                            _applyEmailDomain(emailDomains[index]);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12.0,
-                              horizontal: 16.0,
-                            ),
-                            child: Text(
-                              emailDomains[index],
-                              style: const TextStyle(
-                                fontSize: 16, // Slightly larger for easier tap
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
+        child: Column(
+          children: <Widget>[
+            _buildEmailTextField(),
+            _buildPasswordTextField()
           ],
         ),
       ),
     );
-  }
-
-  void _applyEmailDomain(String domain) {
-    debugPrint("Selected Domain: $domain"); // Debug print to verify tap
-    final text = _viewModel.usernameController.text;
-
-    // Safety check
-    if (!text.contains('@')) return;
-
-    final prefix = text.split('@').first;
-    final newEmail = "$prefix@$domain";
-
-    setState(() {
-      _viewModel.usernameController.text = newEmail;
-
-      // Move cursor to end of text
-      _viewModel.usernameController.selection = TextSelection.fromPosition(
-        TextPosition(offset: newEmail.length),
-      );
-
-      // Close dropdown
-      showDomainDropdown = false;
-    });
   }
 
   Widget _buildEmailTextField() {
@@ -307,14 +319,6 @@ class _LoginPageState extends State<LoginPage> {
         focusNode: _emailFocusNode,
         enabled: !_viewModel.isLoading,
         keyboardType: TextInputType.emailAddress,
-        onChanged: (value) {
-          final containsAt = value.contains('@');
-          // Hide if the user manually types a full domain (optional logic)
-          // For now, simple logic: Show if @ is present
-          setState(() {
-            showDomainDropdown = containsAt;
-          });
-        },
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: "Email: eg: abc@xyz.com",

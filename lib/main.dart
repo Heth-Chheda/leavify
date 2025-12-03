@@ -2,15 +2,10 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:leavify/app/app.dart';
-import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/config/app_environment.dart';
 import 'package:leavify/core/storage/app_storage.dart';
-import 'package:leavify/features/Home/viewmodel/announcements_view_model.dart';
-import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
-import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
-import 'package:leavify/features/profile/viewmodel/profile_view_model.dart';
+import 'package:leavify/locator.dart';
 import 'package:leavify/services/fcm_service.dart';
-import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 
 /// ⚠️ Development-only override for self-signed certificates.
@@ -37,18 +32,12 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FCMService.initialize();
 
+  // Setup the ViewModel locator
+  setupLocator();
+
   HttpOverrides.global = DevHttpOverrides();
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => BaseViewModel()),
-        ChangeNotifierProvider(create: (_) => HomeViewModel()..initialize()),
-        ChangeNotifierProvider(create: (_) => ProfileViewModel()),
-        ChangeNotifierProvider(create: (_) => AnnouncementViewModel()),
-        ChangeNotifierProvider(create: (_) => LeaveViewModel()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  // The MultiProvider is no longer needed here as get_it handles the lifecycle.
+  // We'll provide ViewModels at the route level in app_router.dart.
+  runApp(const MyApp());
 }

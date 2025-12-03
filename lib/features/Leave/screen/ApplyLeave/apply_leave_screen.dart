@@ -283,12 +283,29 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   }
 
   Widget _buildDateSelectionSection(LeaveViewModel leaveViewModel) {
+    final homeViewModel = context.read<HomeViewModel>();
+
+    // 1. Get Leave Dates (Green)
+    final List<DateTime> leaveDates = homeViewModel.upcomingLeaveDates;
+
+    // 2. Get Holiday Dates (Red)
+    final List<DateTime> holidayDates = homeViewModel
+        .holidayListResponse
+        ?.holidayList
+        ?.holidayDates
+        .map((holidayDate) => DateTime.tryParse(holidayDate.date ?? ''))
+        .whereType<DateTime>()
+        .toList() ?? [];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Inline Calendar - directly embedded
         MyAppDateSelectionCalendar(
-          highlightDates: context.read<HomeViewModel>().upcomingLeaveDates,
+          // Pass leaves here (Green)
+          highlightDates: leaveDates,
+          // Pass holidays here (Red)
+          holidayDates: holidayDates,
+
           initialStartDate: leaveViewModel.selectedStartDate,
           initialEndDate: leaveViewModel.selectedEndDate,
           enableRangeSelection: true,
@@ -484,8 +501,10 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       width: double.infinity,
       child: MyAppButton(
         label: 'Apply',
-        onPressed: () =>
-            leaveViewModel.submitLeaveForm(context, reasonFocusNode),
+        onPressed: () {
+          reasonFocusNode.unfocus();
+          leaveViewModel.submitLeaveForm(context, reasonFocusNode);
+        },
         isLoading: leaveViewModel.isLoading,
         borderRadius: 16,
         padding: const EdgeInsets.symmetric(vertical: 16),

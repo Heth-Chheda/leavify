@@ -1,10 +1,7 @@
+import 'package:flutter/foundation.dart';
+import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
-// import 'package:leavify/dummydata/announcement/announcement.dart';
-// import 'package:leavify/dummydata/users/balance_leaves.dart';
-// import 'package:leavify/dummydata/users/hr.dart';
-// import 'package:leavify/dummydata/users/employer.dart';
-// import 'package:leavify/dummydata/users/manager.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/Authentication/domain/response/get_category_response.dart';
@@ -14,7 +11,7 @@ import 'package:leavify/features/Leave/models/response/get_announcements_respons
 
 class HomeViewModel extends BaseViewModel {
   final AuthenticationRepository _authenticationRepository =
-      AuthenticationRepository();
+  AuthenticationRepository();
 
   GetUserSummaryResponse? _homeData;
   bool _isLoading = true;
@@ -60,29 +57,41 @@ class HomeViewModel extends BaseViewModel {
   int get workingDays => _workingDays;
 
   Future<void> initialize() async {
-    await _getHolidayList();
     await _loadUserSummaryFromApi();
+    await _getHolidayList();
     await _fetchAnnouncements();
     // await _getLeaveBalance();
   }
 
+  // MARK: - ERROR CLEANER HELPER
+  String _cleanErrorMessage(dynamic e) {
+    if (e is ApiException) {
+      // Filter out technical jargon if it slipped into the message
+      if (e.message.contains("ClientException") ||
+          e.message.contains("uri=") ||
+          e.message.contains("Client is already closed")) {
+        return "Network request failed. Please retry.";
+      }
+      return e.message;
+    }
+    // Fallback for non-ApiExceptions (crashes, parsing errors)
+    return "Something went wrong";
+  }
+
+  // MARK: - LOAD USER SUMMARY
   Future<void> _loadUserSummaryFromApi() async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
 
-      // Replace with actual user ID (ideally get from AppStorage or token decoding)
       final userId = await AppStorage.getString("USER_ID") ?? "";
       final response = await _authenticationRepository.getUserSummary(userId);
-      // final response = dummyManagerData;
-      // final response = dummyEmployeeData;
-      // final response = dummyHRData;
 
       _homeData = response;
       await AppStorage.saveObject("user_details", response.toJson());
     } catch (e) {
-      _error = "Failed to load user data: $e";
+      _error = _cleanErrorMessage(e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -114,13 +123,11 @@ class HomeViewModel extends BaseViewModel {
         userId: userId,
         accessToken: accessToken,
       );
-      // final result = dummyBalanceData;
 
-      // Update from API response
       _leaveBalance = result.balance ?? 0;
       _workingDays = result.remainingWorkingDays ?? 0;
     } catch (e) {
-      _error = e.toString();
+      _error = _cleanErrorMessage(e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -135,9 +142,8 @@ class HomeViewModel extends BaseViewModel {
 
     try {
       _announcements = await _authenticationRepository.getAnnouncements();
-      // _announcements = dummyAnnouncements;
     } catch (e) {
-      _error = e.toString();
+      _error = _cleanErrorMessage(e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -145,7 +151,6 @@ class HomeViewModel extends BaseViewModel {
   }
 
   // MARK: - GET CATEGORY
-  // MANAGER, HR, ADMIN AND SUPER ADMIN FUNCTIONALITY.
   Future<void> getCategory() async {
     try {
       _isLoading = true;
@@ -158,7 +163,7 @@ class HomeViewModel extends BaseViewModel {
 
       _leaveCategories = _leaveCategoryResponse?.categories ?? [];
     } catch (e) {
-      _error = "Failed to fetch leave categories: $e";
+      _error = _cleanErrorMessage(e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -173,7 +178,7 @@ class HomeViewModel extends BaseViewModel {
       notifyListeners();
       _holidayListResponse = await _authenticationRepository.getHolidayList();
     } catch (e) {
-      _error = "Failed to fetch holiday list: $e";
+      _error = _cleanErrorMessage(e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -208,7 +213,6 @@ class HomeViewModel extends BaseViewModel {
 
   bool get hasUpcomingLeaves => myUpcomingLeaves.isNotEmpty;
   bool get hasTeamUpcomingLeaves => teamUpcomingLeaves.isNotEmpty;
-
 
   List<DateTime> generateDateRange(DateTime start, DateTime end) {
     List<DateTime> dates = [];

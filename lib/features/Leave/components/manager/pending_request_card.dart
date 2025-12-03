@@ -54,7 +54,7 @@ class PendingRequestCard extends StatelessWidget {
                   children: [
                     _statusBadge(status: request.status),
                     const SizedBox(height: 4),
-                    if ((request.actionTaken ?? '').isNotEmpty)
+                    if ((request.actionTaken ?? '').isNotEmpty && request.status.toLowerCase() == 'pending')
                       _actionTakenTag(request.actionTaken!),
                   ],
                 ),

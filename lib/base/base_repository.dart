@@ -125,7 +125,9 @@ class BaseRepository {
     BodyType bodyType = BodyType.json,
   }) async {
     final uri = Uri.parse(url);
-    final client = _getHttpClient();
+
+    // NOTE: client is NOT created here anymore.
+    // It is created inside the loop to fix the "Client already closed" error.
 
     final headers = _headers();
     if (extraHeaders != null) headers.addAll(extraHeaders);
@@ -141,6 +143,9 @@ class BaseRepository {
     int attempt = 0;
 
     while (attempt <= _maxRetries) {
+      // ✅ FIX: Create a fresh client for every attempt
+      final client = _getHttpClient();
+
       try {
         http.Response response;
 
@@ -203,10 +208,10 @@ class BaseRepository {
         }
 
         _logResponse(response);
-        client.close();
+        client.close(); // Safe to close here as loop will create a new one
 
         // 🔥🔥🔥 GLOBAL 401 JWT EXPIRED HANDLER
-        if (response.statusCode == 400 || response.statusCode == 404) {
+        if (response.statusCode == 401 || response.statusCode == 404) {
           String message = "Please login again.";
 
           if (BaseRepository.onSessionExpired != null) {
@@ -257,7 +262,9 @@ class BaseRepository {
           attempt++;
           continue;
         }
-        throw ApiException("Unknown error: $e");
+
+        // Return a generic message here so the UI doesn't see "ClientException"
+        throw ApiException("Something went wrong. Please try again.");
       }
     }
 

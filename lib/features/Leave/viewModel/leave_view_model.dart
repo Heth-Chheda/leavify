@@ -582,11 +582,9 @@ class LeaveViewModel extends BaseViewModel {
     try {
       update(isLoading: true, errorMessage: null);
       selectedLeaveById = null;
+      notifyListeners();
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        notifyListeners();
-      });
-
+      final userId = await _loadUserId();
       final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
 
       final result = await _repository.getLeaveById(
@@ -603,10 +601,7 @@ class LeaveViewModel extends BaseViewModel {
       debugPrint("getLeaveById error: $errorMessage");
     } finally {
       update(isLoading: false);
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        notifyListeners();
-      });
+      notifyListeners();
     }
   }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
 import 'package:leavify/core/utils/components/toast/app_toast.dart';
-import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Home/viewmodel/announcements_view_model.dart';
@@ -61,70 +60,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildContent(String userName, BuildContext context) {
-    final viewModel = context.watch<HomeViewModel>();
     final displayName = userName.isNotEmpty ? userName : 'Loading ...';
     return Row(
       children: [
-        // Profile Avatar
-        GestureDetector(
-          onTap: () {
-            AppNavigator.navigateTo(RouteNames.profile);
-          },
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(38),
-              border: Border.all(color: AppColors.highlightBlue, width: 2.0),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withOpacity(0.95),
-                  Colors.white.withOpacity(0.85),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(38),
-              child: Image.network(
-                (viewModel.profileImageUrl.isNotEmpty)
-                    ? '${ApiEndpoints.baseUrl}/${viewModel.profileImageUrl}'
-                    : 'https://picsum.photos/200',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withOpacity(0.95),
-                          Colors.white.withOpacity(0.85),
-                        ],
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.person,
-                      color: Colors.grey.withOpacity(0.5),
-                      size: 20,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-
         // Greeting and Name in Row
         Expanded(
           child: Row(
@@ -183,12 +121,21 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   void _showAnnouncementBottomSheet(BuildContext context) {
+    final announcementViewModel = context.read<AnnouncementViewModel>();
+    final homeViewModel = context.read<HomeViewModel>();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return _AnnouncementBottomSheetContent();
+      builder: (BuildContext sheetContext) {
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: announcementViewModel),
+            ChangeNotifierProvider.value(value: homeViewModel),
+          ],
+          child: const _AnnouncementBottomSheetContent(),
+        );
       },
     );
   }
@@ -217,12 +164,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   void _performLogout(BuildContext context) async {
     try {
-      if (context.mounted) {
         // Load the home view Model // just read the home view Model.
         final homeViewModel = context.read<HomeViewModel>();
 
         // Call logout API
         final isLogoutSuccess = await homeViewModel.logout();
+        if (!context.mounted) return;
 
         // Navigate based on result
         if (isLogoutSuccess) {
@@ -232,10 +179,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           AppNavigator.setRootView(RouteNames.login);
         } else {
           // debugPrint("Logout failed.");
-          // Optionally show a toast/snackbar here
+          // Optionally show a toast/snack bar here
           homeViewModel.showError(context, 'Something went wrong.');
         }
-      }
     } catch (e) {
       AppToast.error(context, 'Something went wrong.');
     }
@@ -289,6 +235,7 @@ class _AnnouncementBottomSheetContentState
   final TextEditingController _bodyController = TextEditingController();
 
   void _sendAnnouncement() async {
+    if (!mounted) return;
     final title = _titleController.text.trim();
     final body = _bodyController.text.trim();
 
@@ -303,6 +250,7 @@ class _AnnouncementBottomSheetContentState
     final homeViewModel = context.read<HomeViewModel>();
 
     final success = await viewModel.addAnnouncement(title, body);
+    if (!mounted) return;
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
