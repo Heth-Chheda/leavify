@@ -40,6 +40,20 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _navigateAndRefresh(
+    String routeName,
+    HomeViewModel viewModel,
+  ) async {
+    // 1. Navigate and wait for the user to come back
+    await AppNavigator.navigateTo(routeName);
+
+    // 2. Check if the widget is still in the tree
+    if (!mounted) return;
+
+    // 3. Refresh the data
+    viewModel.refresh();
+  }
+
   // MARK: - BOTTOM TAB SELECTION
   void _onTabSelected(int index, HomeViewModel viewModel) async {
     final role = viewModel.userRole.toLowerCase();
@@ -51,17 +65,16 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() => _currentIndex = index);
           break;
         case 1:
-          await AppNavigator.navigateTo(RouteNames.pendingRequests);
-          viewModel.refresh();
+          _navigateAndRefresh(RouteNames.pendingRequests, viewModel);
           break;
         case 2:
-          AppNavigator.navigateTo(RouteNames.applyLeave);
+          _navigateAndRefresh(RouteNames.applyLeave, viewModel);
           break;
         case 3:
-          AppNavigator.navigateTo(RouteNames.analytics);
+          _navigateAndRefresh(RouteNames.analytics, viewModel);
           break;
         case 4:
-          AppNavigator.navigateTo(RouteNames.profile);
+          _navigateAndRefresh(RouteNames.profile, viewModel);
           break;
       }
     } else {
@@ -70,10 +83,10 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() => _currentIndex = index);
           break;
         case 1:
-          AppNavigator.navigateTo(RouteNames.applyLeave);
+          _navigateAndRefresh(RouteNames.applyLeave, viewModel);
           break;
         case 2:
-          AppNavigator.navigateTo(RouteNames.profile);
+          _navigateAndRefresh(RouteNames.profile, viewModel);
           break;
       }
     }
@@ -95,7 +108,9 @@ class _HomeScreenState extends State<HomeScreen> {
         // Transparent background so your gradient shows through
         statusBarColor: Colors.transparent,
         // Icon brightness: White icons for Dark Mode, Black icons for Light Mode
-        statusBarIconBrightness: isDarkMode ? Brightness.light : Brightness.dark,
+        statusBarIconBrightness: isDarkMode
+            ? Brightness.light
+            : Brightness.dark,
         // For iOS:
         statusBarBrightness: isDarkMode ? Brightness.dark : Brightness.light,
       ),
@@ -119,39 +134,40 @@ class _HomeScreenState extends State<HomeScreen> {
                 : viewModel.error != null
                 ? _buildErrorWidget(viewModel)
                 : RefreshIndicator(
-              onRefresh: viewModel.refresh,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Container(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight -
-                            kBottomNavigationBarHeight -
-                            MediaQuery.of(context).padding.bottom,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const CustomAppBar(),
-                          _buildAnnouncementSection(viewModel),
-                          const SizedBox(height: 8),
+                    onRefresh: viewModel.refresh,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Container(
+                            constraints: BoxConstraints(
+                              minHeight:
+                                  constraints.maxHeight -
+                                  kBottomNavigationBarHeight -
+                                  MediaQuery.of(context).padding.bottom,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const CustomAppBar(),
+                                _buildAnnouncementSection(viewModel),
+                                const SizedBox(height: 8),
 
-                          // Restored Calendar Section
-                          _buildCalendarSection(viewModel),
+                                // Restored Calendar Section
+                                _buildCalendarSection(viewModel),
 
-                          const SizedBox(height: 8),
+                                const SizedBox(height: 8),
 
-                          // Restored Team Leaves Section
-                          _buildUpcomingEventsSection(viewModel),
-                        ],
-                      ),
+                                // Restored Team Leaves Section
+                                _buildUpcomingEventsSection(viewModel),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-            ),
+                  ),
           ),
 
           bottomNavigationBar: CustomBottomNavBar(
@@ -159,13 +175,17 @@ class _HomeScreenState extends State<HomeScreen> {
             onTabSelected: (index) => _onTabSelected(index, viewModel),
             role: viewModel.userRole,
             profileImageUrl: viewModel.profileImageUrl,
+            // Fix: safely convert nullable num to int
+            pendingRequestCount:
+                viewModel.homeData?.pendingLeavesFromTeam?.toInt() ?? 0,
           ),
 
           floatingActionButton: FloatingAddButton(
             onPressed: () => _onTabSelected(addButtonIndex, viewModel),
             isSelected: _currentIndex == addButtonIndex,
           ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerDocked,
         ),
       ),
     );
@@ -199,17 +219,17 @@ class _HomeScreenState extends State<HomeScreen> {
     // Get actual leave events from ViewModel
     final teamUpcomingLeaves = _selectedDate != null
         ? viewModel.teamUpcomingLeaves
-        .where((leave) => _isDateInLeaveRange(leave, _selectedDate!))
-        .toList()
+              .where((leave) => _isDateInLeaveRange(leave, _selectedDate!))
+              .toList()
         : viewModel.teamUpcomingLeaves.where((leave) {
-      try {
-        return DateTime.parse(
-          leave.startDate,
-        ).isAfter(DateTime.now().subtract(const Duration(days: 1)));
-      } catch (e) {
-        return false;
-      }
-    }).toList();
+            try {
+              return DateTime.parse(
+                leave.startDate,
+              ).isAfter(DateTime.now().subtract(const Duration(days: 1)));
+            } catch (e) {
+              return false;
+            }
+          }).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,8 +322,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return "${date.day} ${months[date.month - 1]} ${date.year}";
   }
@@ -314,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SpinKitSquareCircle(color: AppColors.highlightBlue, size: 100.0)
+          SpinKitSquareCircle(color: AppColors.highlightBlue, size: 100.0),
         ],
       ),
     );
@@ -486,7 +516,7 @@ class _HomeScreenState extends State<HomeScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
         announcements.length,
-            (index) => AnimatedContainer(
+        (index) => AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -495,13 +525,13 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             gradient: _currentPage == index
                 ? LinearGradient(
-              colors: [AppColors.highlightBlue, AppColors.highlightPink],
-            )
+                    colors: [AppColors.highlightBlue, AppColors.highlightPink],
+                  )
                 : null,
             color: _currentPage != index
                 ? (theme.brightness == Brightness.dark
-                ? Colors.grey.shade800
-                : Colors.grey.shade300)
+                      ? Colors.grey.shade800
+                      : Colors.grey.shade300)
                 : null,
             borderRadius: BorderRadius.circular(4),
           ),

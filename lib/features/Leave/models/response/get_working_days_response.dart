@@ -1,5 +1,5 @@
 class BalanceResponse {
-  final int? balance;
+  final num? balance;
   final int? remainingWorkingDays;
   final String? error;
 

@@ -5,11 +5,13 @@ class GetUserSummaryResponse {
   final User? currentUser;
   final List<LeaveDetailsWithoutLeaveId>? myUpcomingLeaves;
   final List<LeaveDetailsWithoutLeaveId>? teamUpcomingLeaves;
+  final num? pendingLeavesFromTeam;
 
   GetUserSummaryResponse({
     this.currentUser,
     this.myUpcomingLeaves,
     this.teamUpcomingLeaves,
+    this.pendingLeavesFromTeam,
   });
 
   factory GetUserSummaryResponse.fromJson(Map<String, dynamic> json) {
@@ -23,11 +25,13 @@ class GetUserSummaryResponse {
       teamUpcomingLeaves: (json['teamUpcomingLeaves'] as List<dynamic>?)
           ?.map((e) => LeaveDetailsWithoutLeaveId.fromJson(e))
           .toList(),
+      pendingLeavesFromTeam: json['pendingLeavesFromTeam'] as num?,
     );
   }
   Map<String, dynamic> toJson() => {
     'currentUser': currentUser?.toJson(),
     'myUpcomingLeaves': myUpcomingLeaves?.map((e) => e.toJson()).toList(),
     'teamUpcomingLeaves': teamUpcomingLeaves?.map((e) => e.toJson()).toList(),
+    'pendingLeavesFromTeam': pendingLeavesFromTeam,
   };
 }

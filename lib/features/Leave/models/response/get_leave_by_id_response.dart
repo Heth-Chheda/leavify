@@ -5,11 +5,13 @@ class GetLeaveByIdResponse {
   final String leaveId;
   final String employeeName;
   final int workingDaysCount;
-  final int balanceLeaves;
+  final num balanceLeaves;
   final int duration;
   final LeaveDetails leaveDetails;
   final CurrentUserAction? currentUserAction;
   final List<TeamConflictingLeave> teamConflictingLeaves;
+  // 1. Added field
+  final List<RecentApprovedLeave> recentApprovedLeaves;
 
   GetLeaveByIdResponse({
     required this.userId,
@@ -21,16 +23,18 @@ class GetLeaveByIdResponse {
     required this.leaveDetails,
     this.currentUserAction,
     required this.teamConflictingLeaves,
+    // 2. Added to constructor
+    required this.recentApprovedLeaves,
   });
 
   factory GetLeaveByIdResponse.fromJson(Map<String, dynamic> json) {
     return GetLeaveByIdResponse(
-      userId: json['userId'],
-      leaveId: json['leaveId'],
-      employeeName: json['employeeName'],
-      workingDaysCount: json['workingDaysCount'],
-      balanceLeaves: json['balanceLeaves'],
-      duration: json['duration'],
+      userId: json['userId'] ?? '',
+      leaveId: json['leaveId'] ?? '',
+      employeeName: json['employeeName'] ?? '',
+      workingDaysCount: json['workingDaysCount'] ?? 0,
+      balanceLeaves: json['balanceLeaves'] ?? 0,
+      duration: json['duration'] ?? 0,
       leaveDetails: LeaveDetails.fromJson(json['leaveDetails']),
       currentUserAction: json['currentUserAction'] != null
           ? CurrentUserAction.fromJson(json['currentUserAction'])
@@ -40,9 +44,41 @@ class GetLeaveByIdResponse {
               ?.map((e) => TeamConflictingLeave.fromJson(e))
               .toList() ??
           [],
+      // 3. Parsing logic added
+      recentApprovedLeaves:
+          (json['recentApprovedLeaves'] as List?)
+              ?.map((e) => RecentApprovedLeave.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 }
+
+// 4. NEW CLASS: RecentApprovedLeave
+class RecentApprovedLeave {
+  final String type;
+  final DateTime fromDate;
+  final DateTime toDate;
+  final String reason;
+
+  RecentApprovedLeave({
+    required this.type,
+    required this.fromDate,
+    required this.toDate,
+    required this.reason,
+  });
+
+  factory RecentApprovedLeave.fromJson(Map<String, dynamic> json) {
+    return RecentApprovedLeave(
+      type: json['type'] ?? '',
+      fromDate: DateTime.parse(json['fromDate']),
+      toDate: DateTime.parse(json['toDate']),
+      reason: json['reason'] ?? '',
+    );
+  }
+}
+
+// --- REST OF THE CLASSES REMAIN THE SAME ---
 
 class CurrentUserAction {
   final String managerId;
@@ -115,21 +151,21 @@ class LeaveDetails {
 
   factory LeaveDetails.fromJson(Map<String, dynamic> json) {
     return LeaveDetails(
-      type: json['type'],
+      type: json['type'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
       fromDate: DateTime.parse(json['fromDate']),
       toDate: DateTime.parse(json['toDate']),
-      reason: json['reason'],
+      reason: json['reason'] ?? '',
       documents:
           (json['documents'] as List<dynamic>?)
               ?.map((doc) => LeaveDocument.fromJson(doc))
               .toList() ??
           [],
-      isCompOff: json['isCompOff'],
+      isCompOff: json['isCompOff'] ?? false,
       compDates: List<String>.from(json['compDates'] ?? []),
-      isHalfDay: json['isHalfDay'],
-      status: json['status'],
-      isEscalated: json['isEscalated'],
+      isHalfDay: json['isHalfDay'] ?? false,
+      status: json['status'] ?? '',
+      isEscalated: json['isEscalated'] ?? false,
       reqStatusTracking:
           (json['reqStatusTracking'] as List?)
               ?.map((e) => ReqStatusTracking.fromJson(e))
@@ -140,7 +176,7 @@ class LeaveDetails {
           : null,
       updatedAt: DateTime.parse(json['updatedAt']),
       reminderDetails: ReminderDetails.fromJson(json['reminderDetails']),
-      subType: json['subType'],
+      subType: json['subType'] ?? '',
     );
   }
 }
@@ -160,10 +196,10 @@ class ReqStatusTracking {
 
   factory ReqStatusTracking.fromJson(Map<String, dynamic> json) {
     return ReqStatusTracking(
-      status: json['status'],
-      processedBy: json['processedBy'],
+      status: json['status'] ?? '',
+      processedBy: json['processedBy'] ?? '',
       processedAt: DateTime.parse(json['processedAt']),
-      comment: json['comment'],
+      comment: json['comment'] ?? '',
     );
   }
 }
@@ -202,9 +238,21 @@ class ReminderDetails {
   ReminderDetails({required this.reminderSentAt, required this.reminderCount});
 
   factory ReminderDetails.fromJson(Map<String, dynamic> json) {
+    // Handle the case where reminderSentAt might be default C# min value or missing
+    DateTime parsedDate;
+    if (json['reminderSentAt'] != null) {
+      try {
+        parsedDate = DateTime.parse(json['reminderSentAt']);
+      } catch (e) {
+        parsedDate = DateTime(1, 1, 1);
+      }
+    } else {
+      parsedDate = DateTime(1, 1, 1);
+    }
+
     return ReminderDetails(
-      reminderSentAt: DateTime.parse(json['reminderSentAt']),
-      reminderCount: json['reminderCount'],
+      reminderSentAt: parsedDate,
+      reminderCount: json['reminderCount'] ?? 0,
     );
   }
 }

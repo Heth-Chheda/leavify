@@ -9,9 +9,9 @@ import 'package:leavify/core/utils/formatters/date/date_formatter.dart';
 import 'package:leavify/core/utils/helpers/documents/ui/viewer/document_viewer.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
+import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Leave/components/manager/conflict/conflict_dialog.dart';
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
-import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:leavify/router/app_navigator.dart';
 import 'package:provider/provider.dart';
@@ -52,7 +52,9 @@ class _PendingRequestDetailScreenState
     await viewModel.getLeaveById(leaveId: widget.leaveId);
 
     final leaveDetails = viewModel.selectedLeaveById;
-    if (leaveDetails != null && leaveDetails.teamConflictingLeaves.isNotEmpty) {
+    if (leaveDetails != null &&
+        leaveDetails.teamConflictingLeaves.isNotEmpty &&
+        leaveDetails.leaveDetails.type.toLowerCase() != 'extra') {
       _showConflictDialog(leaveDetails.teamConflictingLeaves);
     }
   }
@@ -122,19 +124,28 @@ class _PendingRequestDetailScreenState
           const SizedBox(height: 20),
           _LeaveRequestDetailsCard(leaveData: leaveData),
           const SizedBox(height: 16),
-          _TeamConflictingLeavesList(
-            teamLeaves: leaveData.teamConflictingLeaves,
-          ),
-          const SizedBox(height: 20),
+
+          if (leaveData.leaveDetails.type.toLowerCase() != 'extra') ...[
+            _TeamConflictingLeavesList(
+              teamLeaves: leaveData.teamConflictingLeaves,
+            ),
+            const SizedBox(height: 20),
+          ],
+
           if (leaveData.leaveDetails.reason.isNotEmpty)
             _ReasonCard(reason: leaveData.leaveDetails.reason),
+
           if (leaveData.leaveDetails.reason.isNotEmpty)
             const SizedBox(height: 16),
+
+          // ---------------------------------------------------------
           if (leaveData.leaveDetails.documents.isNotEmpty)
             DocumentsCard(documents: leaveData.leaveDetails.documents),
+
           if (leaveData.leaveDetails.documents.isNotEmpty)
             const SizedBox(height: 16),
-          if (leaveData.leaveDetails.reqStatusTracking.isNotEmpty)
+
+          if (leaveData.leaveDetails.reqStatusTracking.isNotEmpty) ...[
             StatusTrackingCard(
               statusTracking: leaveData.leaveDetails.reqStatusTracking.map((
                 tracking,
@@ -147,12 +158,21 @@ class _PendingRequestDetailScreenState
                 );
               }).toList(),
             ),
+            const SizedBox(height: 16),
+          ],
+
+          if (leaveData.recentApprovedLeaves.isNotEmpty) ...[
+            _RecentApprovedLeavesCard(leaves: leaveData.recentApprovedLeaves),
+            const SizedBox(height: 16),
+          ],
 
           if (leaveData.leaveDetails.reqStatusTracking.isNotEmpty)
             const SizedBox(height: 16),
+
           if (leaveData.leaveDetails.isEscalated &&
               leaveData.leaveDetails.escalationDet != null)
             const SizedBox(height: 16),
+
           _CommentsCard(
             commentsController: _commentsController,
             focusNode: _commentsFocusNode,
@@ -277,7 +297,6 @@ class _PendingRequestDetailScreenState
     );
   }
 
-
   Future<void> _handleApprove() async {
     final leaveViewModel = context.read<LeaveViewModel>();
     if (_commentsController.text.trim().isEmpty) {
@@ -379,90 +398,96 @@ class _EmployeeHeaderCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.onSurface.withOpacity(0.15),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child:
-                      profileImagePath != null && profileImagePath!.isNotEmpty
-                      ? Image.network(
-                          '${ApiEndpoints.baseUrl}/$profileImagePath',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            // fallback to initials if image fails to load
-                            return Center(
-                              child: Text(
-                                _getInitials(leaveData.employeeName),
-                                style: TextStyle(
-                                  color: colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 28,
+    return GestureDetector(
+      onTap: () {
+        // navigate to the other user detail page.
+        debugPrint('Employee Header Card tapped');
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.onSurface.withOpacity(0.15),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child:
+                        profileImagePath != null && profileImagePath!.isNotEmpty
+                        ? Image.network(
+                            '${ApiEndpoints.baseUrl}/$profileImagePath',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              // fallback to initials if image fails to load
+                              return Center(
+                                child: Text(
+                                  _getInitials(leaveData.employeeName),
+                                  style: TextStyle(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 28,
+                                  ),
                                 ),
+                              );
+                            },
+                          )
+                        : Center(
+                            child: Text(
+                              _getInitials(leaveData.employeeName),
+                              style: TextStyle(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 28,
                               ),
-                            );
-                          },
-                        )
-                      : Center(
-                          child: Text(
-                            _getInitials(leaveData.employeeName),
-                            style: TextStyle(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 28,
                             ),
                           ),
-                        ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    leaveData.employeeName,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      leaveData.employeeName,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
-                  ),
-                  Text(
-                    designation ?? 'N/A',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: const Color.fromARGB(255, 54, 54, 54),
+                    Text(
+                      designation ?? 'N/A',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: const Color.fromARGB(255, 54, 54, 54),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildBalanceInfo(),
-        ],
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildBalanceInfo(),
+          ],
+        ),
       ),
     );
   }
@@ -519,6 +544,7 @@ class _EmployeeHeaderCard extends StatelessWidget {
 }
 
 // MARK: - Leave Request Details Card
+// MARK: - Leave Request Details Card (Updated for Comp Off)
 class _LeaveRequestDetailsCard extends StatelessWidget {
   final GetLeaveByIdResponse leaveData;
 
@@ -526,9 +552,44 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Get Flags
+    final bool isHalfDay = leaveData.leaveDetails.isHalfDay;
+    final bool isCompOff = leaveData.leaveDetails.isCompOff;
+
+    // 2. Determine if we need to show a badge (Half Day OR Comp Off)
+    final bool showBadge = isHalfDay || isCompOff;
+
+    // 3. Determine Badge Style
+    String badgeLabel = '';
+    Color badgeBgColor = Colors.transparent;
+    Color badgeIconColor = Colors.transparent;
+    Color badgeValueColor = Colors.transparent;
+
+    if (isCompOff) {
+      // Style for Comp Off (Purple Theme)
+      badgeLabel = 'Comp Off';
+      badgeBgColor = Colors.purple.withOpacity(0.15);
+      badgeIconColor = Colors.purple[800]!;
+      badgeValueColor = Colors.purple[900]!;
+    } else if (isHalfDay) {
+      // Style for Half Day (Orange Theme)
+      badgeLabel = 'Half Day';
+      badgeBgColor = Colors.orange.withOpacity(0.15);
+      badgeIconColor = Colors.orange[800]!;
+      badgeValueColor = Colors.orange[900]!;
+    }
+
     return _InfoCard(
       title: 'Leave Request Details',
       children: [
+        if (leaveData.leaveDetails.type.toLowerCase() == 'extra') ...[
+          _InfoRow(
+            icon: Icons.more_time_rounded,
+            label: 'Comp Off',
+            value: leaveData.leaveDetails.type,
+          ),
+        ],
+        // Row 1: Type & Duration
         Row(
           children: [
             Expanded(
@@ -548,6 +609,8 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
             ),
           ],
         ),
+
+        // Row 2: From & To Date
         Row(
           children: [
             Expanded(
@@ -567,18 +630,51 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
             ),
           ],
         ),
-        _InfoRow(
-          icon: Icons.access_time_outlined,
-          label: 'Applied On',
-          value: _formatDateTime(leaveData.leaveDetails.createdAt),
-        ),
+
+        // Row 3: Applied On (Conditionally Split for Comp Off OR Half Day)
+        if (showBadge)
+          Row(
+            children: [
+              // 1. Applied On
+              Expanded(
+                child: _InfoRow(
+                  icon: Icons.access_time_outlined,
+                  label: 'Applied On',
+                  value: _formatDateTime(leaveData.leaveDetails.createdAt),
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // 2. Mode Highlight Box (Comp Off / Half Day)
+              Expanded(
+                child: _InfoRow(
+                  icon: isCompOff
+                      ? Icons.star_rounded
+                      : Icons.timelapse_rounded,
+                  label: 'Mode',
+                  value: badgeLabel,
+                  // Apply dynamic styles
+                  backgroundColor: badgeBgColor,
+                  iconColor: badgeIconColor,
+                  valueColor: badgeValueColor,
+                ),
+              ),
+            ],
+          )
+        else
+          // Standard full-width row if NO special mode
+          _InfoRow(
+            icon: Icons.access_time_outlined,
+            label: 'Applied On',
+            value: _formatDateTime(leaveData.leaveDetails.createdAt),
+          ),
       ],
     );
   }
 
   String _calculateDuration() {
     final days = leaveData.duration;
-    return '$days day${days > 1 ? 's' : ''}';
+    return '$days day${days == 1 ? '' : 's'}';
   }
 
   String _formatDate(DateTime date) {
@@ -755,10 +851,18 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
+  // New properties for custom styling
+  final Color? backgroundColor;
+  final Color? iconColor;
+  final Color? valueColor;
+
   const _InfoRow({
     required this.icon,
     required this.label,
     required this.value,
+    this.backgroundColor,
+    this.iconColor,
+    this.valueColor,
   });
 
   @override
@@ -771,13 +875,19 @@ class _InfoRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.1),
+          // Use custom background or default grey
+          color: backgroundColor ?? Colors.grey.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, size: 20, color: colorScheme.onSurface.withOpacity(0.7)),
+            Icon(
+              icon,
+              size: 20,
+              // Use custom icon color or default
+              color: iconColor ?? colorScheme.onSurface.withOpacity(0.7),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -796,7 +906,8 @@ class _InfoRow extends StatelessWidget {
                     value,
                     style: TextStyle(
                       fontSize: 15,
-                      color: colorScheme.onSurface,
+                      // Use custom value color or default
+                      color: valueColor ?? colorScheme.onSurface,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -907,5 +1018,159 @@ class _TeamConflictingLeavesList extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// MARK: - Recent Approved Leaves Card
+class _RecentApprovedLeavesCard extends StatelessWidget {
+  final List<RecentApprovedLeave> leaves;
+
+  const _RecentApprovedLeavesCard({required this.leaves});
+
+  @override
+  Widget build(BuildContext context) {
+    if (leaves.isEmpty) return const SizedBox.shrink();
+
+    return _InfoCard(
+      title: 'Recent Approved History',
+      children: [
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: leaves.length,
+          itemBuilder: (context, index) {
+            return _TimelineLeaveItem(
+              leave: leaves[index],
+              isLast: index == leaves.length - 1,
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+// MARK: - Timeline Item Widget
+class _TimelineLeaveItem extends StatelessWidget {
+  final RecentApprovedLeave leave;
+  final bool isLast;
+
+  const _TimelineLeaveItem({required this.leave, required this.isLast});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Timeline Visuals (Dot + Line)
+          Column(
+            children: [
+              // The Dot
+              Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.green, width: 2),
+                ),
+                child: Center(
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+              // The Line (only show if not the last item)
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: Colors.grey.withOpacity(0.2),
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 16),
+
+          // 2. Content
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header: Date and Type
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _formatDateRange(leave.fromDate, leave.toDate),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          leave.type, // e.g., "Casual", "Sick"
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  // Reason Text
+                  Text(
+                    leave.reason.isNotEmpty
+                        ? leave.reason
+                        : "No reason provided",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDateRange(DateTime from, DateTime to) {
+    final fromStr = DateFormat('dd MMM').format(from);
+    // If same day, just show one date
+    if (from.year == to.year && from.month == to.month && from.day == to.day) {
+      return fromStr;
+    }
+    final toStr = DateFormat('dd MMM').format(to);
+    return "$fromStr - $toStr";
   }
 }

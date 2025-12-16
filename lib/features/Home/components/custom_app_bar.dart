@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
 import 'package:leavify/core/utils/components/toast/app_toast.dart';
-import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Home/viewmodel/announcements_view_model.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/router/app_navigator.dart';
 import 'package:leavify/router/route_names.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
@@ -163,26 +163,41 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   void _performLogout(BuildContext context) async {
+    debugPrint("🔴 LOGOUT: Process started");
+
     try {
-        // Load the home view Model // just read the home view Model.
-        final homeViewModel = context.read<HomeViewModel>();
+      // Load the home view Model // just read the home view Model.
+      final homeViewModel = context.read<HomeViewModel>();
+      debugPrint("🔴 LOGOUT: HomeViewModel loaded");
 
-        // Call logout API
-        final isLogoutSuccess = await homeViewModel.logout();
-        if (!context.mounted) return;
+      // Call logout API
+      debugPrint("🔴 LOGOUT: Calling API...");
+      final isLogoutSuccess = await homeViewModel.logout();
+      debugPrint("🔴 LOGOUT: API call finished. Success: $isLogoutSuccess");
 
-        // Navigate based on result
-        if (isLogoutSuccess) {
-          homeViewModel.clearData();
-          // Clear data and preferences
-          await AppStorage.clearAllExcept("USER_FCM_TOKEN");
-          AppNavigator.setRootView(RouteNames.login);
-        } else {
-          // debugPrint("Logout failed.");
-          // Optionally show a toast/snack bar here
-          homeViewModel.showError(context, 'Something went wrong.');
-        }
+      if (!context.mounted) {
+        debugPrint("🔴 LOGOUT: Context not mounted after await. Aborting.");
+        return;
+      }
+
+      // Navigate based on result
+      if (isLogoutSuccess) {
+        debugPrint("🔴 LOGOUT: Clearing ViewModel data...");
+        homeViewModel.clearData();
+
+        // Clear data and preferences
+        debugPrint("🔴 LOGOUT: Clearing AppStorage (preserving FCM)...");
+        await AppStorage.clearAllExcept("USER_FCM_TOKEN");
+
+        debugPrint("🔴 LOGOUT: Navigating to Login root view");
+        AppNavigator.setRootView(RouteNames.login);
+      } else {
+        debugPrint("🔴 LOGOUT: Logout failed (boolean false). Showing error.");
+        // Optionally show a toast/snack bar here
+        homeViewModel.showError(context, 'Something went wrong.');
+      }
     } catch (e) {
+      debugPrint("🔴 LOGOUT: Exception caught -> $e");
       AppToast.error(context, 'Something went wrong.');
     }
   }
@@ -441,9 +456,7 @@ class _AnnouncementBottomSheetContentState
     return Container(
       width: double.infinity,
       height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
       child: ElevatedButton(
         onPressed: isLoading ? null : _sendAnnouncement,
         style: ElevatedButton.styleFrom(

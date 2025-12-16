@@ -33,12 +33,19 @@ class _MyAppDateSelectionCalendarState
   DateTime? _selectedStartDate;
   DateTime? _selectedEndDate;
 
+  // Define the minimum allowed date
+  late DateTime _minSelectableDate;
+
   @override
   void initState() {
     super.initState();
     _currentMonth = widget.initialStartDate ?? DateTime.now();
     _selectedStartDate = widget.initialStartDate;
     _selectedEndDate = widget.initialEndDate;
+
+    // Logic: Set minimum date to the 1st day of the PREVIOUS month.
+    final now = DateTime.now();
+    _minSelectableDate = DateTime(now.year, now.month - 1, 1);
   }
 
   bool _isHighlighted(DateTime date) {
@@ -47,6 +54,12 @@ class _MyAppDateSelectionCalendarState
 
   bool _isHoliday(DateTime date) {
     return widget.holidayDates.any((d) => _isSameDay(d, date));
+  }
+
+  // Helper: Check if date is before the allowed limit (Previous Month 1st)
+  bool _isRestricted(DateTime date) {
+    final dateToCheck = DateTime(date.year, date.month, date.day);
+    return dateToCheck.isBefore(_minSelectableDate);
   }
 
   bool _isSameDay(DateTime date1, DateTime date2) {
@@ -89,6 +102,9 @@ class _MyAppDateSelectionCalendarState
   }
 
   void _onDateTap(DateTime date) {
+    // 1. UPDATE: Removed weekend check. Only check for Restricted dates.
+    if (_isRestricted(date)) return;
+
     setState(() {
       if (!widget.enableRangeSelection) {
         _selectedStartDate = date;
@@ -119,8 +135,8 @@ class _MyAppDateSelectionCalendarState
     if (_selectedStartDate == null) return false;
     if (_selectedEndDate == null) return false;
     return date.isAfter(
-      _selectedStartDate!.subtract(const Duration(days: 1)),
-    ) &&
+          _selectedStartDate!.subtract(const Duration(days: 1)),
+        ) &&
         date.isBefore(_selectedEndDate!.add(const Duration(days: 1)));
   }
 
@@ -150,16 +166,12 @@ class _MyAppDateSelectionCalendarState
           ),
         ],
       ),
-      // 1. Wrap the content in GestureDetector
       child: GestureDetector(
-        behavior: HitTestBehavior.translucent, // Ensures swipes on empty space work
+        behavior: HitTestBehavior.translucent,
         onHorizontalDragEnd: (details) {
-          // 2. Determine Swipe Direction
           if (details.primaryVelocity! > 0) {
-            // Swiped Right -> Go to Previous Month
             _previousMonth();
           } else if (details.primaryVelocity! < 0) {
-            // Swiped Left -> Go to Next Month
             _nextMonth();
           }
         },
@@ -167,14 +179,34 @@ class _MyAppDateSelectionCalendarState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Select Dates',
-              style: const TextStyle(
-                fontFamily: 'Lato',
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+            // UPDATED HEADER ROW
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Select Dates',
+                  style: TextStyle(
+                    fontFamily: 'Lato',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                // LEGEND WIDGET
+                Row(
+                  children: [
+                    _buildLegendItem(
+                      color: const Color(0xFFB4E7C1), // Green
+                      label: 'My Leaves',
+                    ),
+                    const SizedBox(width: 12),
+                    _buildLegendItem(
+                      color: const Color(0xFFFFCDD2), // Pink/Red
+                      label: 'Holidays',
+                    ),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Row(
@@ -203,8 +235,9 @@ class _MyAppDateSelectionCalendarState
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children:
-              ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
+              children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((
+                day,
+              ) {
                 return SizedBox(
                   width: 40,
                   child: Center(
@@ -225,6 +258,27 @@ class _MyAppDateSelectionCalendarState
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLegendItem({required Color color, required String label}) {
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
     );
   }
 
@@ -250,13 +304,22 @@ class _MyAppDateSelectionCalendarState
 
     for (int day = 1; day <= daysInMonth; day++) {
       final date = DateTime(_currentMonth.year, _currentMonth.month, day);
+
       final isSelected = _isDateSelected(date);
       final isInRange = _isDateInRange(date);
+
+      // 2. UPDATE: Removed isWeekend check from disabled logic
+      final bool isRestricted = _isRestricted(date);
+      final bool isDisabled = isRestricted;
 
       Color backgroundColor;
       Color textColor = Colors.black87;
 
-      if (isSelected) {
+      if (isDisabled) {
+        // Only old dates are disabled now
+        backgroundColor = Colors.transparent;
+        textColor = Colors.grey.withOpacity(0.4);
+      } else if (isSelected) {
         backgroundColor = const Color(0xFF7BA5B8);
         textColor = Colors.white;
       } else if (isInRange) {
@@ -271,7 +334,7 @@ class _MyAppDateSelectionCalendarState
 
       dayWidgets.add(
         GestureDetector(
-          onTap: () => _onDateTap(date),
+          onTap: isDisabled ? null : () => _onDateTap(date),
           child: Container(
             width: 40,
             height: 40,
@@ -327,8 +390,18 @@ class _MyAppDateSelectionCalendarState
 
   String _getMonthYearString(DateTime date) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[date.month - 1]} ${date.year}';
   }
@@ -421,7 +494,18 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
 
   Widget _buildMonthGrid() {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
 
     return GridView.builder(

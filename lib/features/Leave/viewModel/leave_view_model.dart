@@ -111,6 +111,11 @@ class LeaveViewModel extends BaseViewModel {
     _resetFormState();
   }
 
+  void setHalfDay(bool? value) {
+    isLeaveHalfDay = value ?? false;
+    notifyListeners();
+  }
+
   void updateSelectedLeaveType(String? value) {
     selectedLeaveType = value;
     notifyListeners();
@@ -292,14 +297,16 @@ class LeaveViewModel extends BaseViewModel {
   }
 
   // MARK: - FORM VALIDATION METHODS
-  bool validateForm(BuildContext context) {
+  bool validateForm(BuildContext context, bool isCompOff) {
     if (selectedStartDate == null) {
       showError(context, 'Please select the date.');
       return false;
     }
-    if (selectedLeaveType == '' || selectedLeaveType == null) {
-      showError(context, 'Leave type is necessary!');
-      return false;
+    if (!isCompOff) {
+      if (selectedLeaveType == '' || selectedLeaveType == null) {
+        showError(context, 'Leave type is necessary!');
+        return false;
+      }
     }
     return true;
   }
@@ -307,9 +314,10 @@ class LeaveViewModel extends BaseViewModel {
   // MARK: - SUBMIT LEAVE FORM METHOD
   Future<void> submitLeaveForm(
     BuildContext context,
-    FocusNode reasonFocusNode,
-  ) async {
-    if (!validateForm(context)) {
+    FocusNode reasonFocusNode, {
+    bool isCompOff = false,
+  }) async {
+    if (!validateForm(context, isCompOff)) {
       return;
     }
 
@@ -328,7 +336,7 @@ class LeaveViewModel extends BaseViewModel {
         return;
       }
 
-      final request = await _createLeaveRequest(userId);
+      final request = await _createLeaveRequest(userId, isCompOff);
 
       // Submit the request
       final success = await submitLeaveRequest(request);
@@ -344,12 +352,12 @@ class LeaveViewModel extends BaseViewModel {
       }
     } catch (e) {
       update(isLoading: false);
-      
+
       if (e is ApiException && e.statusCode == 409) {
         showError(context, "You already have a leave on that date.");
         return;
       }
-      
+
       showError(context, 'Error submitting leave.');
     }
   }
@@ -371,7 +379,10 @@ class LeaveViewModel extends BaseViewModel {
   }
 
   // MARK: - CREATE LEAVE REQUEST METHOD
-  Future<ApplyLeaveRequestModel> _createLeaveRequest(String userId) async {
+  Future<ApplyLeaveRequestModel> _createLeaveRequest(
+    String userId,
+    bool isCompOff,
+  ) async {
     final adjustedRange = getAdjustedDateRange();
     List<String> compOffDateStrings = selectedCompOffDates.map((date) {
       final adjustedDate = DateTime(
@@ -400,7 +411,7 @@ class LeaveViewModel extends BaseViewModel {
         ? ApplyLeaveRequestModel(
             userId: _selectedUser!.id,
             requestedBy: userId,
-            type: 'LEAVE',
+            type: isCompOff ? 'EXTRA' : 'LEAVE',
             subType: selectedLeaveType ?? 'GENERAL',
             fromDate: adjustedRange['from']!.toUtc().toIso8601String(),
             toDate: adjustedRange['to']!.toUtc().toIso8601String(),
@@ -414,7 +425,7 @@ class LeaveViewModel extends BaseViewModel {
         : ApplyLeaveRequestModel(
             userId: userId,
             requestedBy: userId,
-            type: 'LEAVE',
+            type: isCompOff ? 'EXTRA' : 'LEAVE',
             subType: selectedLeaveType ?? 'GENERAL',
             fromDate: adjustedRange['from']!.toUtc().toIso8601String(),
             toDate: adjustedRange['to']!.toUtc().toIso8601String(),
@@ -424,8 +435,6 @@ class LeaveViewModel extends BaseViewModel {
             compDates: compOffDateStrings,
             documents: documents,
           );
-
-    debugPrint("Created Leave Request: ${request.toJson()}");
     return request;
   }
 

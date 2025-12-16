@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
@@ -31,8 +32,8 @@ class BaseRepository {
       final ioClient = HttpClient()
         ..badCertificateCallback =
             (X509Certificate cert, String host, int port) {
-          return true;
-        };
+              return true;
+            };
       return IOClient(ioClient);
     } else {
       return http.Client();
@@ -182,24 +183,37 @@ class BaseRepository {
             } else if (bodyType == BodyType.formUrlEncoded) {
               encodedBody = Uri(
                 queryParameters: requestBody.map(
-                      (k, v) => MapEntry(k, v.toString()),
+                  (k, v) => MapEntry(k, v.toString()),
                 ),
               ).query;
               headers["Content-Type"] = "application/x-www-form-urlencoded";
             }
           }
 
-          _logRequest(method: method, url: url, headers: headers, body: requestBody);
+          _logRequest(
+            method: method,
+            url: url,
+            headers: headers,
+            body: requestBody,
+          );
 
           switch (method) {
             case HttpMethod.get:
               response = await client.get(uri, headers: headers);
               break;
             case HttpMethod.post:
-              response = await client.post(uri, headers: headers, body: encodedBody);
+              response = await client.post(
+                uri,
+                headers: headers,
+                body: encodedBody,
+              );
               break;
             case HttpMethod.put:
-              response = await client.put(uri, headers: headers, body: encodedBody);
+              response = await client.put(
+                uri,
+                headers: headers,
+                body: encodedBody,
+              );
               break;
             case HttpMethod.delete:
               response = await client.delete(uri, headers: headers);
@@ -235,8 +249,10 @@ class BaseRepository {
             if (response.body.isNotEmpty) {
               final decoded = jsonDecode(response.body);
               if (decoded is Map<String, dynamic>) {
-                if (decoded['error'] != null) errorMessage = decoded['error'];
-                else if (decoded['message'] != null) errorMessage = decoded['message'];
+                if (decoded['error'] != null)
+                  errorMessage = decoded['error'];
+                else if (decoded['message'] != null)
+                  errorMessage = decoded['message'];
               } else {
                 errorMessage = response.body;
               }
@@ -310,8 +326,9 @@ class BaseRepository {
     debugPrint("Headers: ${response.headers}");
     if (response.body.isNotEmpty) {
       try {
-        final prettyBody =
-        const JsonEncoder.withIndent('  ').convert(jsonDecode(response.body));
+        final prettyBody = const JsonEncoder.withIndent(
+          '  ',
+        ).convert(jsonDecode(response.body));
         printFullJson(prettyBody);
       } catch (e) {
         printFullJson(response.body);

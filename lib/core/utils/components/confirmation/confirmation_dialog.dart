@@ -67,7 +67,7 @@ class ConfirmationDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // ✅ Replace with MyAppButton
+                // Replace with MyAppButton
                 SizedBox(
                   width: double.infinity,
                   child: MyAppButton(

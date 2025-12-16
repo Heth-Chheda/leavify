@@ -54,11 +54,11 @@ class MyLeaves {
 
 class LeaveData {
   final String userId;
-  final int balanceLeaves;
-  final int approvedLeaves;
-  final int pendingLeaves;
-  final int rejectedLeaves;
-  final int cancelledLeaves;
+  final num balanceLeaves;
+  final num approvedLeaves;
+  final num pendingLeaves;
+  final num rejectedLeaves;
+  final num cancelledLeaves;
   final List<MyLeaves> allLeaves;
 
   LeaveData({

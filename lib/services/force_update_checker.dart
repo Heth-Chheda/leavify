@@ -1,9 +1,10 @@
 // force_update_checker.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/router/app_navigator.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'dart:io';
 import 'package:url_launcher/url_launcher.dart';
 
 class ForceUpdateWrapper extends StatefulWidget {
@@ -28,7 +29,9 @@ class _ForceUpdateWrapperState extends State<ForceUpdateWrapper> {
   /// Called by SplashScreen before navigation
   Future<bool> checkForUpdate() async {
     if (_hasCheckedForUpdate) {
-      debugPrint("⚠️ [ForceUpdate] Returning cached result: $_isUpdateRequired");
+      debugPrint(
+        "⚠️ [ForceUpdate] Returning cached result: $_isUpdateRequired",
+      );
       return _isUpdateRequired;
     }
 
@@ -92,17 +95,13 @@ class _ForceUpdateWrapperState extends State<ForceUpdateWrapper> {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => PopScope(
-        canPop: false,
-        child: const UpdateDialog(),
-      ),
+      builder: (_) => PopScope(canPop: false, child: const UpdateDialog()),
     );
   }
 
   @override
   Widget build(BuildContext context) => widget.child;
 }
-
 
 /// UI for the forced update dialog
 class UpdateDialog extends StatelessWidget {
@@ -112,17 +111,26 @@ class UpdateDialog extends StatelessWidget {
     try {
       if (Platform.isAndroid) {
         // Replace with your app's package name
-        final Uri playStoreUri = Uri.parse('market://details?id=com.yourcompany.leavify');
-        final Uri playStoreWebUri = Uri.parse('https://play.google.com/store/apps/details?id=com.yourcompany.leavify');
+        final Uri playStoreUri = Uri.parse(
+          'https://play.google.com/store/apps/details?id=com.ritetechnologies.leavify&pcampaignid=web_share',
+        );
+        final Uri playStoreWebUri = Uri.parse(
+          'https://play.google.com/store/apps/details?id=com.ritetechnologies.leavify&hl=en',
+        );
 
         if (await canLaunchUrl(playStoreUri)) {
           await launchUrl(playStoreUri, mode: LaunchMode.externalApplication);
         } else {
-          await launchUrl(playStoreWebUri, mode: LaunchMode.externalApplication);
+          await launchUrl(
+            playStoreWebUri,
+            mode: LaunchMode.externalApplication,
+          );
         }
       } else if (Platform.isIOS) {
         // Replace with your app's App Store ID
-        final Uri appStoreUri = Uri.parse('https://apps.apple.com/app/idYOUR_APP_ID');
+        final Uri appStoreUri = Uri.parse(
+          'https://apps.apple.com/in/app/leavify/id6753981242',
+        );
         await launchUrl(appStoreUri, mode: LaunchMode.externalApplication);
       }
     } catch (e) {
@@ -140,10 +148,7 @@ class UpdateDialog extends StatelessWidget {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Colors.blueAccent,
-              Colors.lightBlueAccent,
-            ],
+            colors: [Colors.blueAccent, Colors.lightBlueAccent],
           ),
           borderRadius: BorderRadius.circular(20),
         ),

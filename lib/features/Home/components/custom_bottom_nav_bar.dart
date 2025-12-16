@@ -7,7 +7,8 @@ class CustomBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final Function(int) onTabSelected;
   final String role;
-  final String? profileImageUrl; // Added parameter for profile image
+  final String? profileImageUrl;
+  final int pendingRequestCount;
 
   const CustomBottomNavBar({
     super.key,
@@ -15,6 +16,7 @@ class CustomBottomNavBar extends StatefulWidget {
     required this.onTabSelected,
     required this.role,
     this.profileImageUrl,
+    this.pendingRequestCount = 0,
   });
 
   @override
@@ -27,8 +29,6 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     final String role = widget.role.toLowerCase();
     final bool isManagerOrHR = role != 'employee';
 
-    // Navigation items based on role (excluding the add button)
-    // We keep the IconData list to determine length and default icons
     final List<IconData> navIcons = [];
     int addButtonOriginalIndex;
 
@@ -37,35 +37,38 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         Icons.home_rounded,
         Icons.pending_actions_rounded,
         Icons.bar_chart,
-        Icons.person_rounded, // Placeholder for profile image
+        Icons.person_rounded,
       ]);
       addButtonOriginalIndex = 2;
     } else {
-      navIcons.addAll([
-        Icons.home_rounded,
-        Icons.person_rounded // Placeholder for profile image
-      ]);
+      navIcons.addAll([Icons.home_rounded, Icons.person_rounded]);
       addButtonOriginalIndex = 1;
     }
 
     return AnimatedBottomNavigationBar.builder(
       itemCount: navIcons.length,
       tabBuilder: (int index, bool isActive) {
-        final color = isActive ? AppColors.highlightBlue : Colors.grey.withOpacity(0.9);
-
-        // Logic to determine if this is the profile tab (always the last one)
+        final color = isActive
+            ? AppColors.highlightBlue
+            : Colors.grey.withOpacity(0.9);
         final bool isProfileTab = index == navIcons.length - 1;
 
+        // 1. Profile Tab Logic
         if (isProfileTab) {
           return _buildProfileTab(isActive, color);
         }
 
-        // Render standard icon for all other tabs
-        return Icon(
-          navIcons[index],
-          size: 30,
-          color: color,
-        );
+        // 2. Pending Requests Badge Logic (Manager only, Index 1)
+        if (isManagerOrHR && index == 1) {
+          return _buildBadgedIcon(
+            icon: navIcons[index],
+            color: color,
+            count: widget.pendingRequestCount,
+          );
+        }
+
+        // 3. Standard Icon
+        return Icon(navIcons[index], size: 30, color: color);
       },
       activeIndex: _getActiveIndex(
         widget.currentIndex,
@@ -74,7 +77,6 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       ),
       onTap: (index) {
         try {
-          // Check if the HomeScreen is still mounted and provider is available
           int originalIndex = _convertToOriginalIndex(
             index,
             addButtonOriginalIndex,
@@ -82,11 +84,9 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           );
           widget.onTabSelected(originalIndex);
         } catch (e) {
-          // Provider might be unavailable (e.g., during/after logout)
           debugPrint('Navigation error: $e');
         }
       },
-      // Styling
       backgroundColor: const Color(0xFF060838),
       splashColor: const Color(0xFF4735DD).withOpacity(0.9),
       splashSpeedInMilliseconds: 300,
@@ -102,20 +102,59 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     );
   }
 
-  /// Helper to build the profile image with fallback
+  // --- NEW HELPER: Builds the Icon with a Red Notification Badge ---
+  Widget _buildBadgedIcon({
+    required IconData icon,
+    required Color color,
+    required int count,
+  }) {
+    // If count is 0, just return the plain icon
+    if (count <= 0) {
+      return Icon(icon, size: 30, color: color);
+    }
+
+    return Stack(
+      clipBehavior: Clip.none, // Allows the badge to hang slightly off the icon
+      alignment: Alignment.center,
+      children: [
+        Icon(icon, size: 30, color: color),
+        Positioned(
+          top: 6,
+          right: 23,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: const BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            constraints: const BoxConstraints(
+              minWidth: 18, // Ensures a perfect circle for single digits
+              minHeight: 18,
+            ),
+            child: Center(
+              child: Text(
+                count > 99 ? '99+' : '$count', // Cap at 99+ for layout safety
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildProfileTab(bool isActive, Color defaultColor) {
-    // 1. Check if the URL is valid.
-    // We check for null, empty string, or the string "null" (just in case)
     if (widget.profileImageUrl == null ||
         widget.profileImageUrl!.isEmpty ||
         widget.profileImageUrl == 'null') {
-
-      // Data hasn't arrived yet, show default Icon
       return Icon(Icons.person_rounded, size: 30, color: defaultColor);
     }
 
-    // 2. Construct the full URL only when we have valid data
-    // Ensure we handle slashes correctly to avoid double slashes //
     final baseUrl = ApiEndpoints.baseUrl.endsWith('/')
         ? ApiEndpoints.baseUrl.substring(0, ApiEndpoints.baseUrl.length - 1)
         : ApiEndpoints.baseUrl;
@@ -154,7 +193,6 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
               );
             },
             errorBuilder: (context, error, stackTrace) {
-              debugPrint('Error loading profile image: $error');
               return Icon(Icons.person_rounded, size: 30, color: defaultColor);
             },
           ),
@@ -163,31 +201,29 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     );
   }
 
-  // Convert current index to the package's expected index (excluding add button)
   int _getActiveIndex(
-      int currentIndex,
-      int addButtonIndex,
-      bool isManagerOrHR,
-      ) {
+    int currentIndex,
+    int addButtonIndex,
+    bool isManagerOrHR,
+  ) {
     if (currentIndex == addButtonIndex) {
-      return -1; // Add button is floating, not in the regular nav
+      return -1;
     } else if (currentIndex > addButtonIndex) {
-      return currentIndex - 1; // Shift down by 1 since add button is removed
+      return currentIndex - 1;
     } else {
-      return currentIndex; // No change needed
+      return currentIndex;
     }
   }
 
-  // Convert package index back to original indexing
   int _convertToOriginalIndex(
-      int packageIndex,
-      int addButtonIndex,
-      bool isManagerOrHR,
-      ) {
+    int packageIndex,
+    int addButtonIndex,
+    bool isManagerOrHR,
+  ) {
     if (packageIndex >= addButtonIndex) {
-      return packageIndex + 1; // Shift up by 1 to account for add button
+      return packageIndex + 1;
     } else {
-      return packageIndex; // No change needed
+      return packageIndex;
     }
   }
 }

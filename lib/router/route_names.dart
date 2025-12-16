@@ -17,6 +17,8 @@ class RouteNames {
   static const String profile = '/profile';
   static const String userSettings = '/user-settings';
 
+  static const String otherUserProfile = '/other-user-profile';
+
   // 📊 Analytics Flow (future)
   static const String analytics = '/analytics';
 

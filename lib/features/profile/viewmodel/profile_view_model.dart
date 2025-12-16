@@ -32,17 +32,30 @@ class ProfileViewModel extends BaseViewModel {
 
   // MARK: LOAD USER LEAVES
   Future<void> loadUserLeaves(String userId) async {
+    debugPrint("🟢 USER_LEAVES: loadUserLeaves started for userId: $userId");
+
     try {
       update(isLoading: true, errorMessage: null);
       _loadUserLeavesError = null;
-      // notifyListeners();
+      debugPrint("🟢 USER_LEAVES: Loading set to true.");
+
       final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
+      debugPrint(
+        "🟢 USER_LEAVES: Access Token retrieved. Is empty? ${accessToken.isEmpty}",
+      );
+
+      debugPrint("🟢 USER_LEAVES: Calling repository getUserLeaves...");
       _leaveData = await _repository.getUserLeaves(userId, accessToken);
+      debugPrint(
+        "🟢 USER_LEAVES: API call successful. Data assigned to _leaveData.",
+      );
+
       // _leaveData = dummyLeaveData;
       update(isLoading: false);
       notifyListeners();
+      debugPrint("🟢 USER_LEAVES: Loading set to false. Listeners notified.");
     } catch (e) {
-      debugPrint('Hello kaay chaale che ${e.toString()}');
+      debugPrint('🔴 USER_LEAVES: Error caught -> $e');
       update(errorMessage: e.toString(), isLoading: false);
       _loadUserLeavesError = e.toString();
       notifyListeners();

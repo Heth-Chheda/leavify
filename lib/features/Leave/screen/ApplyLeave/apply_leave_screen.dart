@@ -9,7 +9,6 @@ import 'package:leavify/core/utils/helpers/documents/ui/document_ui.dart';
 import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
 import 'package:leavify/features/Leave/components/ApplyLeave/reportee_picker.dart';
-import 'package:leavify/features/Leave/models/response/reportee_response.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -20,13 +19,36 @@ class ApplyLeaveScreen extends StatefulWidget {
   State<ApplyLeaveScreen> createState() => _ApplyLeaveScreenState();
 }
 
-class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
+class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
+    with TickerProviderStateMixin {
+  // CHANGED: Use TickerProviderStateMixin instead of SingleTickerProviderStateMixin
+  // to allow re-creating the controller if needed (though typically not needed here).
+
+  late TabController _tabController;
   final FocusNode reasonFocusNode = FocusNode();
+
+  // Track current role state to init controller correctly
+  bool _isEmployee = true;
+
+  final List<String> leaveTypes = [
+    'Casual',
+    'Sick',
+    'Emergency',
+    'Annual Leave',
+  ];
 
   @override
   void initState() {
     super.initState();
-    // Initialize form after build is complete
+
+    // We need to initialize the controller, but we might not have the role yet.
+    // However, usually ViewModel data is loaded. We'll default to 1 and update
+    // in didChangeDependencies if needed, or rely on the fact that role
+    // should be available from HomeViewModel.
+
+    // Safety fallback: Init with 1, will re-init in didChangeDependencies
+    _tabController = TabController(length: 1, vsync: this);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final leaveViewModel = Provider.of<LeaveViewModel>(
         context,
@@ -37,15 +59,39 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     });
   }
 
-  List<DateTime> highlightedDates = [];
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // 1. Check Role Here
+    final homeViewModel = context.read<HomeViewModel>();
+    final isEmployee = homeViewModel.userRole.toLowerCase() == 'employee';
+
+    // 2. Re-initialize Controller if the role/tab count changed
+    if (_isEmployee != isEmployee ||
+        _tabController.length != (isEmployee ? 1 : 2)) {
+      _isEmployee = isEmployee;
+      _tabController.dispose();
+      _tabController = TabController(length: isEmployee ? 1 : 2, vsync: this);
+      _tabController.addListener(_handleTabSelection);
+    }
+  }
+
+  void _handleTabSelection() {
+    if (_tabController.indexIsChanging) {
+      FocusScope.of(context).unfocus();
+    }
+  }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabSelection);
+    _tabController.dispose();
     reasonFocusNode.dispose();
     super.dispose();
   }
 
-  // MARK: - CHECK IF FORM HAS DATA
+  // MARK: - CHECK DATA PRESENCE
   bool _hasFormData(LeaveViewModel leaveViewModel) {
     return leaveViewModel.selectedStartDate != null ||
         leaveViewModel.reasonController.text.trim().isNotEmpty ||
@@ -54,17 +100,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         leaveViewModel.selectedCompOffDates.isNotEmpty;
   }
 
-  final List<String> leaveTypes = [
-    'Casual',
-    'Sick',
-    'Emergency',
-    'Annual Leave',
-  ];
-
-  // MARK: - SHOW CONFIRMATION DIALOG
+  // MARK: - CONFIRMATION DIALOG
   Future<bool> _showConfirmationDialog() async {
     FocusScope.of(context).unfocus();
-
     return await showDialog<bool>(
           context: context,
           barrierDismissible: false,
@@ -72,7 +110,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             return ConfirmationDialog(
               title: 'Discard Changes?',
               body:
-                  'You have unsaved changes in your leave application. If you go back now, all your progress will be lost.',
+                  'You have unsaved changes. If you go back now, all your progress will be lost.',
               illustrationAsset: 'lib/assets/gifs/trash2.gif',
               illustrationHeight: 180,
               confirmButtonText: 'Discard',
@@ -84,36 +122,27 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         false;
   }
 
-  // MARK: - HANDLE BACK NAVIGATION
   Future<bool> _onWillPop() async {
     final leaveViewModel = Provider.of<LeaveViewModel>(context, listen: false);
-
     FocusScope.of(context).unfocus();
-
-    // If form has data, show confirmation dialog
     if (_hasFormData(leaveViewModel)) {
       return await _showConfirmationDialog();
     }
-
-    // If no data, allow back navigation
     return true;
   }
 
-  // MARK: - BUILD METHOD
+  // MARK: - MAIN BUILD
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final HomeViewModel homeViewModel = context.watch<HomeViewModel>();
+    final homeViewModel = context.watch<HomeViewModel>();
+    final bool isEmployee = homeViewModel.userRole.toLowerCase() == 'employee';
 
     return PopScope(
       canPop: false,
       onPopInvoked: (bool didPop) async {
         if (didPop) return;
-
         final shouldPop = await _onWillPop();
-        if (shouldPop && context.mounted) {
-          Navigator.of(context).pop();
-        }
+        if (shouldPop && context.mounted) Navigator.of(context).pop();
       },
       child: SafeArea(
         child: GestureDetector(
@@ -122,40 +151,57 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
           child: Scaffold(
             resizeToAvoidBottomInset: false,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: Consumer<LeaveViewModel>(
-              builder: (context, leaveViewModel, child) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildStatsCards(),
-                      const SizedBox(height: 30),
-                      _buildDateSelectionSection(leaveViewModel),
-                      const SizedBox(height: 24),
-                      _buildLeaveTypeSection(leaveViewModel),
-                      const SizedBox(height: 24),
-                      _buildReasonSection(leaveViewModel),
-                      const SizedBox(height: 24),
-                      DocumentUploadSection(
-                        leaveViewModel: leaveViewModel,
-                        parentContext: context,
-                      ),
-                      const SizedBox(height: 24),
-                      if (homeViewModel.userRole.toLowerCase() !=
-                          'employee') ...[
-                        _buildRequestedForToggle(leaveViewModel, isDark),
-                        _buildLeaveTypeDropdownSection(
-                          leaveViewModel,
-                          homeViewModel,
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-                      _buildSubmitButton(leaveViewModel),
-                    ],
+            body: Column(
+              children: [
+                // 1. Stats and Header (Fixed at top)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                  child: _buildStatsCards(homeViewModel),
+                ),
+
+                // 2. Animated Tabs (Only show if NOT Employee, or show simplified title if Employee)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
                   ),
-                );
-              },
+                  child: isEmployee
+                      ? _buildEmployeeTitle() // Just a title for employees
+                      : _buildCustomTabBar(), // Tabs for Managers/HR
+                ),
+
+                // 3. Tab Views (Scrollable Content)
+                Expanded(
+                  child: Consumer<LeaveViewModel>(
+                    builder: (context, leaveViewModel, child) {
+                      return TabBarView(
+                        controller: _tabController,
+                        physics: isEmployee
+                            ? const NeverScrollableScrollPhysics()
+                            : null, // Disable swipe if only 1 tab
+                        children: [
+                          // Tab 1: Apply Leave (Always present)
+                          _buildScrollableForm(
+                            context,
+                            leaveViewModel,
+                            homeViewModel,
+                            isCompOff: false,
+                          ),
+
+                          // Tab 2: Comp Off (Only present if NOT Employee)
+                          if (!isEmployee)
+                            _buildScrollableForm(
+                              context,
+                              leaveViewModel,
+                              homeViewModel,
+                              isCompOff: true,
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -163,9 +209,127 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     );
   }
 
-  Widget _buildStatsCards() {
-    final homeViewModel = context.watch<HomeViewModel>();
+  // MARK: - EMPLOYEE TITLE (When tabs are hidden)
+  Widget _buildEmployeeTitle() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Center(
+        child: Text(
+          "Apply Leave",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: Colors.black87,
+          ),
+        ),
+      ),
+    );
+  }
 
+  // MARK: - CUSTOM TAB BAR
+  Widget _buildCustomTabBar() {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        indicator: BoxDecoration(
+          borderRadius: BorderRadius.circular(25),
+          gradient: const LinearGradient(
+            colors: [AppColors.highlightBlue, AppColors.highlightPink],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.highlightBlue.withOpacity(0.3),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.grey.shade600,
+        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        tabs: const [
+          Tab(text: "Apply Leave"),
+          Tab(text: "Comp Off"),
+        ],
+      ),
+    );
+  }
+
+  // MARK: - SCROLLABLE FORM CONTENT
+  Widget _buildScrollableForm(
+    BuildContext context,
+    LeaveViewModel leaveViewModel,
+    HomeViewModel homeViewModel, {
+    required bool isCompOff,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildDateSelectionSection(leaveViewModel, homeViewModel),
+          const SizedBox(height: 24),
+
+          // Show Half Day checkbox only for Normal Leaves (Tab 1)
+          // You can decide if Comp Off also supports Half Day logic here
+          if (!isCompOff) ...[
+            _buildHalfDayCheckbox(leaveViewModel),
+            const SizedBox(height: 24),
+          ],
+
+          // Only show basic leave types if NOT Comp Off
+          if (!isCompOff) ...[
+            _buildLeaveTypeSection(leaveViewModel),
+            const SizedBox(height: 24),
+          ],
+
+          _buildReasonSection(leaveViewModel),
+          const SizedBox(height: 24),
+
+          DocumentUploadSection(
+            leaveViewModel: leaveViewModel,
+            parentContext: context,
+          ),
+          const SizedBox(height: 24),
+
+          // Manager options
+          // NOTE: homeViewModel.userRole check is redundant here if we assume this logic
+          // only applies to the 'Apply Leave' tab, but kept for safety.
+          if (homeViewModel.userRole.toLowerCase() != 'employee') ...[
+            _buildRequestedForToggle(leaveViewModel, isDark),
+
+            // Only show category dropdown if user selected AND not comp off
+            if (!isCompOff)
+              _buildLeaveTypeDropdownSection(leaveViewModel, homeViewModel),
+          ],
+
+          const SizedBox(height: 32),
+          _buildSubmitButton(leaveViewModel, isCompOff),
+          const SizedBox(height: 20), // Bottom padding
+        ],
+      ),
+    );
+  }
+
+  // MARK: - WIDGETS COMPONENTS (Keeping existing implementations)
+
+  Widget _buildStatsCards(HomeViewModel homeViewModel) {
     return IntrinsicHeight(
       child: Row(
         children: [
@@ -191,7 +355,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
   Widget _buildStatCard(String title, String value, Color accentColor) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: accentColor,
         borderRadius: BorderRadius.circular(24),
@@ -204,13 +368,13 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
         ],
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               color: Colors.black.withOpacity(0.6),
               fontWeight: FontWeight.w800,
             ),
@@ -219,12 +383,23 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
       ),
     );
   }
@@ -235,8 +410,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
       children: [
         _buildSectionTitle("Leave Type"),
         const SizedBox(height: 12),
-
-        // Use dropdown directly, all styling inside
         MyAppDropDownMenu<String>(
           value: leaveViewModel.selectedLeaveType,
           hint: 'Select Leave Type',
@@ -258,54 +431,31 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             );
           }).toList(),
           onChanged: (value) {
-            if (value != null) {
-              leaveViewModel.updateSelectedLeaveType(value);
-            }
+            if (value != null) leaveViewModel.updateSelectedLeaveType(value);
           },
         ),
       ],
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Row(
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateSelectionSection(LeaveViewModel leaveViewModel) {
-    final homeViewModel = context.read<HomeViewModel>();
-
-    // 1. Get Leave Dates (Green)
+  Widget _buildDateSelectionSection(
+    LeaveViewModel leaveViewModel,
+    HomeViewModel homeViewModel,
+  ) {
     final List<DateTime> leaveDates = homeViewModel.upcomingLeaveDates;
-
-    // 2. Get Holiday Dates (Red)
-    final List<DateTime> holidayDates = homeViewModel
-        .holidayListResponse
-        ?.holidayList
-        ?.holidayDates
-        .map((holidayDate) => DateTime.tryParse(holidayDate.date ?? ''))
-        .whereType<DateTime>()
-        .toList() ?? [];
+    final List<DateTime> holidayDates =
+        homeViewModel.holidayListResponse?.holidayList?.holidayDates
+            .map((holidayDate) => DateTime.tryParse(holidayDate.date ?? ''))
+            .whereType<DateTime>()
+            .toList() ??
+        [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         MyAppDateSelectionCalendar(
-          // Pass leaves here (Green)
           highlightDates: leaveDates,
-          // Pass holidays here (Red)
           holidayDates: holidayDates,
-
           initialStartDate: leaveViewModel.selectedStartDate,
           initialEndDate: leaveViewModel.selectedEndDate,
           enableRangeSelection: true,
@@ -317,87 +467,54 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     );
   }
 
-  void _showUserPicker(
-    BuildContext context,
-    List<Reportee> users,
-    LeaveViewModel leaveViewModel,
-  ) {
-    ModernUserPicker.show(
-      context: context,
-      users: users,
-      title: 'Select Employee',
-      onUserSelected: (user) {
-        // 1. THE SHOULD REFLECT ON THE BUTTON
-        // 2. ON SELECTING THE NAME, AND WHEN WE APPLY THE FORM
-        // WE WOULD NEED THE USERID TO BE SENT IN THE REQUEST.
-        // 3. WHAT WE NEED TO DO IS THAT IN THE REQUESTEDBY WE WILL HAVE
-        // THE MANAGER'S USER ID AND IN THE USER ID WE WILL HAVE THE
-        // USER'S ID FOR WHOM WE NEED TO APPLY LEAVE FOR.
-
-        leaveViewModel.selectedUser = user;
-
-        // This will trigger a rebuild and update the button text
-        if (mounted) {
-          setState(() {});
-        }
-      },
-    );
-  }
-
-  Widget _buildLeaveTypeDropdownSection(
-    LeaveViewModel leaveViewModel,
-    HomeViewModel homeViewModel,
-  ) {
-    // Only show if a user is selected
-    if (leaveViewModel.selectedUser == null) return const SizedBox.shrink();
-
-    final categories = homeViewModel.leaveCategories;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 24),
-        Text(
-          'Leave Type',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+  Widget _buildHalfDayCheckbox(LeaveViewModel leaveViewModel) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
-        ),
-        const SizedBox(height: 12),
-
-        // Generalized dropdown with full design control
-        MyAppDropDownMenu<String>(
-          value: leaveViewModel.selectedLeaveCategory,
-          hint: 'Select Leave Type',
-          borderColor: Colors.transparent, // border color
-          dropdownColor: Colors.white, // background color of dropdown menu
-          textColor: Colors.black87, // text color for items and hint
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          borderRadius: 12,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.25),
-              blurRadius: 2,
-              offset: const Offset(0, 0),
-            ),
-          ],
-          items: categories.map((category) {
-            return DropdownMenuItem<String>(
-              value: category.name,
-              child: Text(category.name),
-            );
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) leaveViewModel.selectLeaveCategory(value);
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: CheckboxListTile(
+          value: leaveViewModel.isLeaveHalfDay,
+          onChanged: (bool? value) {
+            leaveViewModel.setHalfDay(value);
           },
+          title: const Text(
+            "Half Day Leave",
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          subtitle: Text(
+            "Apply for only half of the working day",
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.black.withOpacity(0.5),
+            ),
+          ),
+          activeColor: AppColors.highlightBlue,
+          checkColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
+          controlAffinity: ListTileControlAffinity.trailing,
         ),
-      ],
+      ),
     );
   }
 
-  // MARK: - REQUESTED FOR TOGGLE
   Widget _buildRequestedForToggle(LeaveViewModel leaveViewModel, bool isDark) {
     final selectedUser = leaveViewModel.selectedUser;
     final label = selectedUser != null
@@ -413,11 +530,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
           width: double.infinity,
           child: MyAppButton(
             label: label,
-            onPressed: () => _showUserPicker(
-              context,
-              leaveViewModel.teamUsers,
-              leaveViewModel,
-            ),
+            onPressed: () => _showUserPicker(leaveViewModel),
             backgroundColor: Colors.black.withOpacity(0.08),
             foregroundColor: Colors.black,
             borderRadius: 16,
@@ -433,19 +546,69 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     );
   }
 
-  // MARK: - REASON SECTION
+  void _showUserPicker(LeaveViewModel leaveViewModel) {
+    ModernUserPicker.show(
+      context: context,
+      users: leaveViewModel.teamUsers,
+      title: 'Select Employee',
+      onUserSelected: (user) {
+        leaveViewModel.selectedUser = user;
+        if (mounted) setState(() {});
+      },
+    );
+  }
+
+  Widget _buildLeaveTypeDropdownSection(
+    LeaveViewModel leaveViewModel,
+    HomeViewModel homeViewModel,
+  ) {
+    if (leaveViewModel.selectedUser == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        _buildSectionTitle('Leave Type (Manager)'),
+        const SizedBox(height: 12),
+        MyAppDropDownMenu<String>(
+          value: leaveViewModel.selectedLeaveCategory,
+          hint: 'Select Leave Type',
+          borderColor: Colors.transparent,
+          dropdownColor: Colors.white,
+          textColor: Colors.black87,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          borderRadius: 12,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 2,
+              offset: const Offset(0, 0),
+            ),
+          ],
+          items: homeViewModel.leaveCategories.map((category) {
+            return DropdownMenuItem<String>(
+              value: category.name,
+              child: Text(category.name),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) leaveViewModel.selectLeaveCategory(value);
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildReasonSection(LeaveViewModel leaveViewModel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Reason'),
         const SizedBox(height: 12),
-
-        // MyAppTextField now handles background, radius, and shadow internally
         MyAppTextField(
           controller: leaveViewModel.reasonController,
           focusNode: reasonFocusNode,
-          hintText: 'Tell us why you need this leave...',
+          hintText: 'Tell us why...',
           maxLines: 4,
           borderRadius: 24,
           fillColor: Colors.white,
@@ -466,10 +629,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             return null;
           },
         ),
-
         const SizedBox(height: 8),
-
-        // Dynamic error message below the text field
         ValueListenableBuilder<TextEditingValue>(
           valueListenable: leaveViewModel.reasonController,
           builder: (context, value, child) {
@@ -481,7 +641,6 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
             } else {
               errorMessage = '';
             }
-
             return Text(
               errorMessage ?? "Please enter at least 10 characters...",
               style: TextStyle(
@@ -495,15 +654,19 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
     );
   }
 
-  // MARK: - SUBMIT BUTTON
-  Widget _buildSubmitButton(LeaveViewModel leaveViewModel) {
+  Widget _buildSubmitButton(LeaveViewModel leaveViewModel, bool isCompOff) {
     return SizedBox(
       width: double.infinity,
       child: MyAppButton(
-        label: 'Apply',
+        label: isCompOff ? 'Apply Comp Off' : 'Apply Leave',
         onPressed: () {
           reasonFocusNode.unfocus();
-          leaveViewModel.submitLeaveForm(context, reasonFocusNode);
+          // Submit the form
+          leaveViewModel.submitLeaveForm(
+            context,
+            reasonFocusNode,
+            isCompOff: isCompOff,
+          );
         },
         isLoading: leaveViewModel.isLoading,
         borderRadius: 16,
@@ -513,7 +676,10 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
-        icon: const Text('🚀', style: TextStyle(fontSize: 16)),
+        icon: Text(
+          isCompOff ? '🎯' : '🚀',
+          style: const TextStyle(fontSize: 16),
+        ),
       ),
     );
   }

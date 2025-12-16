@@ -1,9 +1,10 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/features/Authentication/data/authentication_repository.dart';
 import 'package:leavify/features/Authentication/domain/models/leave.dart';
+import 'package:leavify/features/Authentication/domain/models/user.dart';
 import 'package:leavify/features/Authentication/domain/response/get_category_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_holiday_list_response.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
@@ -11,7 +12,7 @@ import 'package:leavify/features/Leave/models/response/get_announcements_respons
 
 class HomeViewModel extends BaseViewModel {
   final AuthenticationRepository _authenticationRepository =
-  AuthenticationRepository();
+      AuthenticationRepository();
 
   GetUserSummaryResponse? _homeData;
   bool _isLoading = true;
@@ -33,6 +34,11 @@ class HomeViewModel extends BaseViewModel {
   List<GetAnnouncementsResponse> _announcements = [];
   List<GetAnnouncementsResponse> get announcements => _announcements;
 
+  // Other user
+  GetUserSummaryResponse? _otherUserData;
+  User? get otherUser => _otherUserData?.currentUser;
+  GetUserSummaryResponse? get otherUserData => _otherUserData;
+
   // User-specific getters
   String get userName => _homeData?.currentUser?.firstName ?? 'User';
   String get userFullName =>
@@ -40,24 +46,24 @@ class HomeViewModel extends BaseViewModel {
           .trim();
   String get userEmail => _homeData?.currentUser?.email ?? '';
   String get userRole => _homeData?.currentUser?.role ?? '';
-  int get approvedLeaves => _homeData?.currentUser?.approved ?? 0;
-  int get rejectedLeaves => _homeData?.currentUser?.rejected ?? 0;
-  int get pendingLeaves => _homeData?.currentUser?.pending ?? 0;
+  num get approvedLeaves => _homeData?.currentUser?.approved ?? 0;
+  num get rejectedLeaves => _homeData?.currentUser?.rejected ?? 0;
+  num get pendingLeaves => _homeData?.currentUser?.pending ?? 0;
   String get profileImageUrl => _homeData?.currentUser?.profileImageUrl ?? '';
   bool get canSendAnnouncement =>
       _homeData?.currentUser?.canSendAnnouncement ?? false;
   String get designation => _homeData?.currentUser?.designation ?? '';
 
   // working days
-  int _leaveBalance = 0;
-  int _workingDays = 0;
+  num _leaveBalance = 0;
+  num _workingDays = 0;
 
   // working day getters
-  int get leaveBalance => _leaveBalance;
-  int get workingDays => _workingDays;
+  num get leaveBalance => _leaveBalance;
+  num get workingDays => _workingDays;
 
   Future<void> initialize() async {
-    await _loadUserSummaryFromApi();
+    await loadUserSummaryFromApi();
     await _getHolidayList();
     await _fetchAnnouncements();
     // await _getLeaveBalance();
@@ -79,17 +85,26 @@ class HomeViewModel extends BaseViewModel {
   }
 
   // MARK: - LOAD USER SUMMARY
-  Future<void> _loadUserSummaryFromApi() async {
+  Future<void> loadUserSummaryFromApi({String? userId}) async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
 
-      final userId = await AppStorage.getString("USER_ID") ?? "";
-      final response = await _authenticationRepository.getUserSummary(userId);
+      final targetUserId =
+          userId ?? await AppStorage.getString("USER_ID") ?? "";
+      final response = await _authenticationRepository.getUserSummary(
+        targetUserId,
+      );
 
-      _homeData = response;
-      await AppStorage.saveObject("user_details", response.toJson());
+      if (userId != null) {
+        _otherUserData = response;
+      } else {
+        _homeData = response;
+      }
+      if (userId == null) {
+        await AppStorage.saveObject("user_details", response.toJson());
+      }
     } catch (e) {
       _error = _cleanErrorMessage(e);
     } finally {
@@ -112,6 +127,8 @@ class HomeViewModel extends BaseViewModel {
 
   // MARK: - GET LEAVE BALANCE
   Future<void> getLeaveBalance() async {
+    debugPrint("🔵 LEAVE_BALANCE: getLeaveBalance started");
+
     try {
       _isLoading = true;
       _error = null;
@@ -119,6 +136,16 @@ class HomeViewModel extends BaseViewModel {
 
       final userId = await AppStorage.getString("USER_ID") ?? "";
       final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
+
+      debugPrint(
+        "🔵 LEAVE_BALANCE: UserID: '$userId', AccessToken found: ${accessToken.isNotEmpty}",
+      );
+
+      if (userId.isEmpty) {
+        debugPrint("⚠️ LEAVE_BALANCE: Warning! UserID is empty.");
+      }
+
+      debugPrint("🔵 LEAVE_BALANCE: Calling API getLeaveBalance...");
       final result = await _authenticationRepository.getLeaveBalance(
         userId: userId,
         accessToken: accessToken,
@@ -126,11 +153,17 @@ class HomeViewModel extends BaseViewModel {
 
       _leaveBalance = result.balance ?? 0;
       _workingDays = result.remainingWorkingDays ?? 0;
+
+      debugPrint(
+        "🔵 LEAVE_BALANCE: Success! Balance: $_leaveBalance, Working Days: $_workingDays",
+      );
     } catch (e) {
+      debugPrint("🔴 LEAVE_BALANCE: Error caught -> $e");
       _error = _cleanErrorMessage(e);
     } finally {
       _isLoading = false;
       notifyListeners();
+      debugPrint("🔵 LEAVE_BALANCE: Process complete. Loading set to false.");
     }
   }
 
@@ -187,7 +220,7 @@ class HomeViewModel extends BaseViewModel {
 
   // MARK: REFRESH
   Future<void> refresh() async {
-    await _loadUserSummaryFromApi();
+    await loadUserSummaryFromApi();
     await _fetchAnnouncements();
     await _getHolidayList();
     // await _getLeaveBalance();

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:leavify/app/app.dart';
@@ -6,19 +7,17 @@ import 'package:leavify/core/config/app_environment.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/locator.dart';
 import 'package:leavify/services/fcm_service.dart';
+
 import 'firebase_options.dart';
 
-/// ⚠️ Development-only override for self-signed certificates.
-/// Do NOT use this in production.
 class DevHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     final client = super.createHttpClient(context);
     client.badCertificateCallback =
         (X509Certificate cert, String host, int port) {
-      debugPrint('⚠️ Accepting self-signed certificate from $host:$port');
-      return true;
-    };
+          return true;
+        };
     return client;
   }
 }

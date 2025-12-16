@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/Authentication/domain/response/get_holiday_list_response.dart';
 import 'package:leavify/models/leave_info.dart';
-import 'package:leavify/features/Authentication/domain/models/leave.dart';
 
 class WeekCalendarView extends StatefulWidget {
   final DateTime currentDate;
@@ -73,23 +73,29 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: weekDays
-          .map(
-            (day) => Expanded(
-              child: Center(
-                child: Text(
-                  day,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : Colors.black,
-                    letterSpacing: -0.2,
-                  ),
-                ),
+      children: weekDays.asMap().entries.map((entry) {
+        final index = entry.key;
+        final day = entry.value;
+        // Sat is index 5, Sun is index 6
+        final isWeekend = index == 5 || index == 6;
+
+        return Expanded(
+          child: Center(
+            child: Text(
+              day,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                // Grey out weekends in header
+                color: isWeekend
+                    ? (isDark ? Colors.grey.shade600 : Colors.grey.shade400)
+                    : (isDark ? Colors.white : Colors.black),
+                letterSpacing: -0.2,
               ),
             ),
-          )
-          .toList(),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -110,6 +116,9 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
         final leaveInfo = _getLeaveInfoForDate(date);
         final holiday = _getHolidayForDate(date);
         final hasGroupedHoliday = _hasGroupedHoliday(holiday);
+        final isWeekend =
+            date.weekday == DateTime.saturday ||
+            date.weekday == DateTime.sunday;
 
         return Expanded(
           child: GestureDetector(
@@ -166,6 +175,10 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
                                   ? theme.colorScheme.onPrimary
                                   : isToday
                                   ? theme.colorScheme.primary
+                                  : isWeekend
+                                  ? (isDark
+                                        ? Colors.grey.shade700
+                                        : Colors.grey.shade400)
                                   : (isDark ? Colors.white : Colors.black),
                               letterSpacing: -0.5,
                             ),
@@ -260,21 +273,33 @@ class _WeekCalendarViewState extends State<WeekCalendarView> {
   List<LeaveInfo> _getLeaveInfoForDate(DateTime date) {
     final List<LeaveInfo> leaveInfo = [];
 
+    // 1. Normalize the current cell date to midnight (Strip time)
+    final currentDay = DateTime(date.year, date.month, date.day);
+
     for (final leave in widget.userLeaves) {
       try {
-        final startDate = DateTime.parse(leave.startDate);
-        final endDate = DateTime.parse(leave.endDate);
+        final rawStart = DateTime.parse(leave.startDate);
+        final rawEnd = DateTime.parse(leave.endDate);
 
-        if (_isSameDay(date, startDate) ||
-            _isSameDay(date, endDate) ||
-            (date.isAfter(startDate) && date.isBefore(endDate))) {
-          final isSingleDay = _isSameDay(startDate, endDate);
+        // 2. Normalize Start and End dates to midnight
+        final start = DateTime(rawStart.year, rawStart.month, rawStart.day);
+        final end = DateTime(rawEnd.year, rawEnd.month, rawEnd.day);
+
+        // 3. Check if currentDay falls within the range [start, end] (Inclusive)
+        final isAfterOrSameAsStart =
+            currentDay.isAtSameMomentAs(start) || currentDay.isAfter(start);
+        final isBeforeOrSameAsEnd =
+            currentDay.isAtSameMomentAs(end) || currentDay.isBefore(end);
+
+        if (isAfterOrSameAsStart && isBeforeOrSameAsEnd) {
+          final isSingleDay = start.isAtSameMomentAs(end);
+
           leaveInfo.add(
             LeaveInfo(
               userId: leave.userId,
               isSingleDay: isSingleDay,
-              isStart: _isSameDay(date, startDate),
-              isEnd: _isSameDay(date, endDate),
+              isStart: currentDay.isAtSameMomentAs(start),
+              isEnd: currentDay.isAtSameMomentAs(end),
             ),
           );
         }

@@ -119,17 +119,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 20),
                         // Profile Avatar
                         Container(
-                          decoration:
-                              const BoxDecoration(shape: BoxShape.circle),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                          ),
                           child: ProfileAvatar(
-                            initials:
-                                '${user.firstName[0]}${user.lastName[0]}',
+                            initials: '${user.firstName[0]}${user.lastName[0]}',
                             size: 100,
                             baseUrl: ApiEndpoints.baseUrl, // Your base URL
                             imagePath:
                                 (user.profileImageUrl?.isNotEmpty ?? false)
-                                    ? user.profileImageUrl
-                                    : null, // Pass null if empty or null, // Path from backend, e.g. "profilepics/abc.png"
+                                ? user.profileImageUrl
+                                : null, // Pass null if empty or null, // Path from backend, e.g. "profilepics/abc.png"
                           ),
                         ),
 
@@ -266,7 +266,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // MARK: LEAVE SECTION WITH HORIZONTAL SCROLL
   Widget _buildLeaveSection(
-      ProfileViewModel viewModel, ThemeData theme, User user) {
+    ProfileViewModel viewModel,
+    ThemeData theme,
+    User user,
+  ) {
     // Show loader
     if (viewModel.isLoading) {
       return Center(
@@ -486,7 +489,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -497,9 +500,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildLeaveSummaryBox({
     required String label,
-    required int count,
+    required num count,
     required ThemeData theme,
   }) {
+    // FORMATTING LOGIC:
+    // If it's a whole number (e.g., 5.0), show "5".
+    // If it has decimals (e.g., -0.95), show "-0.95".
+    String displayValue = count % 1 == 0
+        ? count.toInt().toString()
+        : count.toString();
+
     return Container(
       width: (MediaQuery.of(context).size.width - 20 * 2 - 12 * 3) / 2,
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
@@ -511,7 +521,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           Text(
-            '$count',
+            displayValue, // CHANGED: Use the formatted string
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: theme.colorScheme.onSurface,
@@ -535,10 +545,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user != null) {
       AppNavigator.navigateTo(
         RouteNames.leaveDetail,
-        arguments: {
-          'leaveId': leaveId,
-          'userId': user.id,
-        },
+        arguments: {'leaveId': leaveId, 'userId': user.id},
       );
     }
   }
