@@ -127,8 +127,6 @@ class HomeViewModel extends BaseViewModel {
 
   // MARK: - GET LEAVE BALANCE
   Future<void> getLeaveBalance() async {
-    debugPrint("🔵 LEAVE_BALANCE: getLeaveBalance started");
-
     try {
       _isLoading = true;
       _error = null;
@@ -136,10 +134,6 @@ class HomeViewModel extends BaseViewModel {
 
       final userId = await AppStorage.getString("USER_ID") ?? "";
       final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
-
-      debugPrint(
-        "🔵 LEAVE_BALANCE: UserID: '$userId', AccessToken found: ${accessToken.isNotEmpty}",
-      );
 
       if (userId.isEmpty) {
         debugPrint("⚠️ LEAVE_BALANCE: Warning! UserID is empty.");
@@ -153,12 +147,7 @@ class HomeViewModel extends BaseViewModel {
 
       _leaveBalance = result.balance ?? 0;
       _workingDays = result.remainingWorkingDays ?? 0;
-
-      debugPrint(
-        "🔵 LEAVE_BALANCE: Success! Balance: $_leaveBalance, Working Days: $_workingDays",
-      );
     } catch (e) {
-      debugPrint("🔴 LEAVE_BALANCE: Error caught -> $e");
       _error = _cleanErrorMessage(e);
     } finally {
       _isLoading = false;

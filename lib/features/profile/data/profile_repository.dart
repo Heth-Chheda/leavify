@@ -2,6 +2,7 @@ import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/utils/constants/enums/enums.dart';
 import 'package:leavify/features/Leave/models/request/add_announcement_request.dart';
+import 'package:leavify/features/Profile/data/models/get_user_reportees.dart';
 import 'package:leavify/models/general_response.dart';
 
 class ProfileRepository extends BaseRepository {
@@ -27,6 +28,15 @@ class ProfileRepository extends BaseRepository {
       method: HttpMethod.post,
       body: request.toJson(),
       fromJson: GeneralResponse.fromJson,
+    );
+  }
+
+  // MARK: - GET USER REPORTEES
+  Future<List<UserReportee>> getUserReportees({required String userId}) async {
+    return await performListRequest(
+      url: '${ApiEndpoints.getEmployeeList}/$userId',
+      method: HttpMethod.get,
+      fromJson: UserReportee.fromJson,
     );
   }
 }

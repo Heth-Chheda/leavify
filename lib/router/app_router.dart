@@ -4,6 +4,7 @@ import 'package:leavify/features/Home/screens/home_screen.dart';
 // ViewModels
 import 'package:leavify/features/Home/viewmodel/announcements_view_model.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Profile/screens/my_team_member_list_screen.dart';
 import 'package:leavify/features/Profile/screens/other_user_profile_screen.dart';
 // Screens
 import 'package:leavify/features/Profile/screens/profile_screen.dart';
@@ -65,6 +66,29 @@ class AppRouter {
           settings: settings,
         );
 
+      case RouteNames.userMemberListScreen:
+        final args = settings.arguments as Map<String, dynamic>?;
+
+        if (args != null && args['userId'] is String) {
+          return MaterialPageRoute(
+            builder: (_) => MultiProvider(
+              providers: [
+                ChangeNotifierProvider.value(
+                  value: locator<ProfileViewModel>(),
+                ),
+                ChangeNotifierProvider.value(value: locator<HomeViewModel>()),
+              ],
+              child: _withAppBar(
+                MyTeamMembersScreen(userId: args['userId'] as String),
+                'My Team Members',
+              ),
+            ),
+            settings: settings,
+          );
+        }
+
+        return _errorRoute(settings.name);
+
       case RouteNames.otherUserProfile:
         // Extract the userId passed as argument
         final userId = settings.arguments as String;
@@ -77,7 +101,10 @@ class AppRouter {
               ChangeNotifierProvider.value(value: locator<ProfileViewModel>()),
             ],
             // We use the screen directly because it has its own Scaffold & AppBar
-            child: OtherUserProfileScreen(userId: userId),
+            child: _withAppBar(
+              OtherUserProfileScreen(userId: userId),
+              'Profile Details',
+            ),
           ),
           settings: settings,
         );

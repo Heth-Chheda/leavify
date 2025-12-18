@@ -288,10 +288,8 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
 
           // Show Half Day checkbox only for Normal Leaves (Tab 1)
           // You can decide if Comp Off also supports Half Day logic here
-          if (!isCompOff) ...[
-            _buildHalfDayCheckbox(leaveViewModel),
-            const SizedBox(height: 24),
-          ],
+          _buildHalfDayCheckbox(leaveViewModel),
+          const SizedBox(height: 24),
 
           // Only show basic leave types if NOT Comp Off
           if (!isCompOff) ...[

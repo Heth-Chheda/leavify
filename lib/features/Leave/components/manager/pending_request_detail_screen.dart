@@ -14,6 +14,7 @@ import 'package:leavify/features/Leave/components/manager/conflict/conflict_dial
 import 'package:leavify/features/Leave/models/response/get_leave_by_id_response.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:leavify/router/app_navigator.dart';
+import 'package:leavify/router/route_names.dart';
 import 'package:provider/provider.dart';
 
 class PendingRequestDetailScreen extends StatefulWidget {
@@ -120,6 +121,7 @@ class _PendingRequestDetailScreenState
             leaveData: leaveData,
             designation: widget.user?.designation,
             profileImagePath: widget.user?.profileImage,
+            user: widget.user,
           ),
           const SizedBox(height: 20),
           _LeaveRequestDetailsCard(leaveData: leaveData),
@@ -386,11 +388,13 @@ class _EmployeeHeaderCard extends StatelessWidget {
   final GetLeaveByIdResponse leaveData;
   final String? designation;
   final String? profileImagePath;
+  final GetAllResponse? user;
 
   const _EmployeeHeaderCard({
     required this.leaveData,
     this.designation,
     this.profileImagePath,
+    this.user,
   });
 
   @override
@@ -402,6 +406,10 @@ class _EmployeeHeaderCard extends StatelessWidget {
       onTap: () {
         // navigate to the other user detail page.
         debugPrint('Employee Header Card tapped');
+        AppNavigator.navigateTo(
+          RouteNames.otherUserProfile,
+          arguments: user?.userId,
+        );
       },
       child: Container(
         width: double.infinity,
@@ -544,7 +552,6 @@ class _EmployeeHeaderCard extends StatelessWidget {
 }
 
 // MARK: - Leave Request Details Card
-// MARK: - Leave Request Details Card (Updated for Comp Off)
 class _LeaveRequestDetailsCard extends StatelessWidget {
   final GetLeaveByIdResponse leaveData;
 
@@ -631,6 +638,16 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
           ],
         ),
 
+        _InfoRow(
+          icon: isCompOff ? Icons.star_rounded : Icons.timelapse_rounded,
+          label: 'Mode',
+          value: badgeLabel,
+          // Apply dynamic styles
+          backgroundColor: badgeBgColor,
+          iconColor: badgeIconColor,
+          valueColor: badgeValueColor,
+        ),
+
         // Row 3: Applied On (Conditionally Split for Comp Off OR Half Day)
         if (showBadge)
           Row(
@@ -641,22 +658,6 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
                   icon: Icons.access_time_outlined,
                   label: 'Applied On',
                   value: _formatDateTime(leaveData.leaveDetails.createdAt),
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              // 2. Mode Highlight Box (Comp Off / Half Day)
-              Expanded(
-                child: _InfoRow(
-                  icon: isCompOff
-                      ? Icons.star_rounded
-                      : Icons.timelapse_rounded,
-                  label: 'Mode',
-                  value: badgeLabel,
-                  // Apply dynamic styles
-                  backgroundColor: badgeBgColor,
-                  iconColor: badgeIconColor,
-                  valueColor: badgeValueColor,
                 ),
               ),
             ],

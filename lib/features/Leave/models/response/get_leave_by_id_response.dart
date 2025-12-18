@@ -4,9 +4,9 @@ class GetLeaveByIdResponse {
   final String userId;
   final String leaveId;
   final String employeeName;
-  final int workingDaysCount;
+  final num workingDaysCount;
   final num balanceLeaves;
-  final int duration;
+  final num duration;
   final LeaveDetails leaveDetails;
   final CurrentUserAction? currentUserAction;
   final List<TeamConflictingLeave> teamConflictingLeaves;

@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 // import 'package:leavify/dummydata/leave/dummy_user_leaves.dart';
 import 'package:leavify/features/Leave/data/leave_repository.dart';
 import 'package:leavify/features/Leave/models/general/my_leaves.dart';
 import 'package:leavify/features/Leave/models/request/apply_leave_request_model.dart';
+import 'package:leavify/features/Profile/data/models/get_user_reportees.dart';
 import 'package:leavify/features/Profile/data/profile_repository.dart';
 
 class ProfileViewModel extends BaseViewModel {
@@ -18,6 +19,10 @@ class ProfileViewModel extends BaseViewModel {
   String? _loadUserLeavesError;
   String? get loadUserLeavesError => _loadUserLeavesError;
 
+  List<UserReportee> _userReportees = [];
+
+  List<UserReportee> get userReportees => _userReportees;
+
   void resetEditMode() {
     _isEditMode = false;
     update(errorMessage: null);
@@ -30,32 +35,43 @@ class ProfileViewModel extends BaseViewModel {
     notifyListeners();
   }
 
+  Future<void> getEmployeeList(String userId) async {
+    try {
+      debugPrint('[VM] Fetching reportees for userId: $userId');
+      update(isLoading: true, errorMessage: null);
+
+      final reportees = await _userRepository.getUserReportees(userId: userId);
+
+      debugPrint('[VM] API returned ${reportees.length} reportees');
+      for (final r in reportees) {
+        debugPrint(
+          '[VM] Reportee → ${r.firstName} ${r.lastName} (${r.designation})',
+        );
+      }
+
+      _userReportees = reportees;
+
+      debugPrint('[VM] Stored reportees count: ${_userReportees.length}');
+      update(isLoading: false);
+    } catch (e) {
+      debugPrint('[VM] Error fetching reportees: $e');
+      update(errorMessage: e.toString(), isLoading: false);
+    }
+  }
+
   // MARK: LOAD USER LEAVES
   Future<void> loadUserLeaves(String userId) async {
-    debugPrint("🟢 USER_LEAVES: loadUserLeaves started for userId: $userId");
-
     try {
       update(isLoading: true, errorMessage: null);
       _loadUserLeavesError = null;
-      debugPrint("🟢 USER_LEAVES: Loading set to true.");
 
       final accessToken = await AppStorage.getString('JWT_TOKEN') ?? '';
-      debugPrint(
-        "🟢 USER_LEAVES: Access Token retrieved. Is empty? ${accessToken.isEmpty}",
-      );
-
-      debugPrint("🟢 USER_LEAVES: Calling repository getUserLeaves...");
       _leaveData = await _repository.getUserLeaves(userId, accessToken);
-      debugPrint(
-        "🟢 USER_LEAVES: API call successful. Data assigned to _leaveData.",
-      );
 
       // _leaveData = dummyLeaveData;
       update(isLoading: false);
       notifyListeners();
-      debugPrint("🟢 USER_LEAVES: Loading set to false. Listeners notified.");
     } catch (e) {
-      debugPrint('🔴 USER_LEAVES: Error caught -> $e');
       update(errorMessage: e.toString(), isLoading: false);
       _loadUserLeavesError = e.toString();
       notifyListeners();

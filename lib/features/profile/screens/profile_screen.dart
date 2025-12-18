@@ -234,6 +234,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ],
 
+                        if (user.role.toLowerCase() != 'employee') ...[
+                          _buildMyTeamMemberContainerListSection(
+                            userId: user.id,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
                         // Leave Information Section
                         const SectionHeader(title: 'My Leaves'),
                         const SizedBox(height: 16),
@@ -262,6 +269,81 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       return joiningDate;
     }
+  }
+
+  Widget _buildMyTeamMemberContainerListSection({required String userId}) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: () {
+        AppNavigator.navigateTo(
+          RouteNames.userMemberListScreen,
+          arguments: {'userId': userId},
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.28),
+              blurRadius: 2,
+              offset: const Offset(0, 0),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.groups_outlined,
+                color: Colors.black,
+                size: 28,
+              ),
+            ),
+
+            const SizedBox(width: 16),
+
+            // Text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'My Team Members',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'View and manage people reporting to you',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.black.withOpacity(0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Arrow
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // MARK: LEAVE SECTION WITH HORIZONTAL SCROLL
@@ -384,6 +466,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final String statusUpper = leave.status.toUpperCase();
     final Color statusColor = StatusColors.fromStatus(leave.status);
 
+    // Logic refactor: check if type is 'extra' for Comp Off
+    final bool isCompOff = leave.type.toLowerCase() == 'extra';
+
+    // Determine dynamic border color and width
+    Color borderColor = theme.colorScheme.onSurface.withOpacity(0.09);
+    double borderWidth = 1.5;
+
+    if (leave.isHalfDay) {
+      borderColor = Colors.amber;
+      borderWidth = 2.0;
+    } else if (isCompOff) {
+      borderColor = Colors.purple;
+      borderWidth = 2.0;
+    }
+
     // Check if from and to dates are the same
     final bool isSingleDay =
         DateFormat('dd MMM yyyy').format(leave.fromDate) ==
@@ -395,10 +492,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.8),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: theme.colorScheme.onSurface.withOpacity(0.09),
-          width: 1.5,
-        ),
+        border: Border.all(color: borderColor, width: borderWidth),
         boxShadow: [
           BoxShadow(
             color: theme.colorScheme.primary.withOpacity(0.08),
@@ -412,8 +506,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Date display with icon
+          // Date display
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: isSingleDay
@@ -427,26 +522,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            DateFormatter.formatDateRange(
-                              leave.fromDate.toIso8601String(),
-                              leave.toDate.toIso8601String(),
-                            ),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface,
-                              letterSpacing: 0.2,
-                              fontSize: 12,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                    : Text(
+                        DateFormatter.formatDateRange(
+                          leave.fromDate.toIso8601String(),
+                          leave.toDate.toIso8601String(),
+                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface,
+                          letterSpacing: 0.2,
+                          fontSize: 12,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
               ),
+              // Visual indicator for special leave types
+              if (leave.isHalfDay)
+                const Icon(
+                  Icons.wb_sunny_outlined,
+                  size: 16,
+                  color: Colors.amber,
+                )
+              else if (isCompOff)
+                const Icon(
+                  Icons.star_outline_rounded,
+                  size: 18,
+                  color: Colors.purple,
+                ),
             ],
           ),
 
@@ -480,17 +583,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: statusColor.withOpacity(0.3), width: 1),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  statusUpper,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+            child: Center(
+              child: Text(
+                statusUpper,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-              ],
+              ),
             ),
           ),
         ],
