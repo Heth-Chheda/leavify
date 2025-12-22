@@ -97,6 +97,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAppliedByManager = _leave?.userId != _leave?.requestedById;
+    debugPrint('_status: $isAppliedByManager');
     return Consumer<ProfileViewModel>(
       builder: (context, viewModel, child) {
         final leaveViewModel = context.watch<LeaveViewModel>();
@@ -138,7 +140,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (_status.toLowerCase() != 'cancelled') ...[
+                            if (_status.toLowerCase() != 'cancelled' &&
+                                !isAppliedByManager) ...[
                               _buildStatusSection(),
                               const SizedBox(height: 24),
                             ],

@@ -545,7 +545,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: theme.colorScheme.onSurface.withOpacity(0.65),
                     fontSize: 13,
                   ),
-                  maxLines: 3,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -562,7 +562,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const TextSpan(
                       text: 'COMP OFF',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Colors.purple,
                         letterSpacing: 0.4,

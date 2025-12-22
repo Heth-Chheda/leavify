@@ -4,6 +4,7 @@ class GetLeaveByIdResponse {
   final String userId;
   final String leaveId;
   final String employeeName;
+  final String requestedById;
   final num workingDaysCount;
   final num balanceLeaves;
   final num duration;
@@ -20,6 +21,7 @@ class GetLeaveByIdResponse {
     required this.workingDaysCount,
     required this.duration,
     required this.balanceLeaves,
+    required this.requestedById,
     required this.leaveDetails,
     this.currentUserAction,
     required this.teamConflictingLeaves,
@@ -33,6 +35,7 @@ class GetLeaveByIdResponse {
       leaveId: json['leaveId'] ?? '',
       employeeName: json['employeeName'] ?? '',
       workingDaysCount: json['workingDaysCount'] ?? 0,
+      requestedById: json['requestedById'] ?? '',
       balanceLeaves: json['balanceLeaves'] ?? 0,
       duration: json['duration'] ?? 0,
       leaveDetails: LeaveDetails.fromJson(json['leaveDetails']),
