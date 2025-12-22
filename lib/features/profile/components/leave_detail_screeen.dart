@@ -97,8 +97,6 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isAppliedByManager = _leave?.userId != _leave?.requestedById;
-    debugPrint('_status: $isAppliedByManager');
     return Consumer<ProfileViewModel>(
       builder: (context, viewModel, child) {
         final leaveViewModel = context.watch<LeaveViewModel>();
@@ -140,8 +138,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (_status.toLowerCase() != 'cancelled' &&
-                                !isAppliedByManager) ...[
+                            if (_status.toLowerCase() != 'cancelled') ...[
                               _buildStatusSection(),
                               const SizedBox(height: 24),
                             ],
@@ -609,6 +606,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
   Widget _buildStatusSection() {
     final isPending = _leave?.leaveDetails.status.toLowerCase() == 'pending';
+    final isAppliedByManager = _leave?.userId != _leave?.requestedById;
 
     return Row(
       children: [
@@ -641,19 +639,20 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        Expanded(
-          child: MyAppButton(
-            label: 'Cancel',
-            backgroundColor: Colors.grey,
-            onPressed: () => _confirmLeaveAction(
-              type: LeaveActionType.cancel,
-              title: 'Cancel Leave?',
-              body: 'Are you sure you want to cancel this leave request?',
-              confirmText: 'Cancel Leave',
-              buttonBackgroundColor: Colors.grey,
+        if (!isAppliedByManager)
+          Expanded(
+            child: MyAppButton(
+              label: 'Cancel',
+              backgroundColor: Colors.grey,
+              onPressed: () => _confirmLeaveAction(
+                type: LeaveActionType.cancel,
+                title: 'Cancel Leave?',
+                body: 'Are you sure you want to cancel this leave request?',
+                confirmText: 'Cancel Leave',
+                buttonBackgroundColor: Colors.grey,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
