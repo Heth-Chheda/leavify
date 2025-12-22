@@ -143,6 +143,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
+      barrierColor: Colors.black.withOpacity(0.9),
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return ConfirmationDialog(
@@ -150,11 +151,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           body: 'Are you sure you want to logout?',
           confirmButtonText: 'Yes, Logout',
           illustrationAsset: 'lib/assets/logout.png',
-          illustrationHeight: 140,
+          illustrationHeight: 180,
           buttonBackgroundColor: Colors.red,
           buttonForegroundColor: Colors.white,
+          showCloseButton: true,
           onConfirm: () {
-            Navigator.of(dialogContext).pop();
+            Navigator.of(dialogContext).pop(); // ✅ removes dialog + overlay
             _performLogout(context);
           },
         );

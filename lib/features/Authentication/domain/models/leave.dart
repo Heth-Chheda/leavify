@@ -6,6 +6,8 @@ class LeaveDetailsWithoutLeaveId {
   final String reason;
   final String status;
   final String? profileImageUrl;
+  final bool isHalfDay;
+  final String requestType;
 
   LeaveDetailsWithoutLeaveId({
     required this.userId,
@@ -15,6 +17,8 @@ class LeaveDetailsWithoutLeaveId {
     required this.reason,
     required this.status,
     this.profileImageUrl,
+    required this.isHalfDay,
+    required this.requestType,
   });
 
   factory LeaveDetailsWithoutLeaveId.fromJson(Map<String, dynamic> json) =>
@@ -26,6 +30,8 @@ class LeaveDetailsWithoutLeaveId {
         reason: json['reason'] ?? '',
         status: json['status'] ?? '',
         profileImageUrl: json['profileImageUrl'] ?? '',
+        isHalfDay: json['isHalfDay'] ?? false,
+        requestType: json['requestType'] ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -36,5 +42,7 @@ class LeaveDetailsWithoutLeaveId {
     'reason': reason,
     'status': status,
     'profileImageUrl': profileImageUrl,
+    'isHalfDay': isHalfDay,
+    'requestType': requestType,
   };
 }

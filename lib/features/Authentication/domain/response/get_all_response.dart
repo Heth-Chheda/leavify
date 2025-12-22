@@ -13,6 +13,8 @@ class GetAllResponse {
   final String? designation;
   final String? actionTaken;
   final String? userId;
+  final bool isHalfDay;
+  final String requestType;
 
   GetAllResponse({
     required this.profileImage,
@@ -29,6 +31,8 @@ class GetAllResponse {
     this.designation,
     this.actionTaken,
     this.userId,
+    required this.isHalfDay,
+    required this.requestType,
   });
 
   factory GetAllResponse.fromJson(Map<String, dynamic> json) {
@@ -47,6 +51,8 @@ class GetAllResponse {
       designation: json['designation'] ?? '',
       actionTaken: json['actionTaken'] ?? '',
       userId: json['userId'] ?? '',
+      isHalfDay: json['isHalfDay'] ?? false,
+      requestType: json['requestType'] ?? '',
     );
   }
   Map<String, dynamic> toJson() => {
@@ -64,5 +70,7 @@ class GetAllResponse {
     'designation': designation,
     'actionTaken': actionTaken,
     'userId': userId,
+    'isHalfDay': isHalfDay,
+    'requestType': requestType,
   };
 }

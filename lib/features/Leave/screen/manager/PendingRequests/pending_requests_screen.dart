@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
-import 'package:leavify/features/Leave/components/manager/pending_request_card.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Leave/components/manager/pending_request_card.dart';
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
 import 'package:leavify/router/app_navigator.dart';
 import 'package:leavify/router/route_names.dart';
@@ -153,7 +153,10 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
                   _buildHeader(context, pendingCount),
                   const Expanded(
                     child: Center(
-                      child: SpinKitSquareCircle(color: AppColors.highlightBlue, size: 80),
+                      child: SpinKitSquareCircle(
+                        color: AppColors.highlightBlue,
+                        size: 80,
+                      ),
                     ),
                   ),
                 ],

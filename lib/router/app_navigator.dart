@@ -5,11 +5,11 @@ class AppNavigator {
       GlobalKey<NavigatorState>();
 
   /// Push a new route on top of stack
-  static Future<dynamic>? navigateTo(String routeName, {Object? arguments}) {
-    return navigatorKey.currentState?.pushNamed(
-      routeName,
-      arguments: arguments,
-    );
+  static Future<dynamic> navigateTo(String routeName, {Object? arguments}) {
+    final navigator = navigatorKey.currentState;
+    assert(navigator != null, 'NavigatorState is not ready');
+
+    return navigator!.pushNamed(routeName, arguments: arguments);
   }
 
   /// Replace entire stack with new root view

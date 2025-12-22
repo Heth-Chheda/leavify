@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:leavify/features/Authentication/domain/response/get_all_response.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
-import 'package:provider/provider.dart';
-
+import 'package:leavify/features/Leave/components/manager/pending_request_detail_screen.dart';
 // Screens
 import 'package:leavify/features/Leave/screen/ApplyLeave/apply_leave_screen.dart';
-import 'package:leavify/features/Leave/components/manager/pending_request_detail_screen.dart';
 import 'package:leavify/features/Leave/screen/manager/PendingRequests/pending_requests_screen.dart';
-import 'package:leavify/features/Profile/components/leave_detail_screeen.dart';
-
 // ViewModel
 import 'package:leavify/features/Leave/viewModel/leave_view_model.dart';
+import 'package:leavify/features/Profile/components/leave_detail_screeen.dart';
 import 'package:leavify/features/profile/viewmodel/profile_view_model.dart';
-
 // Core
 import 'package:leavify/locator.dart';
 import 'package:leavify/router/app_navigator.dart';
 import 'package:leavify/router/route_names.dart';
+import 'package:provider/provider.dart';
 
 class LeaveRouter {
   static Route<dynamic>? generateRoute(RouteSettings settings) {
@@ -83,7 +80,8 @@ class LeaveRouter {
               providers: [
                 ChangeNotifierProvider.value(value: locator<LeaveViewModel>()),
                 ChangeNotifierProvider.value(
-                    value: locator<ProfileViewModel>()),
+                  value: locator<ProfileViewModel>(),
+                ),
               ],
               child: Consumer<ProfileViewModel>(
                 builder: (context, viewModel, _) {
@@ -94,11 +92,27 @@ class LeaveRouter {
                     ),
                     'Leave Details',
                     actions: [
-                      IconButton(
-                        icon: Icon(
-                          viewModel.isEditMode ? Icons.close : Icons.edit,
-                        ),
-                        onPressed: () => viewModel.toggleEditMode(),
+                      Consumer<LeaveViewModel>(
+                        builder: (context, leaveVM, _) {
+                          final leave = leaveVM.selectedLeaveById;
+
+                          // While loading OR leave not fetched yet → no icon
+                          if (leave == null) return const SizedBox.shrink();
+
+                          // EXTRA (Comp-Off) → no edit allowed
+                          if (leave.leaveDetails.type.toUpperCase() ==
+                              'EXTRA') {
+                            return const SizedBox.shrink();
+                          }
+
+                          // Editable leave
+                          return IconButton(
+                            icon: Icon(
+                              viewModel.isEditMode ? Icons.close : Icons.edit,
+                            ),
+                            onPressed: () => viewModel.toggleEditMode(),
+                          );
+                        },
                       ),
                     ],
                   );
@@ -137,7 +151,11 @@ class LeaveRouter {
     );
   }
 
-  static Widget _withAppBar(Widget child, String title, {List<Widget>? actions}) {
+  static Widget _withAppBar(
+    Widget child,
+    String title, {
+    List<Widget>? actions,
+  }) {
     return Scaffold(
       appBar: AppBar(
         title: Text(title, textAlign: TextAlign.center),
@@ -148,7 +166,7 @@ class LeaveRouter {
                 AppNavigator.navigatorKey.currentState?.canPop() ?? false;
 
             if (canPop) {
-              AppNavigator.goBack();
+              AppNavigator.goBack(true);
             } else {
               AppNavigator.setRootView(RouteNames.home);
             }

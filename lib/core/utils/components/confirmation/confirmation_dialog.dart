@@ -14,6 +14,10 @@ class ConfirmationDialog extends StatelessWidget {
   final Color? buttonForegroundColor;
   final Gradient? buttonGradient;
 
+  /// Controls visibility of close (X) button
+  /// Default = true (backward compatible)
+  final bool showCloseButton;
+
   const ConfirmationDialog({
     super.key,
     required this.title,
@@ -25,10 +29,13 @@ class ConfirmationDialog extends StatelessWidget {
     this.buttonBackgroundColor,
     this.buttonForegroundColor,
     this.buttonGradient,
+    this.showCloseButton = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool hasIllustration = illustrationAsset != null;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Stack(
@@ -37,15 +44,19 @@ class ConfirmationDialog extends StatelessWidget {
           // Main white container
           Container(
             width: 320,
-            padding: const EdgeInsets.fromLTRB(16, 60, 16, 16),
+
+            // ✅ Dynamic top padding
+            padding: EdgeInsets.fromLTRB(16, hasIllustration ? 60 : 24, 16, 16),
+
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
             ),
+
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 16),
+                // Title
                 Text(
                   title,
                   textAlign: TextAlign.center,
@@ -55,7 +66,10 @@ class ConfirmationDialog extends StatelessWidget {
                     color: Color(0xFF1F2937),
                   ),
                 ),
+
                 const SizedBox(height: 12),
+
+                // Body
                 Text(
                   body,
                   textAlign: TextAlign.center,
@@ -65,9 +79,10 @@ class ConfirmationDialog extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
+
                 const SizedBox(height: 24),
 
-                // Replace with MyAppButton
+                // Confirm Button
                 SizedBox(
                   width: double.infinity,
                   child: MyAppButton(
@@ -85,10 +100,10 @@ class ConfirmationDialog extends StatelessWidget {
             ),
           ),
 
-          // Optional illustration image
-          if (illustrationAsset != null)
+          // Optional illustration
+          if (hasIllustration)
             Positioned(
-              top: -90, // overlaps half of the container
+              top: -90,
               left: 0,
               right: 0,
               child: Center(
@@ -99,19 +114,20 @@ class ConfirmationDialog extends StatelessWidget {
               ),
             ),
 
-          // Close button (x) at top-right
-          Positioned(
-            top: 8,
-            right: 10,
-            child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: const CircleAvatar(
-                radius: 15,
-                backgroundColor: Colors.white,
-                child: Icon(Icons.close, size: 24, color: Colors.black),
+          // Close button (X)
+          if (showCloseButton)
+            Positioned(
+              top: 8,
+              right: 10,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const CircleAvatar(
+                  radius: 15,
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.close, size: 24, color: Colors.black),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

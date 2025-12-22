@@ -224,17 +224,6 @@ class BaseRepository {
         _logResponse(response);
         client.close(); // Safe to close here as loop will create a new one
 
-        // 🔥🔥🔥 GLOBAL 401 JWT EXPIRED HANDLER
-        if (response.statusCode == 401 || response.statusCode == 404) {
-          String message = "Please login again.";
-
-          if (BaseRepository.onSessionExpired != null) {
-            BaseRepository.onSessionExpired!(message);
-          }
-
-          throw ApiException(message, statusCode: 401);
-        }
-
         if (response.statusCode >= 200 && response.statusCode < 300) {
           return response;
         } else {
@@ -248,17 +237,32 @@ class BaseRepository {
           try {
             if (response.body.isNotEmpty) {
               final decoded = jsonDecode(response.body);
+
               if (decoded is Map<String, dynamic>) {
-                if (decoded['error'] != null)
+                if (decoded['error'] != null) {
                   errorMessage = decoded['error'];
-                else if (decoded['message'] != null)
+                } else if (decoded['message'] != null) {
                   errorMessage = decoded['message'];
+                }
               } else {
                 errorMessage = response.body;
               }
             }
           } catch (_) {
             errorMessage = response.body;
+          }
+
+          final msgLower = errorMessage.toLowerCase();
+          final bool isSessionExpired =
+              msgLower.contains('invalid or expired jwt token') ||
+              msgLower.contains('employee not found');
+
+          if (isSessionExpired) {
+            const sessionMsg = "Please login again.";
+
+            BaseRepository.onSessionExpired?.call(sessionMsg);
+
+            throw ApiException(sessionMsg, statusCode: 401);
           }
 
           throw ApiException(errorMessage, statusCode: response.statusCode);

@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_sliding_toast/flutter_sliding_toast.dart';
+import 'package:leavify/app/splash_screen.dart';
 import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 import 'package:leavify/core/utils/components/confirmation/confirmation_dialog.dart';
+import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/router/app_navigator.dart';
 import 'package:leavify/router/app_router.dart';
-import 'package:leavify/app/splash_screen.dart';
-import 'package:leavify/core/utils/theme/app_colors.dart';
 import 'package:leavify/router/route_names.dart';
 import 'package:leavify/services/force_update_checker.dart';
 
@@ -47,6 +47,7 @@ class _MyAppState extends State<MyApp> {
             illustrationAsset: "lib/assets/session_expired.png",
             illustrationHeight: 150,
             confirmButtonText: "OK",
+            showCloseButton: false,
             onConfirm: () {
               Navigator.of(context).pop();
               _performLogout();

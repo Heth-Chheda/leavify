@@ -21,56 +21,82 @@ class PendingRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final homeViewModel = context.read<HomeViewModel>();
+
     final isAboveManager =
         homeViewModel.userRole.toLowerCase() != 'employee' &&
         homeViewModel.userRole.toLowerCase() != 'manager';
 
-    debugPrint('IS ABOVE MANAGER : $isAboveManager');
     final shouldShowBell = request.escalated && isAboveManager;
+
+    /* ================= LEFT ACCENT PRIORITY ================= */
+
+    final bool isCompOff = request.requestType.toLowerCase() == 'extra';
+    final bool isHalfDay = request.isHalfDay == true;
+
+    Color? leftAccentColor;
+
+    // Priority: Comp-Off > Half-Day
+    if (isCompOff) {
+      leftAccentColor = Colors.purple;
+    } else if (isHalfDay) {
+      leftAccentColor = Colors.amber.shade700;
+    }
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        decoration: _buildCardDecoration(context, homeViewModel),
+        // LEFT ACCENT BORDER (added, does NOT affect escalated logic)
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: leftAccentColor != null
+              ? Border(left: BorderSide(color: leftAccentColor, width: 4))
+              : null,
+        ),
         child: Container(
-          decoration: _buildGradientDecoration(),
-          child: Stack(
-            children: [
-              // Main content
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 100, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [_requestHeader(request: request)],
-                ),
-              ),
-
-              // Status badge positioned on top-right corner
-              Positioned(
-                top: 15,
-                right: 15,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    _statusBadge(status: request.status),
-                    const SizedBox(height: 4),
-                    if ((request.actionTaken ?? '').isNotEmpty && request.status.toLowerCase() == 'pending')
-                      _actionTakenTag(request.actionTaken!),
-                  ],
-                ),
-              ),
-
-              if (shouldShowBell)
-                Positioned(
-                  bottom: 8,
-                  right: 20,
-                  child: FaIcon(
-                    FontAwesomeIcons.solidBell,
-                    color: const Color(0xFFFFD43B),
-                    size: 18,
+          // EXISTING CARD DECORATION (unchanged)
+          decoration: _buildCardDecoration(context, homeViewModel),
+          child: Container(
+            decoration: _buildGradientDecoration(),
+            child: Stack(
+              children: [
+                // Main content
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 10, 100, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [_requestHeader(request: request)],
                   ),
                 ),
-            ],
+
+                // Status badge (unchanged)
+                Positioned(
+                  top: 15,
+                  right: 15,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _statusBadge(status: request.status),
+                      const SizedBox(height: 4),
+                      if ((request.actionTaken ?? '').isNotEmpty &&
+                          request.status.toLowerCase() == 'pending')
+                        _actionTakenTag(request.actionTaken!),
+                    ],
+                  ),
+                ),
+
+                // Escalation bell (unchanged)
+                if (shouldShowBell)
+                  Positioned(
+                    bottom: 8,
+                    right: 20,
+                    child: FaIcon(
+                      FontAwesomeIcons.solidBell,
+                      color: const Color(0xFFFFD43B),
+                      size: 18,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -102,21 +128,13 @@ class PendingRequestCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-
-        // 🔵 Dot
         Container(
           width: 8,
           height: 8,
           margin: const EdgeInsets.only(top: 3),
-          decoration: BoxDecoration(
-            color: dotColor,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
         ),
-
         const SizedBox(width: 8),
-
-        // 🔤 Two-line Text
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -142,9 +160,7 @@ class PendingRequestCard extends StatelessWidget {
     );
   }
 
-
-
-  // MARK: - BUILD CARD DECORATION
+  // MARK: - BUILD CARD DECORATION (UNCHANGED)
   BoxDecoration _buildCardDecoration(
     BuildContext context,
     HomeViewModel homeViewModel,
@@ -175,6 +191,8 @@ class PendingRequestCard extends StatelessWidget {
   }
 }
 
+// ================= SUB-WIDGETS =================
+
 // MARK: - REQUEST_HEADER
 Widget _requestHeader({required GetAllResponse request}) {
   return Row(
@@ -198,8 +216,7 @@ Widget _employeeAvatar({required GetAllResponse request}) {
     builder: (context) {
       String? getProfileImageUrl() {
         if (request.profileImage.isEmpty) return null;
-        final baseUrl = ApiEndpoints.baseUrl;
-        return "$baseUrl/${request.profileImage}";
+        return "${ApiEndpoints.baseUrl}/${request.profileImage}";
       }
 
       return Container(
@@ -226,7 +243,7 @@ Widget _employeeAvatar({required GetAllResponse request}) {
                 child: Image.network(
                   getProfileImageUrl()!,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
+                  errorBuilder: (_, __, ___) =>
                       _employeeInitials(request: request),
                 ),
               )
@@ -244,7 +261,8 @@ Widget _employeeInitials({required GetAllResponse request}) {
 
       return Center(
         child: Text(
-          '${request.firstName.isNotEmpty ? request.firstName[0] : ''}${request.lastName.isNotEmpty ? request.lastName[0] : ''}',
+          '${request.firstName.isNotEmpty ? request.firstName[0] : ''}'
+          '${request.lastName.isNotEmpty ? request.lastName[0] : ''}',
           style: TextStyle(
             color: isDark
                 ? Theme.of(context).secondaryHeaderColor
@@ -280,7 +298,6 @@ Widget _employeeInfo({required GetAllResponse request}) {
             style: TextStyle(
               fontSize: 13,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
-              fontWeight: FontWeight.w400,
             ),
           ),
           _requestDurationAndDateRange(request: request),
@@ -301,17 +318,10 @@ Widget _statusBadge({required String status}) {
         decoration: BoxDecoration(
           color: statusColor.withOpacity(0.7),
           borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: statusColor.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: Text(
           status.toUpperCase(),
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w600,
             fontSize: 11,
@@ -325,39 +335,20 @@ Widget _statusBadge({required String status}) {
 
 // MARK: - REQUEST DURATION AND DATE RANGE
 Widget _requestDurationAndDateRange({required GetAllResponse request}) {
-  return Builder(
-    builder: (context) {
-      final textColor = Colors.grey[700];
-
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _iconContainer(icon: Icons.calendar_today_outlined),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(
-              DateFormatter.formatDateRange(request.startDate, request.endDate),
-              style: TextStyle(
-                color: textColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+  return Row(
+    children: [
+      const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
+      const SizedBox(width: 4),
+      Expanded(
+        child: Text(
+          DateFormatter.formatDateRange(request.startDate, request.endDate),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey,
           ),
-        ],
-      );
-    },
-  );
-}
-
-// MARK: - ICON_CONTAINER
-Widget _iconContainer({
-  required IconData icon,
-  double size = 14,
-  double padding = 4,
-}) {
-  return Container(
-    padding: EdgeInsets.symmetric(vertical: padding),
-    child: Icon(icon, size: size, color: Colors.grey[600]),
+        ),
+      ),
+    ],
   );
 }
