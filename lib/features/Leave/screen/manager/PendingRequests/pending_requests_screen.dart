@@ -64,6 +64,13 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
         case 'escalated':
           matchesFilter = isHR ? r.escalated == true : status == 'escalated';
           break;
+        case 'comp off':
+          matchesFilter = r.requestType.toLowerCase() == 'extra';
+          break;
+
+        case 'half day':
+          matchesFilter = r.isHalfDay == true;
+          break;
         default:
           matchesFilter = true; // All
       }
@@ -267,6 +274,8 @@ class _PendingRequestsScreenState extends State<PendingRequestsScreen> {
       'Pending',
       'Approved',
       'Rejected',
+      'Comp Off',
+      'Half Day',
     ];
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;

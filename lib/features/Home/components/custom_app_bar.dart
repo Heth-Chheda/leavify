@@ -165,41 +165,27 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   void _performLogout(BuildContext context) async {
-    debugPrint("🔴 LOGOUT: Process started");
-
     try {
       // Load the home view Model // just read the home view Model.
       final homeViewModel = context.read<HomeViewModel>();
-      debugPrint("🔴 LOGOUT: HomeViewModel loaded");
-
-      // Call logout API
-      debugPrint("🔴 LOGOUT: Calling API...");
       final isLogoutSuccess = await homeViewModel.logout();
-      debugPrint("🔴 LOGOUT: API call finished. Success: $isLogoutSuccess");
 
       if (!context.mounted) {
-        debugPrint("🔴 LOGOUT: Context not mounted after await. Aborting.");
         return;
       }
 
       // Navigate based on result
       if (isLogoutSuccess) {
-        debugPrint("🔴 LOGOUT: Clearing ViewModel data...");
         homeViewModel.clearData();
-
-        // Clear data and preferences
-        debugPrint("🔴 LOGOUT: Clearing AppStorage (preserving FCM)...");
         await AppStorage.clearAllExcept("USER_FCM_TOKEN");
-
-        debugPrint("🔴 LOGOUT: Navigating to Login root view");
         AppNavigator.setRootView(RouteNames.login);
       } else {
-        debugPrint("🔴 LOGOUT: Logout failed (boolean false). Showing error.");
         // Optionally show a toast/snack bar here
         homeViewModel.showError(context, 'Something went wrong.');
+        AppNavigator.setRootView(RouteNames.login);
       }
     } catch (e) {
-      debugPrint("🔴 LOGOUT: Exception caught -> $e");
+      AppNavigator.setRootView(RouteNames.login);
       AppToast.error(context, 'Something went wrong.');
     }
   }

@@ -281,8 +281,8 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.only(left: 22),
       child: Text(
         _selectedDate != null
-            ? "Leaves for ${_formatDate(_selectedDate!)}"
-            : "Upcoming Team Leaves",
+            ? "Activities for ${_formatDate(_selectedDate!)}"
+            : "Upcoming Team Activities",
         style: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.w900,

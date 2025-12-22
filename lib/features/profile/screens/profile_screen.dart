@@ -473,14 +473,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Color borderColor = theme.colorScheme.onSurface.withOpacity(0.09);
     double borderWidth = 1.5;
 
-    if (leave.isHalfDay) {
-      borderColor = Colors.amber;
-      borderWidth = 2.0;
-    } else if (isCompOff) {
-      borderColor = Colors.purple;
-      borderWidth = 2.0;
-    }
-
     // Check if from and to dates are the same
     final bool isSingleDay =
         DateFormat('dd MMM yyyy').format(leave.fromDate) ==
@@ -537,24 +529,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
               ),
-              // Visual indicator for special leave types
-              if (leave.isHalfDay)
-                const Icon(
-                  Icons.wb_sunny_outlined,
-                  size: 16,
-                  color: Colors.amber,
-                )
-              else if (isCompOff)
-                const Icon(
-                  Icons.star_outline_rounded,
-                  size: 18,
-                  color: Colors.purple,
-                ),
             ],
           ),
 
           const SizedBox(height: 12),
 
+          // Leave reason
           // Leave reason
           Row(
             children: [
@@ -571,6 +551,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
+
+          // COMP OFF / HALF DAY TAG
+          if (isCompOff || leave.isHalfDay) ...[
+            const SizedBox(height: 6),
+            RichText(
+              text: TextSpan(
+                children: [
+                  if (isCompOff)
+                    const TextSpan(
+                      text: 'COMP OFF',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.purple,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  if (isCompOff && leave.isHalfDay) const TextSpan(text: ' '),
+                  if (leave.isHalfDay)
+                    TextSpan(
+                      text: '(HALF DAY)',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.purple,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
 
           const Spacer(),
 
@@ -596,6 +608,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  String _buildLeaveTagText(bool isCompOff, bool isHalfDay) {
+    if (isCompOff && isHalfDay) {
+      return 'COMP OFF (HALF DAY)';
+    }
+    if (isCompOff) {
+      return 'COMP OFF';
+    }
+    if (isHalfDay) {
+      return 'HALF DAY';
+    }
+    return '';
   }
 
   Widget _buildLeaveSummaryBox({
@@ -640,13 +665,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _navigateToLeaveDetail(String leaveId) {
+  Future<void> _navigateToLeaveDetail(String leaveId) async {
     final user = context.read<HomeViewModel>().homeData?.currentUser;
     if (user != null) {
-      AppNavigator.navigateTo(
+      final result = await AppNavigator.navigateTo(
         RouteNames.leaveDetail,
         arguments: {'leaveId': leaveId, 'userId': user.id},
       );
+
+      // 🔄 Refresh after coming back
+      if (result == true && mounted) {
+        debugPrint('bro called me.');
+        context.read<ProfileViewModel>().loadUserLeaves(user.id);
+      } else {
+        debugPrint('bro did not called me.');
+      }
     }
   }
 }

@@ -34,18 +34,18 @@ class PendingRequestCard extends StatelessWidget {
     final bool isHalfDay = request.isHalfDay == true;
 
     Color? leftAccentColor;
-
-    // Priority: Comp-Off > Half-Day
     if (isCompOff) {
       leftAccentColor = Colors.purple;
     } else if (isHalfDay) {
       leftAccentColor = Colors.amber.shade700;
     }
 
+    final bool showCompOff = isCompOff;
+    final bool showHalfDay = isHalfDay;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        // LEFT ACCENT BORDER (added, does NOT affect escalated logic)
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           border: leftAccentColor != null
@@ -53,22 +53,25 @@ class PendingRequestCard extends StatelessWidget {
               : null,
         ),
         child: Container(
-          // EXISTING CARD DECORATION (unchanged)
           decoration: _buildCardDecoration(context, homeViewModel),
           child: Container(
             decoration: _buildGradientDecoration(),
             child: Stack(
               children: [
-                // Main content
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 10, 100, 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [_requestHeader(request: request)],
+                    children: [
+                      _requestHeader(
+                        request: request,
+                        isCompOff: isCompOff,
+                        isHalfDay: isHalfDay,
+                      ),
+                    ],
                   ),
                 ),
 
-                // Status badge (unchanged)
                 Positioned(
                   top: 15,
                   right: 15,
@@ -84,14 +87,13 @@ class PendingRequestCard extends StatelessWidget {
                   ),
                 ),
 
-                // Escalation bell (unchanged)
                 if (shouldShowBell)
-                  Positioned(
+                  const Positioned(
                     bottom: 8,
                     right: 20,
                     child: FaIcon(
                       FontAwesomeIcons.solidBell,
-                      color: const Color(0xFFFFD43B),
+                      color: Color(0xFFFFD43B),
                       size: 18,
                     ),
                   ),
@@ -103,7 +105,7 @@ class PendingRequestCard extends StatelessWidget {
     );
   }
 
-  // MARK: - ACTION_TAKEN TAG
+  // MARK: - ACTION TAKEN TAG
   Widget _actionTakenTag(String actionTaken) {
     final normalized = actionTaken.trim().toLowerCase();
     late final Color dotColor;
@@ -121,11 +123,9 @@ class PendingRequestCard extends StatelessWidget {
       default:
         dotColor = Colors.grey;
         statusText = 'Pending';
-        break;
     }
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
@@ -160,7 +160,6 @@ class PendingRequestCard extends StatelessWidget {
     );
   }
 
-  // MARK: - BUILD CARD DECORATION (UNCHANGED)
   BoxDecoration _buildCardDecoration(
     BuildContext context,
     HomeViewModel homeViewModel,
@@ -193,8 +192,11 @@ class PendingRequestCard extends StatelessWidget {
 
 // ================= SUB-WIDGETS =================
 
-// MARK: - REQUEST_HEADER
-Widget _requestHeader({required GetAllResponse request}) {
+Widget _requestHeader({
+  required GetAllResponse request,
+  required bool isCompOff,
+  required bool isHalfDay,
+}) {
   return Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -203,137 +205,134 @@ Widget _requestHeader({required GetAllResponse request}) {
       Expanded(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: _employeeInfo(request: request),
+          child: _employeeInfo(
+            request: request,
+            isCompOff: isCompOff,
+            isHalfDay: isHalfDay,
+          ),
         ),
       ),
     ],
   );
 }
 
-// MARK: - EMPLOYEE_AVATAR
 Widget _employeeAvatar({required GetAllResponse request}) {
-  return Builder(
-    builder: (context) {
-      String? getProfileImageUrl() {
-        if (request.profileImage.isEmpty) return null;
-        return "${ApiEndpoints.baseUrl}/${request.profileImage}";
-      }
+  final String? imageUrl = request.profileImage.isNotEmpty
+      ? "${ApiEndpoints.baseUrl}/${request.profileImage}"
+      : null;
 
-      return Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: Theme.of(context).secondaryHeaderColor.withOpacity(0.1),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).primaryColor.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: getProfileImageUrl() != null
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Image.network(
-                  getProfileImageUrl()!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      _employeeInitials(request: request),
-                ),
-              )
-            : _employeeInitials(request: request),
-      );
-    },
+  return Container(
+    width: 80,
+    height: 80,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      color: Colors.blue.withOpacity(0.08),
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: imageUrl != null
+          ? Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) {
+                // 🔒 GUARANTEED fallback
+                return _employeeInitials(request: request);
+              },
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return _employeeInitials(request: request);
+              },
+            )
+          : _employeeInitials(request: request),
+    ),
   );
 }
 
-// MARK: - EMPLOYEE_INITIALS
 Widget _employeeInitials({required GetAllResponse request}) {
-  return Builder(
-    builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
+  return Center(
+    child: Text(
+      '${request.firstName[0]}${request.lastName[0]}',
+      style: const TextStyle(fontWeight: FontWeight.bold),
+    ),
+  );
+}
 
-      return Center(
-        child: Text(
-          '${request.firstName.isNotEmpty ? request.firstName[0] : ''}'
-          '${request.lastName.isNotEmpty ? request.lastName[0] : ''}',
-          style: TextStyle(
-            color: isDark
-                ? Theme.of(context).secondaryHeaderColor
-                : Theme.of(context).primaryColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+Widget _employeeInfo({
+  required GetAllResponse request,
+  required bool isCompOff,
+  required bool isHalfDay,
+}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        '${request.firstName} ${request.lastName}',
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+      Text(
+        request.designation ?? '',
+        style: const TextStyle(fontSize: 13, color: Colors.grey),
+      ),
+      _requestDurationAndDateRange(request: request),
+      if (isCompOff || isHalfDay) ...[
+        const SizedBox(height: 4),
+        RichText(
+          text: TextSpan(
+            children: [
+              if (isCompOff)
+                const TextSpan(
+                  text: 'COMP OFF',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.purple,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+
+              if (isCompOff && isHalfDay)
+                const TextSpan(
+                  text: ' / ',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey,
+                  ),
+                ),
+
+              if (isHalfDay)
+                TextSpan(
+                  text: '(HALF DAY)',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.purple,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+            ],
           ),
         ),
-      );
-    },
+      ],
+    ],
   );
 }
 
-// MARK: - EMPLOYEE_INFO
-Widget _employeeInfo({required GetAllResponse request}) {
-  return Builder(
-    builder: (context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${request.firstName} ${request.lastName}',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
-          ),
-          Text(
-            request.designation ?? 'Loading...',
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
-          ),
-          _requestDurationAndDateRange(request: request),
-        ],
-      );
-    },
-  );
-}
-
-// MARK: - STATUS_BADGE
 Widget _statusBadge({required String status}) {
-  return Builder(
-    builder: (context) {
-      final statusColor = StatusColors.fromStatus(status);
-
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: statusColor.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          status.toUpperCase(),
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w600,
-            fontSize: 11,
-            letterSpacing: 0.5,
-          ),
-        ),
-      );
-    },
+  final statusColor = StatusColors.fromStatus(status);
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: statusColor.withOpacity(0.7),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Text(
+      status.toUpperCase(),
+      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+    ),
   );
 }
 
-// MARK: - REQUEST DURATION AND DATE RANGE
 Widget _requestDurationAndDateRange({required GetAllResponse request}) {
   return Row(
     children: [
@@ -342,11 +341,7 @@ Widget _requestDurationAndDateRange({required GetAllResponse request}) {
       Expanded(
         child: Text(
           DateFormatter.formatDateRange(request.startDate, request.endDate),
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey,
-          ),
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
         ),
       ),
     ],

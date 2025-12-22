@@ -1,11 +1,12 @@
 import 'dart:convert';
-import 'package:flutter/services.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:leavify/router/services/notification_redirection.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:leavify/core/storage/app_storage.dart';
+import 'package:leavify/router/services/notification_redirection.dart';
 
 // 1. Define the background handler as a top-level function
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -16,80 +17,95 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 class FCMService {
   static final FlutterLocalNotificationsPlugin _localNotifications =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   static const MethodChannel _apnsChannel = MethodChannel("leavify/apns");
 
   static RemoteMessage? _pendingInitialMessage;
 
   static Future<void> initialize() async {
+    // 1️⃣ Initialize local notifications FIRST
     await _initializeLocalNotifications();
 
-    final messaging = FirebaseMessaging.instance;
+    final FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-    // -----------------------------
-    // 2. REQUEST PERMISSION HERE
-    // -----------------------------
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
+    // ------------------------------------------------
+    // 2️⃣ SAFE PERMISSION HANDLING (iOS compliant)
+    // ------------------------------------------------
+    final NotificationSettings currentSettings = await messaging
+        .getNotificationSettings();
+
+    debugPrint(
+      '🔔 Current notification permission status: '
+      '${currentSettings.authorizationStatus}',
     );
 
-    debugPrint('🔔 User granted permission: ${settings.authorizationStatus}');
+    // Ask permission ONLY if never asked before
+    if (currentSettings.authorizationStatus ==
+        AuthorizationStatus.notDetermined) {
+      final NotificationSettings newSettings = await messaging
+          .requestPermission(alert: true, badge: true, sound: true);
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('✅ User granted permission');
-    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-      debugPrint('⚠️ User granted provisional permission');
+      debugPrint(
+        '🔔 Permission requested, result: '
+        '${newSettings.authorizationStatus}',
+      );
     } else {
-      debugPrint('❌ User declined or has not accepted permission');
-      // You might want to return here if permission is denied,
-      // but we continue to save the token just in case.
+      debugPrint('✅ Permission already handled — skipping request');
     }
 
+    // ------------------------------------------------
+    // 3️⃣ SAVE FCM TOKEN (safe even if permission denied)
+    // ------------------------------------------------
     await _saveFCMToken(messaging);
 
-    // Register the background handler
+    // ------------------------------------------------
+    // 4️⃣ BACKGROUND MESSAGE HANDLER
+    // ------------------------------------------------
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // -----------------------------
-    // iOS APNs → Flutter receiver
-    // -----------------------------
+    // ------------------------------------------------
+    // 5️⃣ iOS APNs → Flutter MethodChannel Bridge
+    // ------------------------------------------------
     _apnsChannel.setMethodCallHandler((call) async {
       if (call.method == "apnsPayload") {
         final payload = Map<String, dynamic>.from(call.arguments);
 
         debugPrint("📥 [Flutter] Received APNs payload = $payload");
 
-        final mockMessage = RemoteMessage(data: {
-          "screen": payload["screen"]?.toString(),
-          "leaveId": payload["leaveId"]?.toString(),
-        });
+        final RemoteMessage mockMessage = RemoteMessage(
+          data: {
+            "screen": payload["screen"]?.toString(),
+            "leaveId": payload["leaveId"]?.toString(),
+          },
+        );
 
         NotificationRedirection.handleNotification(mockMessage);
       }
     });
 
-    // NORMAL FCM foreground notifications
-    FirebaseMessaging.onMessage.listen((message) {
+    // ------------------------------------------------
+    // 6️⃣ FOREGROUND FCM NOTIFICATIONS
+    // ------------------------------------------------
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint("📩 [FG] Foreground message received");
       debugPrint("📩 Data: ${message.data}");
       showLocalNotification(message);
     });
 
-    // App opened from background
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+    // ------------------------------------------------
+    // 7️⃣ APP OPENED FROM BACKGROUND
+    // ------------------------------------------------
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint("🔔 Notification opened from BACKGROUND");
       NotificationRedirection.handleNotification(message);
     });
 
-    // App opened from terminated
-    final initialMsg = await messaging.getInitialMessage();
+    // ------------------------------------------------
+    // 8️⃣ APP OPENED FROM TERMINATED STATE
+    // ------------------------------------------------
+    final RemoteMessage? initialMsg = await messaging.getInitialMessage();
+
     if (initialMsg != null) {
       debugPrint("🚀 App opened from TERMINATED via FCM");
       _pendingInitialMessage = initialMsg;
@@ -105,8 +121,8 @@ class FCMService {
 
   // LOCAL NOTIFICATION TAP HANDLER
   static Future<void> _handleNotificationResponse(
-      NotificationResponse response,
-      ) async {
+    NotificationResponse response,
+  ) async {
     debugPrint("👉 Local notification tapped");
 
     if (response.payload == null) return;
@@ -155,7 +171,8 @@ class FCMService {
 
     final android = _localNotifications
         .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
     await android?.createNotificationChannel(channel);
 

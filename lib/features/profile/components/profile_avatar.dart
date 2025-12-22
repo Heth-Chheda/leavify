@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 class ProfileAvatar extends StatelessWidget {
   final String initials;
   final double size;
-  final String? imagePath; // This will be the path from backend
-  final String baseUrl; // Backend base URL
+  final String? imagePath;
+  final String baseUrl;
 
   const ProfileAvatar({
     super.key,
@@ -19,6 +19,11 @@ class ProfileAvatar extends StatelessWidget {
     final String? fullImageUrl = (imagePath != null && imagePath!.isNotEmpty)
         ? "$baseUrl/$imagePath"
         : null;
+
+    // 🔍 DEBUG: URL resolution
+    debugPrint('🖼️ ProfileAvatar');
+    debugPrint('   imagePath: $imagePath');
+    debugPrint('   fullImageUrl: $fullImageUrl');
 
     return Container(
       width: size,
@@ -46,8 +51,29 @@ class ProfileAvatar extends StatelessWidget {
               child: Image.network(
                 fullImageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    _buildInitialsWidget(),
+
+                // 🔍 DEBUG: loading lifecycle
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) {
+                    debugPrint('✅ Image loaded successfully: $fullImageUrl');
+                    return child;
+                  }
+
+                  debugPrint(
+                    '⏳ Image loading: $fullImageUrl '
+                    '(${loadingProgress.cumulativeBytesLoaded}'
+                    '/${loadingProgress.expectedTotalBytes ?? 'unknown'})',
+                  );
+
+                  return _buildInitialsWidget();
+                },
+
+                // 🔍 DEBUG: error handling
+                errorBuilder: (context, error, stackTrace) {
+                  debugPrint('❌ Image failed to load: $fullImageUrl');
+                  debugPrint('   Error: $error');
+                  return _buildInitialsWidget();
+                },
               ),
             )
           : _buildInitialsWidget(),

@@ -486,7 +486,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
             leaveViewModel.setHalfDay(value);
           },
           title: const Text(
-            "Half Day Leave",
+            "Half Day",
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
@@ -522,7 +522,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Leave on behalf'),
+        _buildSectionTitle('On behalf'),
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
