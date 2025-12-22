@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:leavify/core/utils/constants/api_endpoints.dart';
 import 'package:leavify/core/utils/constants/status_color/status_colors.dart';
-import 'package:leavify/features/Authentication/domain/models/leave.dart';
 import 'package:leavify/features/Authentication/domain/models/user.dart';
 import 'package:leavify/features/Authentication/domain/response/get_user_summary_response.dart';
 import 'package:leavify/features/Home/viewmodel/home_view_model.dart';
+import 'package:leavify/features/Leave/models/general/my_leaves.dart';
 import 'package:leavify/features/Profile/components/info_card.dart';
 import 'package:leavify/features/Profile/components/profile_avatar.dart';
 import 'package:leavify/features/Profile/components/section_header.dart';
@@ -37,6 +37,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final homeVM = context.watch<HomeViewModel>();
+    final profileViewModel = context.watch<ProfileViewModel>();
 
     final user = homeVM.otherUser;
     final summary = homeVM.otherUserData;
@@ -131,7 +132,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                     // LEAVE HISTORY
                     const SectionHeader(title: 'Leave History'),
                     const SizedBox(height: 16),
-                    _buildLeaveSection(theme, user, summary),
+                    _buildLeaveSection(theme, user, summary, profileViewModel),
                   ],
                 ),
               ),
@@ -191,20 +192,55 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
     ThemeData theme,
     User user,
     GetUserSummaryResponse summary,
+    ProfileViewModel profileViewModel,
   ) {
-    final leaves = summary.myUpcomingLeaves ?? [];
+    final leaves = profileViewModel.leaveData?.allLeaves ?? [];
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double horizontalPadding = 20 * 2; // same as parent padding
+    final double spacing = 12;
+
+    final double chipWidth = (screenWidth - horizontalPadding - spacing) / 2;
 
     // SUMMARY CHIPS (RESTORED)
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: spacing,
+          runSpacing: spacing,
           children: [
-            _buildSummaryChip('Approved', user.approved, theme),
-            _buildSummaryChip('Rejected', user.rejected, theme),
-            _buildSummaryChip('Pending', user.pending, theme),
+            SizedBox(
+              width: chipWidth,
+              child: _buildSummaryChip(
+                'Approved',
+                profileViewModel.leaveData?.approvedLeaves ?? 0,
+                theme,
+              ),
+            ),
+            SizedBox(
+              width: chipWidth,
+              child: _buildSummaryChip(
+                'Rejected',
+                profileViewModel.leaveData?.rejectedLeaves ?? 0,
+                theme,
+              ),
+            ),
+            SizedBox(
+              width: chipWidth,
+              child: _buildSummaryChip(
+                'Pending',
+                profileViewModel.leaveData?.pendingLeaves ?? 0,
+                theme,
+              ),
+            ),
+            SizedBox(
+              width: chipWidth,
+              child: _buildSummaryChip(
+                'Available',
+                profileViewModel.leaveData?.balanceLeaves ?? 0,
+                theme,
+              ),
+            ),
           ],
         ),
 
@@ -261,10 +297,10 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
 
   // ================= LEAVE CARD (HALF + COMP OFF) =================
 
-  Widget _buildLeaveCard(LeaveDetailsWithoutLeaveId leave, ThemeData theme) {
+  Widget _buildLeaveCard(MyLeaves leave, ThemeData theme) {
     final statusColor = StatusColors.fromStatus(leave.status);
 
-    final bool isCompOff = leave.requestType.toLowerCase() == 'extra';
+    final bool isCompOff = leave.type.toLowerCase() == 'extra';
     final bool isHalfDay = leave.isHalfDay == true;
 
     Color? leftBorder;
@@ -274,8 +310,8 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
       leftBorder = Colors.amber.shade700;
     }
 
-    final start = DateTime.tryParse(leave.startDate);
-    final end = DateTime.tryParse(leave.endDate);
+    final start = DateTime.tryParse(leave.fromDate.toString());
+    final end = DateTime.tryParse(leave.toDate.toString());
 
     return Container(
       decoration: BoxDecoration(
@@ -305,18 +341,41 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              start != null && end != null
-                  ? DateFormat('dd MMM').format(start) +
-                        (start != end
-                            ? ' - ${DateFormat('dd MMM').format(end)}'
-                            : '')
-                  : '',
+              start != null && end != null ? _formatDateRange(start, end) : '',
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
             Text(leave.reason, maxLines: 3, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 8),
+            RichText(
+              text: TextSpan(
+                children: [
+                  if (isCompOff)
+                    const TextSpan(
+                      text: 'COMP OFF',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.purple,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  if (isCompOff && leave.isHalfDay) const TextSpan(text: ' '),
+                  if (leave.isHalfDay)
+                    TextSpan(
+                      text: '(HALF DAY)',
+                      style: TextStyle(
+                        fontSize: 11, // ⬅ smaller
+                        fontWeight: FontWeight.w600,
+                        color: Colors.purple,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                ],
+              ),
+            ),
             const Spacer(),
             Container(
               width: double.infinity,
@@ -339,5 +398,19 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
         ),
       ),
     );
+  }
+
+  String _formatDateRange(DateTime start, DateTime end) {
+    final bool isSameDay =
+        start.year == end.year &&
+        start.month == end.month &&
+        start.day == end.day;
+
+    if (isSameDay) {
+      return DateFormat('dd MMM').format(start);
+    }
+
+    return '${DateFormat('dd MMM').format(start)} - '
+        '${DateFormat('dd MMM').format(end)}';
   }
 }
