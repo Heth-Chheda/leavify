@@ -236,6 +236,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
   // MARK: - SAVE CHANGES
   Future<void> _saveChanges() async {
     final leaveViewModel = context.read<LeaveViewModel>();
+
     if (!_formKey.currentState!.validate()) return;
 
     final details = _leave!.leaveDetails;
@@ -280,6 +281,8 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
       documents = [...keptDocs, ...newDocs];
     }
 
+    if (!mounted) return;
+
     final success = await _profileViewModel.updateLeave(
       leaveId: _leave!.leaveId,
       userId: widget.userId,
@@ -290,6 +293,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
       isCompOff: _isCompOff,
       documents: documents,
       leaveType: hasLeaveTypeChanges ? _selectedLeaveType : null,
+      context: context,
     );
 
     if (success && mounted) {
@@ -694,15 +698,18 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
     switch (type) {
       case LeaveActionType.cancel:
-        await leaveVM.cancelLeave(leaveId: widget.leaveId);
+        await leaveVM.cancelLeave(leaveId: widget.leaveId, context: context);
         break;
 
       case LeaveActionType.remind:
-        await leaveVM.sendReminderForLeave(leaveId: widget.leaveId);
+        await leaveVM.sendReminderForLeave(
+          leaveId: widget.leaveId,
+          context: context,
+        );
         break;
 
       case LeaveActionType.escalate:
-        await leaveVM.escalateLeave(leaveId: widget.leaveId);
+        await leaveVM.escalateLeave(leaveId: widget.leaveId, context: context);
         break;
     }
 

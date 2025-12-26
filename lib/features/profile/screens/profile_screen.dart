@@ -669,10 +669,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // 🔄 Refresh after coming back
       if (result == true && mounted) {
-        debugPrint('bro called me.');
         context.read<ProfileViewModel>().loadUserLeaves(user.id);
-      } else {
-        debugPrint('bro did not called me.');
       }
     }
   }

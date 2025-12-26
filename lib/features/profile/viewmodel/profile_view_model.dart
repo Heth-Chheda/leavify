@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:leavify/base/base_repository.dart';
 import 'package:leavify/base/base_view_model.dart';
 import 'package:leavify/core/storage/app_storage.dart';
 // import 'package:leavify/dummydata/leave/dummy_user_leaves.dart';
@@ -94,6 +95,7 @@ class ProfileViewModel extends BaseViewModel {
     List<DateTime>? compDates,
     List<LeaveDocumentForApply>? documents,
     String? leaveType,
+    required BuildContext context,
   }) async {
     update(isLoading: true, errorMessage: null);
     notifyListeners();
@@ -159,6 +161,11 @@ class ProfileViewModel extends BaseViewModel {
       notifyListeners();
       // return true;
       return response.success ?? false;
+    } on ApiException catch (e) {
+      update(errorMessage: e.message, isLoading: false);
+      showError(context, e.message);
+      notifyListeners();
+      return false;
     } catch (e) {
       update(errorMessage: e.toString(), isLoading: false);
       notifyListeners();

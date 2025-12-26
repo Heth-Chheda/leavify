@@ -615,7 +615,10 @@ class LeaveViewModel extends BaseViewModel {
   }
 
   // MARK: SEND REMINDER FOR LEAVE
-  Future<void> sendReminderForLeave({required String leaveId}) async {
+  Future<void> sendReminderForLeave({
+    required String leaveId,
+    required BuildContext context,
+  }) async {
     try {
       isRemindLoading = true;
       update(isLoading: true, errorMessage: null);
@@ -633,6 +636,9 @@ class LeaveViewModel extends BaseViewModel {
 
       reminderResponse = response;
       isRemindLoading = false;
+    } on ApiException catch (e) {
+      update(isLoading: false, errorMessage: e.message);
+      showError(context, e.message);
     } catch (e) {
       update(isLoading: false, errorMessage: e.toString());
       isRemindLoading = false;
@@ -642,7 +648,10 @@ class LeaveViewModel extends BaseViewModel {
   }
 
   // MARK: - ESCALATE LEAVE
-  Future<void> escalateLeave({required String leaveId}) async {
+  Future<void> escalateLeave({
+    required String leaveId,
+    required BuildContext context,
+  }) async {
     try {
       isEscalateLoading = true;
       update(isLoading: true, errorMessage: null);
@@ -660,6 +669,9 @@ class LeaveViewModel extends BaseViewModel {
 
       escalateLeaveResponse = response;
       isEscalateLoading = false;
+    } on ApiException catch (e) {
+      update(isLoading: false, errorMessage: e.message);
+      showError(context, e.message);
     } catch (e) {
       update(isLoading: false, errorMessage: e.toString());
       isEscalateLoading = false;
@@ -669,7 +681,10 @@ class LeaveViewModel extends BaseViewModel {
   }
 
   // MARK: - CANCEL LEAVE
-  Future<void> cancelLeave({required String leaveId}) async {
+  Future<void> cancelLeave({
+    required String leaveId,
+    required BuildContext context,
+  }) async {
     try {
       isCancelLoading = true;
       update(isLoading: true, errorMessage: null);
@@ -687,6 +702,9 @@ class LeaveViewModel extends BaseViewModel {
 
       isCancelLoading = false;
       cancelLeaveResponse = response;
+    } on ApiException catch (e) {
+      update(isLoading: false, errorMessage: e.message);
+      showError(context, e.message);
     } catch (e) {
       isCancelLoading = false;
       update(isLoading: false, errorMessage: e.toString());
