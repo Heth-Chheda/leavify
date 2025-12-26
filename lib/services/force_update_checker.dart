@@ -23,52 +23,66 @@ class ForceUpdateWrapper extends StatefulWidget {
 class _ForceUpdateWrapperState extends State<ForceUpdateWrapper> {
   bool _hasCheckedForUpdate = false;
   bool _isUpdateRequired = false;
+  bool _isMaintenanceMode = false;
+  bool get isMaintenanceMode => _isMaintenanceMode;
 
   bool get isUpdateRequired => _isUpdateRequired;
 
   /// Called by SplashScreen before navigation
   Future<bool> checkForUpdate() async {
     if (_hasCheckedForUpdate) {
-      debugPrint(
-        "⚠️ [ForceUpdate] Returning cached result: $_isUpdateRequired",
-      );
-      return _isUpdateRequired;
+      return _isUpdateRequired || _isMaintenanceMode;
     }
 
     _hasCheckedForUpdate = true;
-    debugPrint("🔍 [ForceUpdate] Starting version check...");
 
     try {
       final info = await PackageInfo.fromPlatform();
       final currentVersion = info.version;
-      debugPrint("📱 [ForceUpdate] Current App Version: $currentVersion");
 
       final repo = AuthenticationRepository();
-      debugPrint("🌐 [ForceUpdate] Calling version API...");
       final response = await repo.getVersionInfo();
 
-      final requiredVersion = response.version;
-      debugPrint("📝 [ForceUpdate] Server Minimum Version: $requiredVersion");
+      // Maintenance check FIRST
+      _isMaintenanceMode = response.isMaintenanceMode;
+      // _isMaintenanceMode = true;
 
+      if (_isMaintenanceMode) {
+        debugPrint("🚧 [ForceUpdate] Maintenance mode enabled");
+
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _showMaintenanceDialog();
+        });
+
+        return true;
+      }
+
+      //  Existing update logic
+      final requiredVersion = response.version;
       _isUpdateRequired = _isVersionOutdated(currentVersion, requiredVersion);
-      debugPrint("🔎 [ForceUpdate] Outdated? → $_isUpdateRequired");
 
       if (_isUpdateRequired) {
-        debugPrint("🚫 [ForceUpdate] Update required - blocking navigation");
-        // Show dialog after a short delay to ensure Navigator is ready
         Future.delayed(const Duration(milliseconds: 300), () {
           _showForceUpdateDialog();
         });
-      } else {
-        debugPrint("✅ [ForceUpdate] Version is OK");
       }
 
       return _isUpdateRequired;
     } catch (e) {
       debugPrint("⚠️ [ForceUpdate] Version check failed: $e");
-      // On error, allow navigation (fail open)
-      return false;
+      return false; // Fail open
     }
+  }
+
+  Future<void> _showMaintenanceDialog() async {
+    final context = AppNavigator.navigatorKey.currentContext;
+    if (context == null) return;
+
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PopScope(canPop: false, child: MaintenanceDialog()),
+    );
   }
 
   bool _isVersionOutdated(String current, String required) {
@@ -101,6 +115,72 @@ class _ForceUpdateWrapperState extends State<ForceUpdateWrapper> {
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+class MaintenanceDialog extends StatelessWidget {
+  const MaintenanceDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 290,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.orangeAccent, Colors.deepOrangeAccent],
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Illustration
+            SizedBox(
+              height: 100,
+              child: Icon(Icons.build_circle, size: 80, color: Colors.white),
+            ),
+
+            // Content
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                children: const [
+                  Text(
+                    'Maintenance in Progress',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F2937),
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Leavify is currently under maintenance.\nPlease try again later.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6B7280),
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// UI for the forced update dialog
