@@ -606,7 +606,16 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
 
   Widget _buildStatusSection() {
     final isPending = _leave?.leaveDetails.status.toLowerCase() == 'pending';
+    final isApproved = _leave?.leaveDetails.status.toLowerCase() == 'approved';
     final isAppliedByManager = _leave?.userId != _leave?.requestedById;
+    // 1. Get current time
+    final now = DateTime.now();
+
+    // 2. Check if the leave end date is strictly before right now
+    final isPastDate = _leave?.leaveDetails.toDate.isBefore(now) ?? false;
+
+    // 3. Form the condition: Cancel is UNAVAILABLE if it is Approved AND in the Past
+    final isCancelNotAvailable = isApproved && isPastDate;
 
     return Row(
       children: [
@@ -639,7 +648,7 @@ class _LeaveDetailScreenState extends State<LeaveDetailScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        if (!isAppliedByManager)
+        if (!isAppliedByManager && !isCancelNotAvailable)
           Expanded(
             child: MyAppButton(
               label: 'Cancel',

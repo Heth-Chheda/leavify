@@ -406,11 +406,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle("Leave Type"),
+        _buildSectionTitle("Application Type"),
         const SizedBox(height: 12),
         MyAppDropDownMenu<String>(
           value: leaveViewModel.selectedLeaveType,
-          hint: 'Select Leave Type',
+          hint: 'Select Application Type',
           borderRadius: 15,
           borderColor: Colors.transparent,
           dropdownColor: Colors.white,
@@ -566,11 +566,11 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 24),
-        _buildSectionTitle('Leave Type (Manager)'),
+        _buildSectionTitle('Application Type (Manager)'),
         const SizedBox(height: 12),
         MyAppDropDownMenu<String>(
           value: leaveViewModel.selectedLeaveCategory,
-          hint: 'Select Leave Type',
+          hint: 'Select Application Type',
           borderColor: Colors.transparent,
           dropdownColor: Colors.white,
           textColor: Colors.black87,

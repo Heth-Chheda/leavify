@@ -130,7 +130,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
                     ],
 
                     // LEAVE HISTORY
-                    const SectionHeader(title: 'Leave History'),
+                    const SectionHeader(title: 'Leave Details'),
                     const SizedBox(height: 16),
                     _buildLeaveSection(theme, user, summary, profileViewModel),
                   ],
@@ -243,6 +243,10 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
             ),
           ],
         ),
+
+        const SizedBox(height: 24),
+
+        const SectionHeader(title: 'Recent Applications'),
 
         const SizedBox(height: 24),
 

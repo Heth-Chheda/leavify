@@ -424,13 +424,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           if (leaveData.allLeaves.isNotEmpty) ...[
             const SizedBox(height: 24),
-            Text(
-              'Recent Leave Applications',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onBackground,
-              ),
-            ),
+            const SectionHeader(title: 'Recent Applications'),
             const SizedBox(height: 12),
             Wrap(
               spacing: 12,

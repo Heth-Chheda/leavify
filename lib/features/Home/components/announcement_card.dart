@@ -97,7 +97,7 @@ class AnnouncementCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              const SizedBox(height: 10),
+              const SizedBox(height: 7),
               _buildMessage(),
             ],
           ),
@@ -209,7 +209,7 @@ class AnnouncementCard extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               height: 1.4,
               letterSpacing: 0.1,
               fontWeight: FontWeight.w700,

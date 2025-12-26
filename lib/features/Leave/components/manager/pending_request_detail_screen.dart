@@ -587,7 +587,7 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
     }
 
     return _InfoCard(
-      title: 'Leave Request Details',
+      title: 'Request Details',
       children: [
         if (leaveData.leaveDetails.type.toLowerCase() == 'extra') ...[
           _InfoRow(
@@ -602,7 +602,7 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
             Expanded(
               child: _InfoRow(
                 icon: Icons.category_outlined,
-                label: 'Leave Type',
+                label: 'Application Type',
                 value: leaveData.leaveDetails.subType,
               ),
             ),
@@ -638,15 +638,17 @@ class _LeaveRequestDetailsCard extends StatelessWidget {
           ],
         ),
 
-        _InfoRow(
-          icon: isCompOff ? Icons.star_rounded : Icons.timelapse_rounded,
-          label: 'Mode',
-          value: badgeLabel,
-          // Apply dynamic styles
-          backgroundColor: badgeBgColor,
-          iconColor: badgeIconColor,
-          valueColor: badgeValueColor,
-        ),
+        if (isCompOff || isHalfDay) ...[
+          _InfoRow(
+            icon: isCompOff ? Icons.star_rounded : Icons.timelapse_rounded,
+            label: 'Mode',
+            value: badgeLabel,
+            // Apply dynamic styles
+            backgroundColor: badgeBgColor,
+            iconColor: badgeIconColor,
+            valueColor: badgeValueColor,
+          ),
+        ],
 
         // Row 3: Applied On (Conditionally Split for Comp Off OR Half Day)
         if (showBadge)
@@ -699,7 +701,7 @@ class _ReasonCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return _InfoCard(
-      title: 'Reason for Leave',
+      title: 'Reason',
       children: [
         Container(
           width: double.infinity,
@@ -758,8 +760,7 @@ class _CommentsCard extends StatelessWidget {
                   onSubmitted: (_) => FocusScope.of(context).unfocus(),
                   style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
-                    hintText:
-                        'Add any comments or feedback for the employee...',
+                    hintText: 'Add any comments for the employee...',
                     hintStyle: TextStyle(
                       color: colorScheme.onSurface.withOpacity(0.6),
                     ),
